@@ -1,0 +1,22 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - img "IntelliGRC" [ref=e5]
+    - generic [ref=e6]:
+      - banner [ref=e7]:
+        - heading "Log In" [level=2] [ref=e8]
+      - generic [ref=e10]:
+        - generic [ref=e13]:
+          - generic [ref=e14]:
+            - generic [ref=e15]: Email
+            - textbox "Email" [ref=e16]:
+              - /placeholder: hello@intelligrc.com
+          - button "Log In" [ref=e18] [cursor=pointer]
+        - link "Forgot Password?" [ref=e21] [cursor=pointer]:
+          - /url: /realms/intelligrc/login-actions/reset-credentials?client_id=apidocs&tab_id=hUt9t223yEQ&client_data=eyJydSI6Imh0dHBzOi8vYXBpLWRvY3MuaW50ZWxsaWdyYy5hcHAvb2F1dGgyL2NhbGxiYWNrIiwicnQiOiJjb2RlIiwic3QiOiJDNzBzTWVZcENLenpYblFGLXA5RERTWmhLbU9SeGdQMENiUE1RbjVvMVI4Oi9zd2FnZ2VyL3YxL3N3YWdnZXIuanNvbiJ9
+  - generic [ref=e23]:
+    - heading "This is a Private and Confidential Information System" [level=4] [ref=e24]
+    - paragraph [ref=e25]: By continuing, you consent to your usage being monitored, recorded, and subject to audit. Unauthorized use of this system is prohibited and subject to criminal and civil penalties.
+    - paragraph [ref=e26]:
+      - link "support@intelligrc.com" [ref=e27] [cursor=pointer]:
+        - /url: mailto:support@intelligrc.com
+      - text: (855) 719-1918
