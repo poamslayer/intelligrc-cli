@@ -1,9 +1,11 @@
-import {Command, Flags} from '@oclif/core'
+import {Command} from '@oclif/core'
 
-import {buildCatalog} from '../manifest.js'
+import {buildCatalog, commandSpec, oclifFlags} from '../manifest.js'
+
+const spec = commandSpec('commands')
 
 export default class Commands extends Command {
-  static override summary = 'Print the local command catalog.'
+  static override summary = spec.summary
 
   static override description =
     'Describes every command, its arguments, flags, and documented permission. ' +
@@ -11,13 +13,7 @@ export default class Commands extends Command {
 
   static override enableJsonFlag = false
 
-  static override flags = {
-    output: Flags.string({
-      summary: 'Output format.',
-      options: ['json'],
-      default: 'json',
-    }),
-  }
+  static override flags = oclifFlags(spec)
 
   async run(): Promise<void> {
     await this.parse(Commands)

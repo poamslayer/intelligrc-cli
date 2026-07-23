@@ -1,5 +1,5 @@
 import {spawn} from 'node:child_process'
-import {mkdtempSync} from 'node:fs'
+import {mkdtempSync, readFileSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {fileURLToPath} from 'node:url'
@@ -13,12 +13,18 @@ export interface CliResult {
 export const projectRoot = fileURLToPath(new URL('../..', import.meta.url))
 const binPath = join(projectRoot, 'bin', 'run.js')
 
+export const packageVersion = (
+  JSON.parse(readFileSync(join(projectRoot, 'package.json'), 'utf8')) as {version: string}
+).version
+
 /**
  * Process-level test seam. Spawns the built executable with isolated
  * per-user state and returns the raw output bytes and exit code.
  *
  * Isolation:
- * - HOME and every XDG base directory point at a fresh temp directory.
+ * - HOME and every XDG (Cross-Desktop Group) base directory — the standard
+ *   Linux locations for per-user config, data, and cache — point at a fresh
+ *   temp directory.
  * - Every INTELLIGRC_* environment variable is removed.
  */
 export function runCli(args: string[], options: {cwd?: string} = {}): Promise<CliResult> {
