@@ -2,7 +2,8 @@
 # Removed before merge.
 name: debug-win
 on:
-  workflow_dispatch:
+  push:
+    branches: [feature/12-cross-platform-ci]
 permissions:
   contents: read
 jobs:
