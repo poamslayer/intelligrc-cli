@@ -12,8 +12,12 @@
 #    "publishConfig": {"access": "restricted"} so the registry records
 #    the release as private. Let the cross-platform workflow pass on that
 #    commit.
-# 3. Create a GitHub environment named "release" with required reviewers
-#    and an NPM_TOKEN secret that can publish to the chosen scope.
+# 3. The GitHub environment named "release" exists (created 2026-07-23).
+#    Store an NPM_TOKEN secret there that can publish to the chosen
+#    scope. Required-reviewer protection on environments needs a paid
+#    GitHub plan for private repositories; on the Free plan the dispatch
+#    step itself is the human gate, because only a repository writer can
+#    start a run and pull-request code never triggers this workflow.
 # 4. Dispatch this workflow from the validated commit, passing the exact
 #    package name and version as a cross-check.
 #
