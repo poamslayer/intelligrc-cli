@@ -28,15 +28,92 @@ export interface ArgSpec {
 export interface CommandSpec {
   id: string
   summary: string
-  /** 'local' commands never load a profile and never contact a network service. */
-  kind: 'local'
-  /** Documented IntelliGRC permission. Always null for local commands. */
+  /**
+   * 'local' commands never contact a network service. 'profile' commands
+   * manage local profiles; among them only `auth login` sends a request —
+   * one tenant-discovery call to the documented tenant-list operation.
+   */
+  kind: 'local' | 'profile'
+  /** Documented IntelliGRC permission. Always null for local and profile commands. */
   permission: null
   args: ArgSpec[]
   flags: FlagSpec[]
 }
 
 export const commandSpecs: CommandSpec[] = [
+  {
+    id: 'auth login',
+    summary: 'Create or replace one named profile after tenant discovery.',
+    kind: 'profile',
+    permission: null,
+    args: [],
+    flags: [
+      {
+        name: 'profile',
+        type: 'option',
+        required: true,
+        summary: 'Profile name to create or replace.',
+      },
+      {
+        name: 'client-id',
+        type: 'option',
+        required: true,
+        summary: 'Client ID of the IntelliGRC API credential.',
+      },
+      {
+        name: 'client-secret-env',
+        type: 'option',
+        required: false,
+        summary:
+          'Name of the environment variable that holds the client secret. ' +
+          'Without this flag, login reads the secret from a masked prompt.',
+      },
+      {
+        name: 'base-url',
+        type: 'option',
+        required: false,
+        summary: 'IntelliGRC API base URL saved into the profile. HTTPS required.',
+      },
+      {
+        name: 'replace',
+        type: 'boolean',
+        required: false,
+        summary: 'Replace an existing profile with the same name.',
+      },
+    ],
+  },
+  {
+    id: 'auth list',
+    summary: 'Print profile names and non-secret settings.',
+    kind: 'profile',
+    permission: null,
+    args: [],
+    flags: [
+      {
+        name: 'output',
+        type: 'option',
+        required: false,
+        allowedValues: ['json'],
+        default: 'json',
+        summary: 'Output format.',
+      },
+    ],
+  },
+  {
+    id: 'auth remove',
+    summary: 'Remove one named profile and its protected secret.',
+    kind: 'profile',
+    permission: null,
+    args: [],
+    flags: [
+      {
+        name: 'profile',
+        type: 'option',
+        required: true,
+        summary: 'Profile name to remove.',
+      },
+    ],
+  },
   {
     id: 'commands',
     summary: 'Print the local command catalog.',
