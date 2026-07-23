@@ -4,7 +4,8 @@
  * array of tenants. Login uses a single attempt with a 30-second limit; the
  * general read-retry policy ships with the API commands.
  */
-import {CliFailure, EXIT, redact} from './errors.js'
+import {apiErrorFromBody} from './api/response.js'
+import {CliFailure, EXIT} from './errors.js'
 
 export interface DiscoveredTenant {
   id: string
@@ -12,27 +13,6 @@ export interface DiscoveredTenant {
 }
 
 const REQUEST_TIMEOUT_MS = 30_000
-/**
- * Bound for preserved upstream error text, applied after redaction so a
- * credential straddling the boundary can never leave a partial value
- * behind. Measured in UTF-16 code units, which equals bytes for the
- * ASCII bodies the contract describes.
- */
-const MAX_PRESERVED_BODY_LENGTH = 16 * 1024
-const TRUNCATION_MARKER = '…[truncated]'
-
-function apiErrorFromBody(bodyText: string, redactionValues: string[]): unknown {
-  const redacted = redact(bodyText, redactionValues)
-  const bounded =
-    redacted.length > MAX_PRESERVED_BODY_LENGTH
-      ? redacted.slice(0, MAX_PRESERVED_BODY_LENGTH) + TRUNCATION_MARKER
-      : redacted
-  try {
-    return JSON.parse(bounded)
-  } catch {
-    return bounded
-  }
-}
 
 export async function discoverTenants(
   baseUrl: string,
