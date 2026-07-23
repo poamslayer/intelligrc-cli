@@ -290,17 +290,23 @@ test('a 403 on an ICL command names the documented permission without claiming t
   assert.match(error.message, /Evaluations: Read/)
 })
 
-test('help output shows the documented permission for each area', async () => {
-  const historyHelp = await run(['assessment-objective', 'history', '--help'])
-  assert.equal(historyHelp.code, 0)
-  assert.match(historyHelp.stdout, /GapAnalysis: Read/)
-  assert.match(historyHelp.stdout, /does not check/)
-
-  const evidenceHelp = await run(['evidence-folder', 'list', '--help'])
-  assert.equal(evidenceHelp.code, 0)
-  assert.match(evidenceHelp.stdout, /Evidence: Read/)
-
-  const iclHelp = await run(['lookup', 'icl-version', 'frameworks', '--help'])
-  assert.equal(iclHelp.code, 0)
-  assert.match(iclHelp.stdout, /Evaluations: Read/)
+test('help output shows the documented permission for every issue #6 command', async () => {
+  const commands: Array<[string[], string]> = [
+    [['evaluation', 'list'], 'Evaluations: Read'],
+    [['assessment-objective', 'history'], 'GapAnalysis: Read'],
+    [['lookup', 'assessment-objective', 'statuses'], 'GapAnalysis: Read'],
+    [['evidence', 'list'], 'Evidence: Read'],
+    [['evidence-folder', 'list'], 'Evidence: Read'],
+    [['lookup', 'icl-version', 'list'], 'Evaluations: Read'],
+    [['lookup', 'icl-version', 'latest-frameworks'], 'Evaluations: Read'],
+    [['lookup', 'icl-version', 'frameworks'], 'Evaluations: Read'],
+  ]
+  for (const [argv, permission] of commands) {
+    const help = await run([...argv, '--help'])
+    assert.equal(help.code, 0, help.stderr)
+    // Help text wraps lines, so allow a line break inside the permission.
+    assert.match(help.stdout, new RegExp(permission.replace(': ', ':\\s+')), argv.join(' '))
+    // The help must not claim the profile holds the permission.
+    assert.match(help.stdout, /does\s+not\s+check/, argv.join(' '))
+  }
 })

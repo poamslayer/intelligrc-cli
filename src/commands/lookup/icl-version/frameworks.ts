@@ -26,10 +26,11 @@ export default class LookupIclVersionFrameworks extends Command {
       path: PATH,
       profile: flags.profile as string,
       output: flags.output as OutputFormat,
-      buildPath: () => {
-        const iclVersionId = parseIclVersionId(flags['icl-version-id'] as string)
-        return `/v1/lookups/iclversions/${iclVersionId}/frameworks`
-      },
+      buildPath: () =>
+        PATH.replace(
+          '{iclVersionId}',
+          parseIclVersionId(flags['icl-version-id'] as string),
+        ),
       sendTenantHeader: true,
     })
   }
