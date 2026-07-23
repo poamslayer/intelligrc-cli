@@ -2,7 +2,7 @@ import {spawn} from 'node:child_process'
 import {mkdtempSync, readFileSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
-import {fileURLToPath} from 'node:url'
+import {fileURLToPath, pathToFileURL} from 'node:url'
 
 export interface CliResult {
   stdout: string
@@ -17,6 +17,34 @@ export const packageVersion = (
   JSON.parse(readFileSync(join(projectRoot, 'package.json'), 'utf8')) as {version: string}
 ).version
 
+/** Create one isolated per-user state directory for a sequence of CLI runs. */
+export function makeIsolatedHome(): string {
+  return mkdtempSync(join(tmpdir(), 'intelligrc-cli-test-'))
+}
+
+/**
+ * Environment that redirects @napi-rs/keyring to the file-backed fake for a
+ * spawned CLI process. keyringFile is the JSON file that holds the fake
+ * store's entries.
+ */
+export function fakeKeyringEnv(keyringFile: string): Record<string, string> {
+  const registerUrl = pathToFileURL(
+    join(projectRoot, 'test', 'helpers', 'fake-keyring-register.mjs'),
+  ).href
+  return {
+    NODE_OPTIONS: `--import ${registerUrl}`,
+    INTELLIGRC_FAKE_KEYRING_FILE: keyringFile,
+  }
+}
+
+export interface RunCliOptions {
+  cwd?: string
+  /** Reuse one isolated home across runs. A fresh temp directory otherwise. */
+  home?: string
+  /** Extra environment variables. Applied after isolation, so they win. */
+  env?: Record<string, string>
+}
+
 /**
  * Process-level test seam. Spawns the built executable with isolated
  * per-user state and returns the raw output bytes and exit code.
@@ -24,11 +52,13 @@ export const packageVersion = (
  * Isolation:
  * - HOME and every XDG (Cross-Desktop Group) base directory — the standard
  *   Linux locations for per-user config, data, and cache — point at a fresh
- *   temp directory.
- * - Every INTELLIGRC_* environment variable is removed.
+ *   temp directory (or options.home when a test needs state to persist
+ *   across runs).
+ * - Every INTELLIGRC_* environment variable is removed. Entries in
+ *   options.env are added back afterward, so tests opt in explicitly.
  */
-export function runCli(args: string[], options: {cwd?: string} = {}): Promise<CliResult> {
-  const isolatedHome = mkdtempSync(join(tmpdir(), 'intelligrc-cli-test-'))
+export function runCli(args: string[], options: RunCliOptions = {}): Promise<CliResult> {
+  const isolatedHome = options.home ?? makeIsolatedHome()
 
   const env: Record<string, string> = {}
   for (const [key, value] of Object.entries(process.env)) {
@@ -41,6 +71,7 @@ export function runCli(args: string[], options: {cwd?: string} = {}): Promise<Cl
   env.XDG_CONFIG_HOME = join(isolatedHome, '.config')
   env.XDG_DATA_HOME = join(isolatedHome, '.local', 'share')
   env.XDG_CACHE_HOME = join(isolatedHome, '.cache')
+  Object.assign(env, options.env)
 
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, [binPath, ...args], {
