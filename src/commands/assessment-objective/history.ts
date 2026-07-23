@@ -3,16 +3,15 @@ import {Command} from '@oclif/core'
 import {type QueryPairs} from '../../api/client.js'
 import {parseAssessmentObjectiveId, parseEvaluationId} from '../../api/filters.js'
 import {apiGetDescription, runApiGet} from '../../api/run-get.js'
-import {commandSpec, oclifFlags} from '../../manifest.js'
+import {apiCommandSpec, oclifFlags} from '../../manifest.js'
 import {type OutputFormat} from '../../output.js'
 
-const spec = commandSpec('assessment-objective history')
-const PATH = '/v1/AssessmentObjectives/History'
+const spec = apiCommandSpec('assessment-objective history')
 
 export default class AssessmentObjectiveHistory extends Command {
   static override summary = spec.summary
 
-  static override description = apiGetDescription(spec, PATH)
+  static override description = apiGetDescription(spec)
 
   static override enableJsonFlag = false
 
@@ -23,7 +22,6 @@ export default class AssessmentObjectiveHistory extends Command {
 
     await runApiGet(this, {
       spec,
-      path: PATH,
       profile: flags.profile as string,
       output: flags.output as OutputFormat,
       buildQuery: (): QueryPairs => {

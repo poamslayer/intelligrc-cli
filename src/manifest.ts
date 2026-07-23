@@ -27,6 +27,37 @@ export interface ArgSpec {
   summary: string
 }
 
+/**
+ * One documented request parameter and the CLI input that supplies it.
+ * Every field except `source` copies the archived OpenAPI document
+ * verbatim; the contract suite compares them by exact equality.
+ */
+export interface ParameterContract {
+  /** Documented parameter name, for example "evaluationId". */
+  name: string
+  in: 'query' | 'path'
+  required: boolean
+  /** Documented schema type, for example "integer". */
+  type: string
+  /** Documented schema format, for example "int32". Absent when undocumented. */
+  format?: string
+  /** Documented default value, copied verbatim. Absent when undocumented. */
+  default?: unknown
+  /** The CLI flag or argument that supplies this parameter. */
+  source: {kind: 'flag' | 'arg'; name: string}
+}
+
+/**
+ * The documented operation one API command maps to. The path is the exact
+ * documented string; a path template keeps its "{name}" placeholder and
+ * the command substitutes the validated identifier at run time.
+ */
+export interface OperationContract {
+  method: 'get'
+  path: string
+  parameters: ParameterContract[]
+}
+
 export interface CommandSpec {
   id: string
   summary: string
@@ -48,7 +79,16 @@ export interface CommandSpec {
   permission: string | null
   args: ArgSpec[]
   flags: FlagSpec[]
+  /**
+   * Present exactly on API commands: the documented method, path, and
+   * parameters of the one operation the command maps to. The contract
+   * suite compares this field against the archived OpenAPI document.
+   */
+  contract?: OperationContract
 }
+
+/** An API command's spec, with the contract guaranteed present. */
+export type ApiCommandSpec = CommandSpec & {kind: 'api'; contract: OperationContract}
 
 /**
  * Shared flag literals for API commands. One definition per flag keeps
@@ -166,6 +206,88 @@ const iclVersionIdFlag: FlagSpec = {
     'into the documented request path.',
 }
 
+/**
+ * Shared parameter contracts. One literal per documented parameter shape
+ * keeps the documented facts identical across the command specs, exactly
+ * like the shared flag literals above.
+ */
+const evaluationIdParameter: ParameterContract = {
+  name: 'evaluationId',
+  in: 'query',
+  required: false,
+  type: 'integer',
+  format: 'int32',
+  source: {kind: 'flag', name: 'evaluation-id'},
+}
+
+const frameworkIdParameter: ParameterContract = {
+  name: 'frameworkId',
+  in: 'query',
+  required: false,
+  type: 'string',
+  format: 'uuid',
+  source: {kind: 'flag', name: 'framework-id'},
+}
+
+const includeTasksParameter: ParameterContract = {
+  name: 'includeTasks',
+  in: 'query',
+  required: false,
+  type: 'boolean',
+  default: true,
+  source: {kind: 'flag', name: 'include-tasks'},
+}
+
+const includeSubTasksParameter: ParameterContract = {
+  name: 'includeSubTasks',
+  in: 'query',
+  required: false,
+  type: 'boolean',
+  default: true,
+  source: {kind: 'flag', name: 'include-subtasks'},
+}
+
+const assessmentObjectiveIdParameter: ParameterContract = {
+  name: 'assessmentObjectiveId',
+  in: 'query',
+  required: true,
+  type: 'string',
+  format: 'uuid',
+  source: {kind: 'flag', name: 'assessment-objective-id'},
+}
+
+const parentIdParameter: ParameterContract = {
+  name: 'parentId',
+  in: 'query',
+  required: false,
+  type: 'string',
+  format: 'uuid',
+  source: {kind: 'flag', name: 'parent-id'},
+}
+
+const idPathParameter: ParameterContract = {
+  name: 'id',
+  in: 'path',
+  required: true,
+  type: 'integer',
+  format: 'int32',
+  source: {kind: 'arg', name: 'id'},
+}
+
+const iclVersionIdParameter: ParameterContract = {
+  name: 'iclVersionId',
+  in: 'path',
+  required: true,
+  type: 'string',
+  format: 'uuid',
+  source: {kind: 'flag', name: 'icl-version-id'},
+}
+
+/** Contract for one documented GET operation. */
+function get(path: string, parameters: ParameterContract[] = []): OperationContract {
+  return {method: 'get', path, parameters}
+}
+
 export const commandSpecs: CommandSpec[] = [
   {
     id: 'auth login',
@@ -279,6 +401,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'Evaluations: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/Evaluations/Current'),
   },
   {
     id: 'evaluation list',
@@ -287,6 +410,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'Evaluations: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/Evaluations'),
   },
   {
     id: 'assessment-objective list',
@@ -295,6 +419,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'GapAnalysis: Read',
     args: [],
     flags: [profileFlag, evaluationIdFlag, frameworkIdFlag, apiOutputFlag],
+    contract: get('/v1/AssessmentObjectives', [evaluationIdParameter, frameworkIdParameter]),
   },
   {
     id: 'assessment-objective history',
@@ -303,6 +428,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'GapAnalysis: Read',
     args: [],
     flags: [profileFlag, assessmentObjectiveIdFlag, evaluationIdFlag, apiOutputFlag],
+    contract: get('/v1/AssessmentObjectives/History', [assessmentObjectiveIdParameter, evaluationIdParameter]),
   },
   {
     id: 'control list',
@@ -311,6 +437,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'GapAnalysis: Read',
     args: [],
     flags: [profileFlag, evaluationIdFlag, frameworkIdFlag, apiOutputFlag],
+    contract: get('/v1/Controls', [evaluationIdParameter, frameworkIdParameter]),
   },
   {
     id: 'evidence for-evaluation',
@@ -319,6 +446,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'Evidence: Read',
     args: [],
     flags: [profileFlag, evaluationIdFlag, frameworkIdFlag, apiOutputFlag],
+    contract: get('/v1/Evidence/Evaluation', [evaluationIdParameter, frameworkIdParameter]),
   },
   {
     id: 'evidence list',
@@ -327,6 +455,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'Evidence: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/Evidence'),
   },
   {
     id: 'evidence-folder list',
@@ -335,6 +464,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'Evidence: Read',
     args: [],
     flags: [profileFlag, parentIdFlag, apiOutputFlag],
+    contract: get('/v1/Evidence/Folders', [parentIdParameter]),
   },
   {
     id: 'action-plan-project list',
@@ -343,6 +473,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'ActionPlan: Read',
     args: [],
     flags: [profileFlag, evaluationIdFlag, includeTasksFlag, includeSubTasksFlag, apiOutputFlag],
+    contract: get('/v1/ActionPlanProjects', [evaluationIdParameter, includeTasksParameter, includeSubTasksParameter]),
   },
   {
     id: 'action-plan-task list',
@@ -351,6 +482,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'ActionPlan: Read',
     args: [],
     flags: [profileFlag, evaluationIdFlag, includeSubTasksFlag, apiOutputFlag],
+    contract: get('/v1/ActionPlanTasks', [evaluationIdParameter, includeSubTasksParameter]),
   },
   {
     id: 'action-plan-subtask list',
@@ -359,6 +491,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'ActionPlan: Read',
     args: [],
     flags: [profileFlag, evaluationIdFlag, apiOutputFlag],
+    contract: get('/v1/ActionPlanSubTasks', [evaluationIdParameter]),
   },
   {
     id: 'boundary list',
@@ -367,6 +500,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'Boundaries: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/Boundaries'),
   },
   {
     id: 'data-type get',
@@ -375,6 +509,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'DataTypes: Read',
     args: [dataTypeIdArg],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/DataTypes/{id}', [idPathParameter]),
   },
   {
     id: 'data-type list',
@@ -383,6 +518,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'DataTypes: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/DataTypes'),
   },
   {
     id: 'facility list',
@@ -391,6 +527,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'Locations: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/Facilities'),
   },
   {
     id: 'facility get',
@@ -399,6 +536,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'Locations: Read',
     args: [facilityIdArg],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/Facilities/{id}', [idPathParameter]),
   },
   {
     id: 'facility data-types',
@@ -407,6 +545,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'Locations: Read',
     args: [facilityIdArg],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/Facilities/{id}/datatypes', [idPathParameter]),
   },
   {
     id: 'interconnection list',
@@ -415,6 +554,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'Interconnections: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/Interconnections'),
   },
   {
     id: 'interconnection get',
@@ -423,6 +563,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'Interconnections: Read',
     args: [interconnectionIdArg],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/Interconnections/{id}', [idPathParameter]),
   },
   {
     id: 'interconnection data-types',
@@ -431,6 +572,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'Interconnections: Read',
     args: [interconnectionIdArg],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/Interconnections/{id}/datatypes', [idPathParameter]),
   },
   {
     id: 'personnel list',
@@ -439,6 +581,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'Personnel: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/Personnel'),
   },
   {
     id: 'personnel get',
@@ -447,6 +590,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'Personnel: Read',
     args: [personnelIdArg],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/Personnel/{id}', [idPathParameter]),
   },
   {
     id: 'lookup action-plan project-statuses',
@@ -455,6 +599,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'ActionPlan: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/lookups/actionplan/projectstatuses'),
   },
   {
     id: 'lookup action-plan task-statuses',
@@ -463,6 +608,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'ActionPlan: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/lookups/actionplan/taskstatuses'),
   },
   {
     id: 'lookup action-plan subtask-statuses',
@@ -471,6 +617,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'ActionPlan: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/lookups/actionplan/subtaskstatuses'),
   },
   {
     id: 'lookup action-plan task-types',
@@ -479,6 +626,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'ActionPlan: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/lookups/actionplan/tasktypes'),
   },
   {
     id: 'lookup action-plan levels-of-effort',
@@ -487,6 +635,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'ActionPlan: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/lookups/actionplan/levelsofeffort'),
   },
   {
     id: 'lookup action-plan priority-levels',
@@ -495,6 +644,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'ActionPlan: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/lookups/actionplan/prioritylevels'),
   },
   {
     id: 'lookup action-plan categories',
@@ -503,6 +653,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'ActionPlan: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/lookups/actionplan/categories'),
   },
   {
     id: 'lookup action-plan subcategories',
@@ -511,6 +662,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'ActionPlan: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/lookups/actionplan/subcategories'),
   },
   {
     id: 'lookup assessment-objective statuses',
@@ -519,6 +671,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'GapAnalysis: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/lookups/assessmentobjectives/statuses'),
   },
   {
     id: 'lookup boundary operational-statuses',
@@ -527,6 +680,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'Boundaries: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/lookups/boundaries/operationalstatuses'),
   },
   {
     id: 'lookup boundary information-system-types',
@@ -535,6 +689,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'Boundaries: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/lookups/boundaries/informationsystemtypes'),
   },
   {
     id: 'lookup boundary confidentiality-levels',
@@ -543,6 +698,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'Boundaries: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/lookups/boundaries/confidentialitylevels'),
   },
   {
     id: 'lookup boundary integrity-levels',
@@ -551,6 +707,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'Boundaries: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/lookups/boundaries/integritylevels'),
   },
   {
     id: 'lookup boundary availability-levels',
@@ -559,6 +716,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'Boundaries: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/lookups/boundaries/availabilitylevels'),
   },
   {
     id: 'lookup data-type confidentiality-levels',
@@ -567,6 +725,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'DataTypes: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/lookups/datatypes/confidentialitylevels'),
   },
   {
     id: 'lookup data-type integrity-levels',
@@ -575,6 +734,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'DataTypes: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/lookups/datatypes/integritylevels'),
   },
   {
     id: 'lookup data-type availability-levels',
@@ -583,6 +743,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'DataTypes: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/lookups/datatypes/availabilitylevels'),
   },
   {
     id: 'lookup facility types',
@@ -591,6 +752,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'Locations: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/lookups/facilities/types'),
   },
   {
     id: 'lookup facility states',
@@ -599,6 +761,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'Locations: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/lookups/facilities/states'),
   },
   {
     id: 'lookup facility data-types',
@@ -607,6 +770,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'Locations: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/lookups/facilities/datatypes'),
   },
   {
     id: 'lookup facility asset-categories',
@@ -615,6 +779,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'Locations: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/lookups/facilities/assetcategories'),
   },
   {
     id: 'lookup interconnection types',
@@ -623,6 +788,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'Interconnections: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/lookups/interconnections/types'),
   },
   {
     id: 'lookup interconnection authorization-types',
@@ -631,6 +797,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'Interconnections: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/lookups/interconnections/authorizationtypes'),
   },
   {
     id: 'lookup interconnection asset-categories',
@@ -639,6 +806,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'Interconnections: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/lookups/interconnections/assetcategories'),
   },
   {
     id: 'lookup icl-version list',
@@ -647,6 +815,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'Evaluations: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/lookups/iclversions'),
   },
   {
     id: 'lookup icl-version latest-frameworks',
@@ -655,6 +824,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'Evaluations: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
+    contract: get('/v1/lookups/iclversions/frameworks'),
   },
   {
     id: 'lookup icl-version frameworks',
@@ -663,6 +833,7 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'Evaluations: Read',
     args: [],
     flags: [profileFlag, iclVersionIdFlag, apiOutputFlag],
+    contract: get('/v1/lookups/iclversions/{iclVersionId}/frameworks', [iclVersionIdParameter]),
   },
   {
     id: 'tenant list',
@@ -679,6 +850,7 @@ export const commandSpecs: CommandSpec[] = [
       },
       apiOutputFlag,
     ],
+    contract: get('/v1/Tenants'),
   },
   {
     id: 'version',
@@ -690,15 +862,29 @@ export const commandSpecs: CommandSpec[] = [
   },
 ]
 
+/**
+ * One catalog entry: the public command description without the contract
+ * metadata. The catalog shape is unchanged from catalogVersion 1; the
+ * contract stays an internal fact proved by the contract suite.
+ */
+export type CatalogCommand = Omit<CommandSpec, 'contract'>
+
 export interface Catalog {
   catalogVersion: 1
-  commands: CommandSpec[]
+  commands: CatalogCommand[]
 }
 
 export function buildCatalog(): Catalog {
   return {
     catalogVersion: 1,
-    commands: commandSpecs,
+    commands: commandSpecs.map(({id, summary, kind, permission, args, flags}) => ({
+      id,
+      summary,
+      kind,
+      permission,
+      args,
+      flags,
+    })),
   }
 }
 
@@ -710,6 +896,20 @@ export function commandSpec(id: string): CommandSpec {
   }
 
   return spec
+}
+
+/**
+ * Look up one API command's spec with its operation contract. Throws when
+ * the id is not an API command or carries no contract, so a command file
+ * cannot silently run without a documented path.
+ */
+export function apiCommandSpec(id: string): ApiCommandSpec {
+  const spec = commandSpec(id)
+  if (spec.kind !== 'api' || !spec.contract) {
+    throw new Error(`Command "${id}" has no operation contract in the manifest.`)
+  }
+
+  return spec as ApiCommandSpec
 }
 
 /**

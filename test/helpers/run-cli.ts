@@ -37,6 +37,28 @@ export function fakeKeyringEnv(keyringFile: string): Record<string, string> {
   }
 }
 
+/**
+ * Isolation environment shared by every CLI run in the test suite: HOME
+ * and the XDG (Cross-Desktop Group) base directories — the standard Linux
+ * locations for per-user config, data, and cache — point at the given
+ * directory, and every inherited INTELLIGRC_* variable is removed so
+ * tests opt in explicitly.
+ */
+export function isolatedEnv(home: string): Record<string, string> {
+  const env: Record<string, string> = {}
+  for (const [key, value] of Object.entries(process.env)) {
+    if (value !== undefined && !key.startsWith('INTELLIGRC_')) {
+      env[key] = value
+    }
+  }
+
+  env.HOME = home
+  env.XDG_CONFIG_HOME = join(home, '.config')
+  env.XDG_DATA_HOME = join(home, '.local', 'share')
+  env.XDG_CACHE_HOME = join(home, '.cache')
+  return env
+}
+
 export interface RunCliOptions {
   cwd?: string
   /** Reuse one isolated home across runs. A fresh temp directory otherwise. */
@@ -60,17 +82,7 @@ export interface RunCliOptions {
 export function runCli(args: string[], options: RunCliOptions = {}): Promise<CliResult> {
   const isolatedHome = options.home ?? makeIsolatedHome()
 
-  const env: Record<string, string> = {}
-  for (const [key, value] of Object.entries(process.env)) {
-    if (value !== undefined && !key.startsWith('INTELLIGRC_')) {
-      env[key] = value
-    }
-  }
-
-  env.HOME = isolatedHome
-  env.XDG_CONFIG_HOME = join(isolatedHome, '.config')
-  env.XDG_DATA_HOME = join(isolatedHome, '.local', 'share')
-  env.XDG_CACHE_HOME = join(isolatedHome, '.cache')
+  const env = isolatedEnv(isolatedHome)
   Object.assign(env, options.env)
 
   return new Promise((resolve, reject) => {

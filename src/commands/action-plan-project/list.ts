@@ -2,16 +2,15 @@ import {Command} from '@oclif/core'
 
 import {actionPlanQueryFromFlags} from '../../api/filters.js'
 import {apiGetDescription, runApiGet} from '../../api/run-get.js'
-import {commandSpec, oclifFlags} from '../../manifest.js'
+import {apiCommandSpec, oclifFlags} from '../../manifest.js'
 import {type OutputFormat} from '../../output.js'
 
-const spec = commandSpec('action-plan-project list')
-const PATH = '/v1/ActionPlanProjects'
+const spec = apiCommandSpec('action-plan-project list')
 
 export default class ActionPlanProjectList extends Command {
   static override summary = spec.summary
 
-  static override description = apiGetDescription(spec, PATH)
+  static override description = apiGetDescription(spec)
 
   static override enableJsonFlag = false
 
@@ -22,7 +21,6 @@ export default class ActionPlanProjectList extends Command {
 
     await runApiGet(this, {
       spec,
-      path: PATH,
       profile: flags.profile as string,
       output: flags.output as OutputFormat,
       buildQuery: () => actionPlanQueryFromFlags(flags),

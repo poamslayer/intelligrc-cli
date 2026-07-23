@@ -1,16 +1,15 @@
 import {Command} from '@oclif/core'
 
 import {apiGetDescription, runApiGet} from '../../api/run-get.js'
-import {commandSpec, oclifFlags} from '../../manifest.js'
+import {apiCommandSpec, oclifFlags} from '../../manifest.js'
 import {type OutputFormat} from '../../output.js'
 
-const spec = commandSpec('facility list')
-const PATH = '/v1/Facilities'
+const spec = apiCommandSpec('facility list')
 
 export default class FacilityList extends Command {
   static override summary = spec.summary
 
-  static override description = apiGetDescription(spec, PATH)
+  static override description = apiGetDescription(spec)
 
   static override enableJsonFlag = false
 
@@ -21,7 +20,6 @@ export default class FacilityList extends Command {
 
     await runApiGet(this, {
       spec,
-      path: PATH,
       profile: flags.profile as string,
       output: flags.output as OutputFormat,
       sendTenantHeader: true,

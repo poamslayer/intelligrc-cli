@@ -2,17 +2,15 @@ import {Command} from '@oclif/core'
 
 import {parsePersonnelId} from '../../api/filters.js'
 import {apiGetDescription, runApiGet} from '../../api/run-get.js'
-import {commandSpec, oclifArgs, oclifFlags} from '../../manifest.js'
+import {apiCommandSpec, oclifArgs, oclifFlags} from '../../manifest.js'
 import {type OutputFormat} from '../../output.js'
 
-const spec = commandSpec('personnel get')
-/** Documented path template; the identifier is validated and substituted. */
-const PATH = '/v1/Personnel/{id}'
+const spec = apiCommandSpec('personnel get')
 
 export default class PersonnelGet extends Command {
   static override summary = spec.summary
 
-  static override description = apiGetDescription(spec, PATH)
+  static override description = apiGetDescription(spec)
 
   static override enableJsonFlag = false
 
@@ -25,10 +23,9 @@ export default class PersonnelGet extends Command {
 
     await runApiGet(this, {
       spec,
-      path: PATH,
       profile: flags.profile as string,
       output: flags.output as OutputFormat,
-      buildPath: () => PATH.replace('{id}', parsePersonnelId(args.id as string)),
+      buildPath: () => spec.contract.path.replace('{id}', parsePersonnelId(args.id as string)),
       sendTenantHeader: true,
     })
   }
