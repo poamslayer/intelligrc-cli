@@ -24,6 +24,7 @@ export interface FakeResponse {
 export class FakeApi {
   readonly requests: RecordedRequest[] = []
   private readonly queue: FakeResponse[] = []
+  private responder?: (request: RecordedRequest) => FakeResponse
   private server!: Server
   private baseUrl!: string
 
@@ -33,6 +34,14 @@ export class FakeApi {
 
   enqueue(response: FakeResponse): void {
     this.queue.push(response)
+  }
+
+  /**
+   * Fallback responder consulted when the queue is empty, before the 599
+   * marker. Lets a test serve many paths without a strict response order.
+   */
+  respondWith(responder: (request: RecordedRequest) => FakeResponse): void {
+    this.responder = responder
   }
 
   /** Enqueue one 200 tenant-list response. */
@@ -48,10 +57,12 @@ export class FakeApi {
         headers: {...req.headers},
       })
 
-      const next = this.queue.shift() ?? {
-        status: 599,
-        body: {error: 'fake-api-empty-queue'},
-      }
+      const request = this.requests.at(-1)!
+      const next = this.queue.shift() ??
+        this.responder?.(request) ?? {
+          status: 599,
+          body: {error: 'fake-api-empty-queue'},
+        }
       const send = () => {
         // The client may have aborted (timeout tests); a write to the
         // closed socket must not crash the fake server.
