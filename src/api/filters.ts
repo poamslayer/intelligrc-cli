@@ -89,6 +89,14 @@ export function parseDataTypeId(raw: string): string {
 }
 
 /**
+ * Validate one facility identifier argument as a documented int32
+ * integer and return its canonical form, so "007" is sent as "7".
+ */
+export function parseFacilityId(raw: string): string {
+  return parseInt32Id(raw, 'invalid-facility-id', 'facility', 'id path parameter')
+}
+
+/**
  * Shared int32 validation, the integer counterpart of parseUuid. Every
  * documented integer identifier fails the same way: exit 2 with a stable
  * code, before any keyring or network access.
