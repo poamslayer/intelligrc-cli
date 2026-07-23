@@ -31,6 +31,9 @@ function run(args: string[]): ReturnType<typeof runCli> {
   return runCli(args, {home: ctx.home, env: ctx.env})
 }
 
+/** Sample identifier the mapping and help tests share for data-type get. */
+const SAMPLE_DATA_TYPE_ID = '42'
+
 /**
  * The 11 documented mappings with their documented permissions. Each
  * command sends one GET request to the exact case-sensitive path with no
@@ -64,7 +67,7 @@ const MAPPINGS: Array<[string[], string, string]> = [
     '/v1/lookups/boundaries/availabilitylevels',
     'Boundaries: Read',
   ],
-  [['data-type', 'get', '42'], '/v1/DataTypes/42', 'DataTypes: Read'],
+  [['data-type', 'get', SAMPLE_DATA_TYPE_ID], '/v1/DataTypes/42', 'DataTypes: Read'],
   [['data-type', 'list'], '/v1/DataTypes', 'DataTypes: Read'],
   [
     ['lookup', 'data-type', 'confidentiality-levels'],
@@ -105,12 +108,15 @@ for (const [argv, path] of MAPPINGS) {
   })
 }
 
-test('data-type get sends the identifier in canonical integer form', async () => {
-  api.enqueue({status: 200, body: {id: 7, name: 'CUI'}})
+test('data-type get sends the identifier in canonical integer form and preserves the object body', async () => {
+  const body = {id: 7, name: 'CUI'}
+  api.enqueue({status: 200, body})
 
   const result = await run(['data-type', 'get', '007', '--profile', 'main'])
 
   assert.equal(result.code, 0, result.stderr)
+  assert.equal(result.stderr, '')
+  assert.equal(result.stdout, `${JSON.stringify(body, null, 2)}\n`)
   assert.equal(api.requests.at(-1)!.path, '/v1/DataTypes/7')
 })
 
@@ -118,6 +124,17 @@ test('a non-integer data-type identifier exits 2 before any network access', asy
   const requestsBefore = api.requests.length
 
   const result = await run(['data-type', 'get', 'seven', '--profile', 'main'])
+
+  assert.equal(result.code, 2)
+  assert.equal(result.stdout, '')
+  assert.equal(JSON.parse(result.stderr).error.code, 'invalid-data-type-id')
+  assert.equal(api.requests.length, requestsBefore)
+})
+
+test('a data-type identifier beyond the documented int32 range exits 2 before any network access', async () => {
+  const requestsBefore = api.requests.length
+
+  const result = await run(['data-type', 'get', '2147483648', '--profile', 'main'])
 
   assert.equal(result.code, 2)
   assert.equal(result.stdout, '')
@@ -197,7 +214,7 @@ test('a 403 on a data-type command names the documented DataTypes permission', a
 test('help output shows the documented permission for every issue #8 command', async () => {
   for (const [argv, , permission] of MAPPINGS) {
     // Drop the positional identifier so the help invocation stays uniform.
-    const commandWords = argv.filter((word) => word !== '42')
+    const commandWords = argv.filter((word) => word !== SAMPLE_DATA_TYPE_ID)
     const help = await run([...commandWords, '--help'])
     assert.equal(help.code, 0, help.stderr)
     // Help text wraps lines, so allow a line break inside the permission.
