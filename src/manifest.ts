@@ -88,6 +88,28 @@ const frameworkIdFlag: FlagSpec = {
     'query parameter. Omitted from the request when not given.',
 }
 
+const includeTasksFlag: FlagSpec = {
+  name: 'include-tasks',
+  type: 'option',
+  required: false,
+  allowedValues: ['true', 'false'],
+  summary:
+    'Explicit true or false, sent as the documented includeTasks ' +
+    'query parameter. Omitted from the request when not given, so ' +
+    'the server applies its documented default (true).',
+}
+
+const includeSubTasksFlag: FlagSpec = {
+  name: 'include-subtasks',
+  type: 'option',
+  required: false,
+  allowedValues: ['true', 'false'],
+  summary:
+    'Explicit true or false, sent as the documented includeSubTasks ' +
+    'query parameter. Omitted from the request when not given, so ' +
+    'the server applies its documented default (true).',
+}
+
 const assessmentObjectiveIdFlag: FlagSpec = {
   name: 'assessment-objective-id',
   type: 'option',
@@ -285,6 +307,94 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'Evidence: Read',
     args: [],
     flags: [profileFlag, parentIdFlag, apiOutputFlag],
+  },
+  {
+    id: 'action-plan-project list',
+    summary: 'List action-plan projects for an evaluation.',
+    kind: 'api',
+    permission: 'ActionPlan: Read',
+    args: [],
+    flags: [profileFlag, evaluationIdFlag, includeTasksFlag, includeSubTasksFlag, apiOutputFlag],
+  },
+  {
+    id: 'action-plan-task list',
+    summary: 'List action-plan tasks for an evaluation.',
+    kind: 'api',
+    permission: 'ActionPlan: Read',
+    args: [],
+    flags: [profileFlag, evaluationIdFlag, includeSubTasksFlag, apiOutputFlag],
+  },
+  {
+    id: 'action-plan-subtask list',
+    summary: 'List action-plan subtasks for an evaluation.',
+    kind: 'api',
+    permission: 'ActionPlan: Read',
+    args: [],
+    flags: [profileFlag, evaluationIdFlag, apiOutputFlag],
+  },
+  {
+    id: 'lookup action-plan project-statuses',
+    summary: 'List the action-plan project status options.',
+    kind: 'api',
+    permission: 'ActionPlan: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'lookup action-plan task-statuses',
+    summary: 'List the action-plan task status options.',
+    kind: 'api',
+    permission: 'ActionPlan: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'lookup action-plan subtask-statuses',
+    summary: 'List the action-plan subtask status options.',
+    kind: 'api',
+    permission: 'ActionPlan: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'lookup action-plan task-types',
+    summary: 'List the action-plan task type options.',
+    kind: 'api',
+    permission: 'ActionPlan: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'lookup action-plan levels-of-effort',
+    summary: 'List the action-plan level of effort options.',
+    kind: 'api',
+    permission: 'ActionPlan: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'lookup action-plan priority-levels',
+    summary: 'List the action-plan priority level options.',
+    kind: 'api',
+    permission: 'ActionPlan: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'lookup action-plan categories',
+    summary: 'List the action-plan category options.',
+    kind: 'api',
+    permission: 'ActionPlan: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'lookup action-plan subcategories',
+    summary: 'List the action-plan subcategory options.',
+    kind: 'api',
+    permission: 'ActionPlan: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
   },
   {
     id: 'lookup assessment-objective statuses',

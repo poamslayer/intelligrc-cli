@@ -3,9 +3,9 @@ import {test} from 'node:test'
 
 import {runCli} from './helpers/run-cli.ts'
 
-// Expected catalog, written out by hand from issues #2, #3, #4, #5, and #6.
-// This literal is the independent source of truth; it must not be derived
-// from src/manifest.ts.
+// Expected catalog, written out by hand from issues #2, #3, #4, #5, #6,
+// and #7. This literal is the independent source of truth; it must not be
+// derived from src/manifest.ts.
 const expectedCatalog = {
   catalogVersion: 1,
   commands: [
@@ -360,6 +360,313 @@ const expectedCatalog = {
             'Parent folder identifier (UUID), sent as the documented parentId ' +
             'query parameter. Omitted from the request when not given, which ' +
             'lists all folders.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'action-plan-project list',
+      summary: 'List action-plan projects for an evaluation.',
+      kind: 'api',
+      permission: 'ActionPlan: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'evaluation-id',
+          type: 'option',
+          required: false,
+          summary:
+            'Integer evaluation identifier, sent as the documented evaluationId ' +
+            'query parameter. Omitted from the request when not given.',
+        },
+        {
+          name: 'include-tasks',
+          type: 'option',
+          required: false,
+          allowedValues: ['true', 'false'],
+          summary:
+            'Explicit true or false, sent as the documented includeTasks ' +
+            'query parameter. Omitted from the request when not given, so ' +
+            'the server applies its documented default (true).',
+        },
+        {
+          name: 'include-subtasks',
+          type: 'option',
+          required: false,
+          allowedValues: ['true', 'false'],
+          summary:
+            'Explicit true or false, sent as the documented includeSubTasks ' +
+            'query parameter. Omitted from the request when not given, so ' +
+            'the server applies its documented default (true).',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'action-plan-task list',
+      summary: 'List action-plan tasks for an evaluation.',
+      kind: 'api',
+      permission: 'ActionPlan: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'evaluation-id',
+          type: 'option',
+          required: false,
+          summary:
+            'Integer evaluation identifier, sent as the documented evaluationId ' +
+            'query parameter. Omitted from the request when not given.',
+        },
+        {
+          name: 'include-subtasks',
+          type: 'option',
+          required: false,
+          allowedValues: ['true', 'false'],
+          summary:
+            'Explicit true or false, sent as the documented includeSubTasks ' +
+            'query parameter. Omitted from the request when not given, so ' +
+            'the server applies its documented default (true).',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'action-plan-subtask list',
+      summary: 'List action-plan subtasks for an evaluation.',
+      kind: 'api',
+      permission: 'ActionPlan: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'evaluation-id',
+          type: 'option',
+          required: false,
+          summary:
+            'Integer evaluation identifier, sent as the documented evaluationId ' +
+            'query parameter. Omitted from the request when not given.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'lookup action-plan project-statuses',
+      summary: 'List the action-plan project status options.',
+      kind: 'api',
+      permission: 'ActionPlan: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'lookup action-plan task-statuses',
+      summary: 'List the action-plan task status options.',
+      kind: 'api',
+      permission: 'ActionPlan: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'lookup action-plan subtask-statuses',
+      summary: 'List the action-plan subtask status options.',
+      kind: 'api',
+      permission: 'ActionPlan: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'lookup action-plan task-types',
+      summary: 'List the action-plan task type options.',
+      kind: 'api',
+      permission: 'ActionPlan: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'lookup action-plan levels-of-effort',
+      summary: 'List the action-plan level of effort options.',
+      kind: 'api',
+      permission: 'ActionPlan: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'lookup action-plan priority-levels',
+      summary: 'List the action-plan priority level options.',
+      kind: 'api',
+      permission: 'ActionPlan: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'lookup action-plan categories',
+      summary: 'List the action-plan category options.',
+      kind: 'api',
+      permission: 'ActionPlan: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'lookup action-plan subcategories',
+      summary: 'List the action-plan subcategory options.',
+      kind: 'api',
+      permission: 'ActionPlan: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
         },
         {
           name: 'output',
