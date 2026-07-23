@@ -2,16 +2,15 @@ import {Command} from '@oclif/core'
 
 import {filterQueryFromFlags} from '../../api/filters.js'
 import {apiGetDescription, runApiGet} from '../../api/run-get.js'
-import {commandSpec, oclifFlags} from '../../manifest.js'
+import {apiCommandSpec, oclifFlags} from '../../manifest.js'
 import {type OutputFormat} from '../../output.js'
 
-const spec = commandSpec('evidence for-evaluation')
-const PATH = '/v1/Evidence/Evaluation'
+const spec = apiCommandSpec('evidence for-evaluation')
 
 export default class EvidenceForEvaluation extends Command {
   static override summary = spec.summary
 
-  static override description = apiGetDescription(spec, PATH)
+  static override description = apiGetDescription(spec)
 
   static override enableJsonFlag = false
 
@@ -22,7 +21,6 @@ export default class EvidenceForEvaluation extends Command {
 
     await runApiGet(this, {
       spec,
-      path: PATH,
       profile: flags.profile as string,
       output: flags.output as OutputFormat,
       buildQuery: () => filterQueryFromFlags(flags),

@@ -9,18 +9,19 @@
 import {type Command} from '@oclif/core'
 
 import {emitFailure} from '../errors.js'
-import {type CommandSpec} from '../manifest.js'
+import {type ApiCommandSpec} from '../manifest.js'
 import {formatOutput, type OutputFormat} from '../output.js'
 import {apiRequest, emitRetryDiagnostic, type QueryPairs} from './client.js'
 import {resolveApiContext} from './resolve.js'
 
 /**
  * Shared help description for one documented GET operation that sends
- * the tenant header and documents a permission.
+ * the tenant header and documents a permission. The path comes from the
+ * spec's operation contract.
  */
-export function apiGetDescription(spec: CommandSpec, path: string): string {
+export function apiGetDescription(spec: ApiCommandSpec): string {
   return (
-    `Sends one documented GET ${path} request with the profile ` +
+    `Sends one documented GET ${spec.contract.path} request with the profile ` +
     'credential and tenant. Documented permission: ' +
     `"${spec.permission}". The CLI does not check whether the selected ` +
     'profile holds that permission. Output preserves the upstream field ' +
@@ -29,9 +30,7 @@ export function apiGetDescription(spec: CommandSpec, path: string): string {
 }
 
 export interface ApiGetOptions {
-  spec: CommandSpec
-  /** Documented path, for example "/v1/Controls". */
-  path: string
+  spec: ApiCommandSpec
   profile: string
   output: OutputFormat
   /**
@@ -42,7 +41,8 @@ export interface ApiGetOptions {
   /**
    * Builds the request path when the documented path contains a path
    * parameter. Runs before profile resolution under the same guarantee
-   * as buildQuery. When absent, the request uses `path` unchanged.
+   * as buildQuery. When absent, the request uses the documented contract
+   * path unchanged.
    */
   buildPath?: () => string
   /**
@@ -56,7 +56,7 @@ export async function runApiGet(command: Command, options: ApiGetOptions): Promi
   let redactionValues: string[] = []
   try {
     const query = options.buildQuery?.() ?? []
-    const path = options.buildPath?.() ?? options.path
+    const path = options.buildPath?.() ?? options.spec.contract.path
 
     const context = resolveApiContext(
       options.profile,

@@ -3,16 +3,15 @@ import {Command} from '@oclif/core'
 import {type QueryPairs} from '../../api/client.js'
 import {parseParentId} from '../../api/filters.js'
 import {apiGetDescription, runApiGet} from '../../api/run-get.js'
-import {commandSpec, oclifFlags} from '../../manifest.js'
+import {apiCommandSpec, oclifFlags} from '../../manifest.js'
 import {type OutputFormat} from '../../output.js'
 
-const spec = commandSpec('evidence-folder list')
-const PATH = '/v1/Evidence/Folders'
+const spec = apiCommandSpec('evidence-folder list')
 
 export default class EvidenceFolderList extends Command {
   static override summary = spec.summary
 
-  static override description = apiGetDescription(spec, PATH)
+  static override description = apiGetDescription(spec)
 
   static override enableJsonFlag = false
 
@@ -23,7 +22,6 @@ export default class EvidenceFolderList extends Command {
 
     await runApiGet(this, {
       spec,
-      path: PATH,
       profile: flags.profile as string,
       output: flags.output as OutputFormat,
       buildQuery: (): QueryPairs => {
