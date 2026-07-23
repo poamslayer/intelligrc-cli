@@ -4,8 +4,8 @@ import {test} from 'node:test'
 import {runCli} from './helpers/run-cli.ts'
 
 // Expected catalog, written out by hand from issues #2, #3, #4, #5, #6,
-// and #7. This literal is the independent source of truth; it must not be
-// derived from src/manifest.ts.
+// #7, and #8. This literal is the independent source of truth; it must
+// not be derived from src/manifest.ts.
 const expectedCatalog = {
   catalogVersion: 1,
   commands: [
@@ -495,6 +495,82 @@ const expectedCatalog = {
       ],
     },
     {
+      id: 'boundary list',
+      summary: 'List the boundaries (systems) for the profile tenant.',
+      kind: 'api',
+      permission: 'Boundaries: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'data-type get',
+      summary: 'Show one data type by its integer identifier.',
+      kind: 'api',
+      permission: 'DataTypes: Read',
+      args: [
+        {
+          name: 'id',
+          type: 'integer',
+          required: true,
+          summary: 'Integer data type identifier, substituted into the documented request path.',
+        },
+      ],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'data-type list',
+      summary: 'List the data types for the profile tenant.',
+      kind: 'api',
+      permission: 'DataTypes: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
       id: 'lookup action-plan project-statuses',
       summary: 'List the action-plan project status options.',
       kind: 'api',
@@ -683,6 +759,190 @@ const expectedCatalog = {
       summary: 'List the assessment objective status options.',
       kind: 'api',
       permission: 'GapAnalysis: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'lookup boundary operational-statuses',
+      summary: 'List the boundary operational status options.',
+      kind: 'api',
+      permission: 'Boundaries: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'lookup boundary information-system-types',
+      summary: 'List the boundary information system type options.',
+      kind: 'api',
+      permission: 'Boundaries: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'lookup boundary confidentiality-levels',
+      summary: 'List the boundary confidentiality level options.',
+      kind: 'api',
+      permission: 'Boundaries: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'lookup boundary integrity-levels',
+      summary: 'List the boundary integrity level options.',
+      kind: 'api',
+      permission: 'Boundaries: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'lookup boundary availability-levels',
+      summary: 'List the boundary availability level options.',
+      kind: 'api',
+      permission: 'Boundaries: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'lookup data-type confidentiality-levels',
+      summary: 'List the data-type confidentiality level options.',
+      kind: 'api',
+      permission: 'DataTypes: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'lookup data-type integrity-levels',
+      summary: 'List the data-type integrity level options.',
+      kind: 'api',
+      permission: 'DataTypes: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'lookup data-type availability-levels',
+      summary: 'List the data-type availability level options.',
+      kind: 'api',
+      permission: 'DataTypes: Read',
       args: [],
       flags: [
         {

@@ -77,13 +77,30 @@ export function actionPlanQueryFromFlags(flags: Record<string, unknown>): QueryP
  * return its canonical form, so "007" is sent as "7".
  */
 export function parseEvaluationId(raw: string): string {
+  return parseInt32Id(raw, 'invalid-evaluation-id', 'evaluation', 'evaluationId parameter')
+}
+
+/**
+ * Validate one data-type identifier argument as a documented int32
+ * integer and return its canonical form, so "007" is sent as "7".
+ */
+export function parseDataTypeId(raw: string): string {
+  return parseInt32Id(raw, 'invalid-data-type-id', 'data type', 'id path parameter')
+}
+
+/**
+ * Shared int32 validation, the integer counterpart of parseUuid. Every
+ * documented integer identifier fails the same way: exit 2 with a stable
+ * code, before any keyring or network access.
+ */
+function parseInt32Id(raw: string, code: string, label: string, documentedName: string): string {
   const numeric = Number(raw)
   if (!INTEGER_PATTERN.test(raw) || numeric < INT32_MIN || numeric > INT32_MAX) {
     throw new CliFailure({
-      code: 'invalid-evaluation-id',
+      code,
       message:
-        `The value "${raw}" is not a valid evaluation identifier. ` +
-        'The documented evaluationId parameter is an integer.',
+        `The value "${raw}" is not a valid ${label} identifier. ` +
+        `The documented ${documentedName} is an integer.`,
       exitCode: EXIT.invalidInput,
     })
   }
