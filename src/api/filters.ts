@@ -44,6 +44,35 @@ export function buildFilterQuery(
 }
 
 /**
+ * Build the query pairs for the action-plan listing commands from the
+ * shared --evaluation-id flag and the explicit Boolean inclusion flags.
+ * The pairs follow the documented parameter order: evaluationId,
+ * includeTasks, includeSubTasks. An omitted flag contributes nothing, so
+ * the server applies its documented Boolean default. The Boolean values
+ * arrive already constrained to "true" or "false" by the flag's allowed
+ * values, so they pass through under the documented camelCase names.
+ */
+export function actionPlanQueryFromFlags(flags: Record<string, unknown>): QueryPairs {
+  const query: QueryPairs = []
+  const evaluationId = flags['evaluation-id'] as string | undefined
+  if (evaluationId !== undefined) {
+    query.push(['evaluationId', parseEvaluationId(evaluationId)])
+  }
+
+  const includeTasks = flags['include-tasks'] as string | undefined
+  if (includeTasks !== undefined) {
+    query.push(['includeTasks', includeTasks])
+  }
+
+  const includeSubTasks = flags['include-subtasks'] as string | undefined
+  if (includeSubTasks !== undefined) {
+    query.push(['includeSubTasks', includeSubTasks])
+  }
+
+  return query
+}
+
+/**
  * Validate one --evaluation-id value as a documented int32 integer and
  * return its canonical form, so "007" is sent as "7".
  */
