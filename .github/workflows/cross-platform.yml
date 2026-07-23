@@ -79,8 +79,12 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y gnome-keyring
+          # --login creates and unlocks the login keyring (the default
+          # Secret Service collection) from stdin; --start then starts the
+          # secrets component inside the same D-Bus session.
           dbus-run-session -- bash -c '
-            echo -n "" | gnome-keyring-daemon --unlock --components=secrets
+            eval "$(echo -n "" | gnome-keyring-daemon --login)"
+            eval "$(gnome-keyring-daemon --components=secrets --start)"
             npm run check:native-store -- "$INTELLIGRC_INSTALLED_BIN"
           '
 
