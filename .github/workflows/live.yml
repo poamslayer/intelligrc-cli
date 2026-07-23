@@ -1,0 +1,84 @@
+# Live validation against the dedicated populated IntelliGRC test tenant
+# (issue #13).
+#
+# Start conditions a human controls:
+# - Only workflow_dispatch starts this workflow, from a chosen branch.
+#   Pull-request code cannot trigger it.
+# - Every job runs in the "live" environment. The repository owner
+#   creates that environment, adds required reviewers to it, and stores
+#   the two secrets there, so a human review gates each run and
+#   unreviewed code never reaches the credential.
+#
+# Operator prerequisites, before the first run:
+# 1. Create a GitHub environment named "live" with required reviewers.
+# 2. Store these environment secrets:
+#    - INTELLIGRC_LIVE_CLIENT_ID: the dedicated credential's client ID.
+#    - INTELLIGRC_LIVE_CLIENT_SECRET: its client secret.
+#    The credential belongs to the populated test tenant, holds every
+#    available read permission, and holds no write permission.
+# 3. Optional variable INTELLIGRC_LIVE_BASE_URL to override the default
+#    base URL assumption (https://api.intelligrc.app).
+#
+# Safety properties, enforced by test/live/live-suite.ts:
+# - Every request is a documented GET; the suite sends no write request.
+# - The uploaded report holds statuses and response-shape metadata only:
+#   no client ID, client secret, tenant identifier, live response value,
+#   or copied tenant data. The runner fails instead of writing a report
+#   that contains one of those values.
+# - A missing source record becomes an explicit skip with a non-secret
+#   reason, never a silent pass.
+name: live
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-suite:
+    runs-on: ubuntu-latest
+    environment: live
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm ci
+
+      # The suite invokes the packed CLI, installed as a consumer would.
+      - name: Pack and install the artifact
+        run: |
+          npm pack --pack-destination "${{ runner.temp }}"
+          PREFIX="${{ runner.temp }}/consumer-prefix"
+          npm install --global --prefix "$PREFIX" "${{ runner.temp }}"/intelligrc-cli-*.tgz
+          echo "INTELLIGRC_INSTALLED_BIN=$PREFIX/bin/intelligrc" >> "$GITHUB_ENV"
+
+      # The upstream keyring-node recipe: the CLI stores the live secret
+      # in a real Secret Service keyring for the duration of the run.
+      - name: Run the live suite
+        env:
+          INTELLIGRC_LIVE_CLIENT_ID: ${{ secrets.INTELLIGRC_LIVE_CLIENT_ID }}
+          INTELLIGRC_LIVE_CLIENT_SECRET: ${{ secrets.INTELLIGRC_LIVE_CLIENT_SECRET }}
+          INTELLIGRC_LIVE_BASE_URL: ${{ vars.INTELLIGRC_LIVE_BASE_URL }}
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gnome-keyring dbus dbus-x11
+          dbus-run-session -- bash -c '
+            rm -f "$HOME/.local/share/keyrings/"*
+            echo -n "ci-throwaway" | gnome-keyring-daemon --unlock
+            npm run check:live -- "$INTELLIGRC_INSTALLED_BIN"
+          '
+
+      # The report contains no credential material, tenant identifier, or
+      # response data; the runner refuses to write it otherwise.
+      - name: Store the live report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-report
+          path: live-report.json
+          if-no-files-found: warn
