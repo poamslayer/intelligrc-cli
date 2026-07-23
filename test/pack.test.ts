@@ -86,7 +86,7 @@ test('a clean checkout builds, packs, installs, and serves the documented surfac
 
   run('npm', ['ci'], cleanRoom)
   const packOutput = run('npm', ['pack', '--pack-destination', workDir], cleanRoom)
-  const tarball = join(workDir, packOutput.trim().split('\n').at(-1)!)
+  const tarball = join(workDir, packOutput.trim().split(/\r?\n/).at(-1)!)
 
   // The tarball must carry the built commands, not just bin/.
   const tarballListing = run('tar', ['-tzf', tarball], workDir)
@@ -99,8 +99,9 @@ test('a clean checkout builds, packs, installs, and serves the documented surfac
   // live responses, tenant data, session data, tests, and the archived
   // OpenAPI document can never ship because any unlisted entry fails
   // here, and a non-JavaScript file under dist/ fails the same way.
+  // Split on \r?\n: Windows bsdtar terminates listing lines with CRLF.
   const allowedEntry = /^package\/(package\.json|README\.md|bin\/[^/]+|dist\/.+\.js)$/
-  for (const entry of tarballListing.trim().split('\n')) {
+  for (const entry of tarballListing.trim().split(/\r?\n/)) {
     assert.match(entry, allowedEntry, `Unexpected file in the package: ${entry}`)
   }
 
