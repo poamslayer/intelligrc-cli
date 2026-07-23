@@ -88,6 +88,34 @@ const frameworkIdFlag: FlagSpec = {
     'query parameter. Omitted from the request when not given.',
 }
 
+const assessmentObjectiveIdFlag: FlagSpec = {
+  name: 'assessment-objective-id',
+  type: 'option',
+  required: true,
+  summary:
+    'Assessment objective identifier (UUID), sent as the documented ' +
+    'assessmentObjectiveId query parameter.',
+}
+
+const parentIdFlag: FlagSpec = {
+  name: 'parent-id',
+  type: 'option',
+  required: false,
+  summary:
+    'Parent folder identifier (UUID), sent as the documented parentId ' +
+    'query parameter. Omitted from the request when not given, which ' +
+    'lists all folders.',
+}
+
+const iclVersionIdFlag: FlagSpec = {
+  name: 'icl-version-id',
+  type: 'option',
+  required: true,
+  summary:
+    'Intelligent Control Library version identifier (UUID), substituted ' +
+    'into the documented request path.',
+}
+
 export const commandSpecs: CommandSpec[] = [
   {
     id: 'auth login',
@@ -203,12 +231,28 @@ export const commandSpecs: CommandSpec[] = [
     flags: [profileFlag, apiOutputFlag],
   },
   {
+    id: 'evaluation list',
+    summary: 'List the evaluations for the profile tenant.',
+    kind: 'api',
+    permission: 'Evaluations: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
     id: 'assessment-objective list',
     summary: 'List assessment objectives and their statuses for an evaluation.',
     kind: 'api',
     permission: 'GapAnalysis: Read',
     args: [],
     flags: [profileFlag, evaluationIdFlag, frameworkIdFlag, apiOutputFlag],
+  },
+  {
+    id: 'assessment-objective history',
+    summary: 'Show the history of one assessment objective and its statuses.',
+    kind: 'api',
+    permission: 'GapAnalysis: Read',
+    args: [],
+    flags: [profileFlag, assessmentObjectiveIdFlag, evaluationIdFlag, apiOutputFlag],
   },
   {
     id: 'control list',
@@ -225,6 +269,54 @@ export const commandSpecs: CommandSpec[] = [
     permission: 'Evidence: Read',
     args: [],
     flags: [profileFlag, evaluationIdFlag, frameworkIdFlag, apiOutputFlag],
+  },
+  {
+    id: 'evidence list',
+    summary: 'List all uploaded evidence for the profile tenant.',
+    kind: 'api',
+    permission: 'Evidence: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'evidence-folder list',
+    summary: 'List evidence folders, optionally under one parent folder.',
+    kind: 'api',
+    permission: 'Evidence: Read',
+    args: [],
+    flags: [profileFlag, parentIdFlag, apiOutputFlag],
+  },
+  {
+    id: 'lookup assessment-objective statuses',
+    summary: 'List the assessment objective status options.',
+    kind: 'api',
+    permission: 'GapAnalysis: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'lookup icl-version list',
+    summary: 'List the published Intelligent Control Library versions.',
+    kind: 'api',
+    permission: 'Evaluations: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'lookup icl-version latest-frameworks',
+    summary: 'List published frameworks for the latest Intelligent Control Library version.',
+    kind: 'api',
+    permission: 'Evaluations: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'lookup icl-version frameworks',
+    summary: 'List published frameworks for one Intelligent Control Library version.',
+    kind: 'api',
+    permission: 'Evaluations: Read',
+    args: [],
+    flags: [profileFlag, iclVersionIdFlag, apiOutputFlag],
   },
   {
     id: 'tenant list',
