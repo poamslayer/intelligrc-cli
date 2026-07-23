@@ -4,8 +4,8 @@ import {test} from 'node:test'
 import {runCli} from './helpers/run-cli.ts'
 
 // Expected catalog, written out by hand from issues #2, #3, #4, #5, #6,
-// #7, #8, and #9. This literal is the independent source of truth; it
-// must not be derived from src/manifest.ts.
+// #7, #8, #9, and #10. This literal is the independent source of truth;
+// it must not be derived from src/manifest.ts.
 const expectedCatalog = {
   catalogVersion: 1,
   commands: [
@@ -654,6 +654,144 @@ const expectedCatalog = {
       ],
     },
     {
+      id: 'interconnection list',
+      summary: 'List the interconnections for the profile tenant.',
+      kind: 'api',
+      permission: 'Interconnections: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'interconnection get',
+      summary: 'Show one interconnection by its integer identifier.',
+      kind: 'api',
+      permission: 'Interconnections: Read',
+      args: [
+        {
+          name: 'id',
+          type: 'integer',
+          required: true,
+          summary:
+            'Integer interconnection identifier, substituted into the documented request path.',
+        },
+      ],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'interconnection data-types',
+      summary: 'List the data types associated with one interconnection.',
+      kind: 'api',
+      permission: 'Interconnections: Read',
+      args: [
+        {
+          name: 'id',
+          type: 'integer',
+          required: true,
+          summary:
+            'Integer interconnection identifier, substituted into the documented request path.',
+        },
+      ],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'personnel list',
+      summary: 'List the personnel for the profile tenant.',
+      kind: 'api',
+      permission: 'Personnel: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'personnel get',
+      summary: 'Show one person by their integer identifier.',
+      kind: 'api',
+      permission: 'Personnel: Read',
+      args: [
+        {
+          name: 'id',
+          type: 'integer',
+          required: true,
+          summary: 'Integer personnel identifier, substituted into the documented request path.',
+        },
+      ],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
       id: 'lookup action-plan project-statuses',
       summary: 'List the action-plan project status options.',
       kind: 'api',
@@ -1118,6 +1256,76 @@ const expectedCatalog = {
       summary: 'List the asset category options that can be associated with a facility.',
       kind: 'api',
       permission: 'Locations: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'lookup interconnection types',
+      summary: 'List the interconnection type options, each with its sub-types.',
+      kind: 'api',
+      permission: 'Interconnections: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'lookup interconnection authorization-types',
+      summary: 'List the authorization type options for interconnections.',
+      kind: 'api',
+      permission: 'Interconnections: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'lookup interconnection asset-categories',
+      summary:
+        'List the asset category options that can be associated with an interconnection.',
+      kind: 'api',
+      permission: 'Interconnections: Read',
       args: [],
       flags: [
         {
