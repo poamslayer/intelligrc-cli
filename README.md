@@ -1,8 +1,11 @@
 # intelligrc-cli
 
-A read-only command-line interface (CLI) for the IntelliGRC API. The CLI maps every one
-of the 50 documented `GET` operations to one stable command. It never sends a `POST`,
-`PUT`, or `DELETE` request, so it cannot change tenant data.
+A command-line interface (CLI) for the IntelliGRC API. The CLI maps every one of the 50
+documented `GET` read operations to one stable command. It has also begun to write data:
+`data-type create`, `data-type update`, and `data-type delete` send the documented
+`POST /v1/DataTypes`, `PUT /v1/DataTypes/{id}`, and `DELETE /v1/DataTypes/{id}` requests.
+The remaining documented write operations are being added incrementally, each repeating
+the data-type pattern.
 
 The CLI serves an IntelliGRC administrator or security engineer who supervises an AI
 agent on the same workstation. The agent discovers commands through the offline catalog
@@ -75,6 +78,36 @@ intelligrc version
    intelligrc commands
    ```
 
+## Writing data types
+
+The CLI can create, update, and delete data types. Each write command requires
+`--profile` and prints the record the API returned.
+
+```sh
+# Create a data type. The three level identifiers come from the matching
+# `lookup data-type ...` command. The command prints the created record.
+intelligrc data-type create --profile prod --name "Controlled Unclassified Information" \
+  --confidentiality-id 3 --integrity-id 2 --availability-id 1
+
+# Update a data type by its integer identifier. The command prints the updated record.
+intelligrc data-type update 42 --profile prod --name "CUI" \
+  --confidentiality-id 3 --integrity-id 2 --availability-id 1
+
+# Delete a data type by its integer identifier. The command pauses for a
+# confirmation that defaults to "no"; add --yes to delete without pausing.
+intelligrc data-type delete 42 --profile prod
+```
+
+Three safety rules protect a write:
+
+- A `create` is never retried after a network failure it cannot confirm. Instead it stops
+  and reports that you should check IntelliGRC before running it again, so a broken
+  connection never produces a duplicate record.
+- An `update` and a `delete` retry after a temporary failure, because repeating them lands
+  on the same result.
+- A `delete` pauses and asks for confirmation. A bare Enter declines. When no terminal is
+  attached and `--yes` is absent, the command declines rather than deleting.
+
 ## Output and exit codes
 
 `--output json` is the default. `--output jsonl` prints one array element per line.
@@ -102,7 +135,8 @@ in the source repository):
 
 - The archived OpenAPI document defines exactly 50 `GET` operations, and the CLI maps
   each one to one command. An automated contract suite compares every path, parameter,
-  and documented permission against the archived OpenAPI document on every test run.
+  documented permission, and write request-body field against the archived OpenAPI
+  document on every test run.
 - Tenant-scoped operations document the `x-client-id`, `x-client-secret`, and
   `x-tenant-id` headers. The tenant-list operation documents no `x-tenant-id` header.
 - The archived OpenAPI document defines no pagination, rate-limit, or complete error

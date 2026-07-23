@@ -15,6 +15,12 @@ const INT32_MAX = 2_147_483_647
 const INTEGER_PATTERN = /^-?\d+$/
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
+/** True when the value is a well-formed integer inside the documented int32 range. */
+function isInt32(raw: string): boolean {
+  const numeric = Number(raw)
+  return INTEGER_PATTERN.test(raw) && numeric >= INT32_MIN && numeric <= INT32_MAX
+}
+
 /**
  * Build the query pairs from the shared --evaluation-id and --framework-id
  * flags. An omitted flag contributes nothing, so it never appears in the
@@ -113,13 +119,70 @@ export function parsePersonnelId(raw: string): string {
 }
 
 /**
+ * The validated body of a data-type create or update request. The two
+ * documented data transfer objects (DTOs) share this shape. The three level
+ * identifiers are JSON numbers, so they serialize as documented int32
+ * integers rather than strings. `description` is present only when the user
+ * supplied it, so an omitted description leaves the field out and the server
+ * applies its documented default.
+ */
+export interface DataTypeBody {
+  name: string
+  description?: string
+  confidentialityId: number
+  integrityId: number
+  availabilityId: number
+}
+
+/**
+ * Build the validated data-type body from the write command's flags. Runs
+ * before profile resolution, so a non-integer level identifier exits 2 with
+ * a stable code and zero keyring or network access. The CLI does not check
+ * the level identifiers against the lookup catalogs — the IntelliGRC API is
+ * the authority that accepts or rejects them.
+ */
+export function buildDataTypeBody(flags: Record<string, unknown>): DataTypeBody {
+  const body: DataTypeBody = {
+    name: flags.name as string,
+    confidentialityId: parseLevelId(flags['confidentiality-id'] as string, 'confidentiality-id'),
+    integrityId: parseLevelId(flags['integrity-id'] as string, 'integrity-id'),
+    availabilityId: parseLevelId(flags['availability-id'] as string, 'availability-id'),
+  }
+
+  const description = flags.description as string | undefined
+  if (description !== undefined) {
+    body.description = description
+  }
+
+  return body
+}
+
+/**
+ * Validate one data-type level flag as a documented int32 integer and return
+ * its numeric value. The flag name appears in the stable error code and the
+ * message so the user learns exactly which level was wrong.
+ */
+function parseLevelId(raw: string, flagName: string): number {
+  if (!isInt32(raw)) {
+    throw new CliFailure({
+      code: `invalid-${flagName}`,
+      message:
+        `The value "${raw}" for --${flagName} is not a valid level ` +
+        'identifier. The documented field is an integer.',
+      exitCode: EXIT.invalidInput,
+    })
+  }
+
+  return Number(raw)
+}
+
+/**
  * Shared int32 validation, the integer counterpart of parseUuid. Every
  * documented integer identifier fails the same way: exit 2 with a stable
  * code, before any keyring or network access.
  */
 function parseInt32Id(raw: string, code: string, label: string, documentedName: string): string {
-  const numeric = Number(raw)
-  if (!INTEGER_PATTERN.test(raw) || numeric < INT32_MIN || numeric > INT32_MAX) {
+  if (!isInt32(raw)) {
     throw new CliFailure({
       code,
       message:
@@ -129,7 +192,7 @@ function parseInt32Id(raw: string, code: string, label: string, documentedName: 
     })
   }
 
-  return String(numeric)
+  return String(Number(raw))
 }
 
 /** Validate one --framework-id value as a universally unique identifier. */

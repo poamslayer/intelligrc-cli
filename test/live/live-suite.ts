@@ -296,7 +296,16 @@ async function main(): Promise<void> {
     }
 
     const catalog = JSON.parse(catalogResult.stdout) as Catalog
-    const apiCommands = catalog.commands.filter((command) => command.kind === 'api')
+    // The live suite is read-only by design: it must never send a write
+    // request to the live tenant. Coverage is therefore scoped to read
+    // commands. A write command carries a ": Write" permission, so it is
+    // excluded here and never turned into a case. Read commands carry a
+    // ": Read" permission, and the tenant-list command carries none.
+    const apiCommands = catalog.commands.filter(
+      (command) =>
+        command.kind === 'api' &&
+        (command.permission === null || !command.permission.endsWith(': Write')),
+    )
     report.coverage.apiCommands = apiCommands.length
 
     const seeds: Seeds = {

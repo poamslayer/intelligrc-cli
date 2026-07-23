@@ -4,6 +4,13 @@ export interface RecordedRequest {
   method: string
   path: string
   headers: Record<string, string | string[] | undefined>
+  /** Raw request body bytes as UTF-8 text. Empty string when no body was sent. */
+  rawBody: string
+  /**
+   * The raw body parsed as JSON, or undefined when the body is empty or is
+   * not valid JSON. Write-command tests assert on this parsed shape.
+   */
+  body?: unknown
 }
 
 export interface FakeResponse {
@@ -51,10 +58,33 @@ export class FakeApi {
 
   async start(): Promise<void> {
     this.server = createServer((req, res) => {
+      // Buffer the whole request body before recording, so a write test can
+      // assert on the exact bytes and their parsed JSON shape.
+      const chunks: Buffer[] = []
+      req.on('data', (chunk: Buffer) => {
+        chunks.push(chunk)
+      })
+      req.on('end', () => {
+        handle()
+      })
+
+      const handle = () => {
+      const rawBody = Buffer.concat(chunks).toString('utf8')
+      let parsedBody: unknown
+      if (rawBody !== '') {
+        try {
+          parsedBody = JSON.parse(rawBody)
+        } catch {
+          parsedBody = undefined
+        }
+      }
+
       this.requests.push({
         method: req.method ?? '',
         path: req.url ?? '',
         headers: {...req.headers},
+        rawBody,
+        body: parsedBody,
       })
 
       const request = this.requests.at(-1)!
@@ -81,6 +111,7 @@ export class FakeApi {
         setTimeout(send, next.delayMs).unref()
       } else {
         send()
+      }
       }
     })
 

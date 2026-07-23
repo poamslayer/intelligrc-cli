@@ -1,11 +1,11 @@
 ---
 name: intelligrc-cli
-description: Query IntelliGRC governance, risk, and compliance data (evaluations, assessment objectives, controls, evidence, action plans, boundaries, facilities, personnel, interconnections, data types, lookups) from the command line using the intelligrc CLI. Use whenever the user asks to pull, check, list, count, or export anything from IntelliGRC, mentions `intelligrc`, or needs GRC or compliance data from their IntelliGRC tenant — even if they do not name the CLI. The CLI is strictly read-only. Skip for any request to create, update, or delete IntelliGRC data (the CLI has no write commands), and skip for conceptual questions about the IntelliGRC web app.
+description: Query and edit IntelliGRC governance, risk, and compliance data (evaluations, assessment objectives, controls, evidence, action plans, boundaries, facilities, personnel, interconnections, data types, lookups) from the command line using the intelligrc CLI. Use whenever the user asks to pull, check, list, count, or export anything from IntelliGRC, or to create, update, or delete a data type, mentions `intelligrc`, or needs GRC or compliance data from their IntelliGRC tenant — even if they do not name the CLI. The CLI reads every documented GET operation and writes data types (`data-type create`, `data-type update`, `data-type delete`); other resources remain read-only for now. Skip for a create, update, or delete of any resource other than data types, and skip for conceptual questions about the IntelliGRC web app.
 ---
 
 # IntelliGRC CLI
 
-Use the `intelligrc` CLI to read data from the IntelliGRC API. The CLI maps every documented GET operation to one command and never writes: it sends no POST, PUT, or DELETE requests, so it cannot change tenant data.
+Use the `intelligrc` CLI to read and edit data in the IntelliGRC API. The CLI maps every documented GET operation to one read command. It also writes data types: `data-type create`, `data-type update`, and `data-type delete` send the documented POST, PUT, and DELETE requests for `/v1/DataTypes`. Every other resource is still read-only; write commands for the remaining resources are being added incrementally.
 
 ## Command reference
 

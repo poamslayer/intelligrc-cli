@@ -571,6 +571,177 @@ const expectedCatalog = {
       ],
     },
     {
+      id: 'data-type create',
+      summary: 'Create one data type for the profile tenant.',
+      kind: 'api',
+      permission: 'DataTypes: Write',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'name',
+          type: 'option',
+          required: true,
+          summary: 'Data type name, sent as the required "name" body field.',
+        },
+        {
+          name: 'description',
+          type: 'option',
+          required: false,
+          summary:
+            'Optional data type description, sent as the "description" body field. ' +
+            'Omitted from the body when not given.',
+        },
+        {
+          name: 'confidentiality-id',
+          type: 'option',
+          required: true,
+          summary:
+            'Integer confidentiality level identifier from ' +
+            '`lookup data-type confidentiality-levels`, sent as the required ' +
+            '"confidentialityId" body field.',
+        },
+        {
+          name: 'integrity-id',
+          type: 'option',
+          required: true,
+          summary:
+            'Integer integrity level identifier from ' +
+            '`lookup data-type integrity-levels`, sent as the required ' +
+            '"integrityId" body field.',
+        },
+        {
+          name: 'availability-id',
+          type: 'option',
+          required: true,
+          summary:
+            'Integer availability level identifier from ' +
+            '`lookup data-type availability-levels`, sent as the required ' +
+            '"availabilityId" body field.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'data-type update',
+      summary: 'Update one data type by its integer identifier.',
+      kind: 'api',
+      permission: 'DataTypes: Write',
+      args: [
+        {
+          name: 'id',
+          type: 'integer',
+          required: true,
+          summary: 'Integer data type identifier, substituted into the documented request path.',
+        },
+      ],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'name',
+          type: 'option',
+          required: true,
+          summary: 'Data type name, sent as the required "name" body field.',
+        },
+        {
+          name: 'description',
+          type: 'option',
+          required: false,
+          summary:
+            'Optional data type description, sent as the "description" body field. ' +
+            'Omitted from the body when not given.',
+        },
+        {
+          name: 'confidentiality-id',
+          type: 'option',
+          required: true,
+          summary:
+            'Integer confidentiality level identifier from ' +
+            '`lookup data-type confidentiality-levels`, sent as the required ' +
+            '"confidentialityId" body field.',
+        },
+        {
+          name: 'integrity-id',
+          type: 'option',
+          required: true,
+          summary:
+            'Integer integrity level identifier from ' +
+            '`lookup data-type integrity-levels`, sent as the required ' +
+            '"integrityId" body field.',
+        },
+        {
+          name: 'availability-id',
+          type: 'option',
+          required: true,
+          summary:
+            'Integer availability level identifier from ' +
+            '`lookup data-type availability-levels`, sent as the required ' +
+            '"availabilityId" body field.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'data-type delete',
+      summary: 'Delete one data type by its integer identifier, after a confirmation pause.',
+      kind: 'api',
+      permission: 'DataTypes: Write',
+      args: [
+        {
+          name: 'id',
+          type: 'integer',
+          required: true,
+          summary: 'Integer data type identifier, substituted into the documented request path.',
+        },
+      ],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'yes',
+          type: 'boolean',
+          required: false,
+          summary: 'Skip the delete confirmation prompt and delete without pausing.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
       id: 'facility list',
       summary: 'List the facilities for the profile tenant.',
       kind: 'api',

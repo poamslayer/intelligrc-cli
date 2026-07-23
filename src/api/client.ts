@@ -1,9 +1,16 @@
 /**
  * Guarded HTTP transport for every API command. One call sends one
- * documented GET request and enforces the issue #1 contracts: credential
- * headers, per-attempt timeout, bounded retries, Retry-After delays,
- * same-host-only redirects, mandatory certificate validation (no bypass
- * option exists), upstream-error preservation, and exit-code mapping.
+ * documented request — a GET read or a POST, PUT, or DELETE write — and
+ * enforces the issue #1 contracts: credential headers, per-attempt timeout,
+ * bounded retries, Retry-After delays, same-host-only redirects, mandatory
+ * certificate validation (no bypass option exists), upstream-error
+ * preservation, and exit-code mapping.
+ *
+ * Retry eligibility is verb-aware. A POST (create) is never retried, because
+ * a network failure it cannot confirm could otherwise produce a duplicate
+ * record; on such a failure it reports the check-IntelliGRC message. A GET,
+ * PUT, or DELETE retries on the existing transient categories, because
+ * repeating it lands on the same result.
  *
  * The transport is independent of oclif so fake-server and live tests
  * exercise the same request policy.
@@ -23,15 +30,28 @@ const MAX_REDIRECT_HOPS = 5
 /** Query parameters under their documented names, in send order. */
 export type QueryPairs = Array<[name: string, value: string]>
 
+/** The documented HTTP methods the transport can send. */
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE'
+
 export interface ApiRequestOptions {
   baseUrl: string
   /** Documented path, for example "/v1/Tenants". */
   path: string
   /**
+   * Documented HTTP method. Defaults to GET so existing read callers need
+   * no change. POST is the only method the transport never retries.
+   */
+  method?: HttpMethod
+  /**
    * Query parameters under their documented names. An omitted parameter
    * is absent from this list, so it never appears in the query string.
    */
   query?: QueryPairs
+  /**
+   * Optional JSON request body. When present, the transport serializes it
+   * and sends "Content-Type: application/json". A DELETE carries no body.
+   */
+  body?: unknown
   clientId: string
   clientSecret: string
   /** Omitted for the tenant-list operation, which documents no tenant header. */
@@ -45,6 +65,7 @@ export interface ApiRequestOptions {
 
 export interface ApiSuccess {
   httpStatus: number
+  /** The parsed JSON response body, or undefined for a 204 No Content reply. */
   body: unknown
   attempts: number
 }
@@ -84,7 +105,7 @@ function isCertificateError(error: unknown): boolean {
   return typeof cause?.code === 'string' && CERTIFICATE_ERROR_CODES.has(cause.code)
 }
 
-function networkFailure(error: unknown, attempts: number): CliFailure {
+function networkFailure(error: unknown, attempts: number, method: HttpMethod): CliFailure {
   const timedOut = error instanceof Error && error.name === 'TimeoutError'
   const detail =
     error instanceof Error
@@ -97,6 +118,24 @@ function networkFailure(error: unknown, attempts: number): CliFailure {
       message:
         `Certificate validation failed: ${detail}. The CLI keeps ` +
         'certificate validation enabled and offers no bypass.',
+      exitCode: EXIT.network,
+      retryable: false,
+      attempts,
+    })
+  }
+
+  // A create whose network attempt fails cannot be confirmed: the server may
+  // have created the record before the connection broke. Retrying could
+  // create a duplicate, so the transport stops and tells the user to check
+  // IntelliGRC before running the command again.
+  if (method === 'POST') {
+    return new CliFailure({
+      code: 'create-unconfirmed',
+      message:
+        `The create request could not be confirmed: ${detail}. The CLI did ` +
+        'not retry it, because retrying a create can produce a duplicate ' +
+        'record. Check IntelliGRC to see whether the record was created ' +
+        'before you run this command again.',
       exitCode: EXIT.network,
       retryable: false,
       attempts,
@@ -177,7 +216,9 @@ function httpFailure(
  */
 async function fetchAttempt(
   startUrl: URL,
+  method: HttpMethod,
   headers: Record<string, string>,
+  body: string | undefined,
   timeoutMs: number,
   attempts: number,
 ): Promise<Response> {
@@ -185,9 +226,12 @@ async function fetchAttempt(
   let url = startUrl
 
   for (let hop = 0; hop <= MAX_REDIRECT_HOPS; hop += 1) {
+    // A same-host redirect replays the same method and body, so a redirected
+    // write reaches its destination unchanged.
     const response = await fetch(url, {
-      method: 'GET',
+      method,
       headers,
+      body,
       redirect: 'manual',
       signal,
     })
@@ -232,6 +276,7 @@ async function fetchAttempt(
 }
 
 export async function apiRequest(options: ApiRequestOptions): Promise<ApiSuccess> {
+  const method = options.method ?? 'GET'
   const headers: Record<string, string> = {
     accept: 'application/json',
     'x-client-id': options.clientId,
@@ -240,6 +285,19 @@ export async function apiRequest(options: ApiRequestOptions): Promise<ApiSuccess
   if (options.tenantId !== undefined) {
     headers['x-tenant-id'] = options.tenantId
   }
+
+  let serializedBody: string | undefined
+  if (options.body !== undefined) {
+    headers['content-type'] = 'application/json'
+    serializedBody = JSON.stringify(options.body)
+  }
+
+  // A POST is never retried: a network failure it cannot confirm could
+  // otherwise duplicate a create, and an ambiguous transient HTTP status
+  // (a 502 or 504 returned after the record was already created) carries the
+  // same risk. Every other method retries on the existing transient
+  // categories, because repeating it lands on the same result.
+  const retriesAllowed = method !== 'POST'
 
   const startUrl = new URL(`${options.baseUrl}${options.path}`)
   for (const [name, value] of options.query ?? []) {
@@ -253,7 +311,14 @@ export async function apiRequest(options: ApiRequestOptions): Promise<ApiSuccess
     let response: Response
     let bodyText: string
     try {
-      response = await fetchAttempt(startUrl, headers, attemptTimeoutMs, attempt)
+      response = await fetchAttempt(
+        startUrl,
+        method,
+        headers,
+        serializedBody,
+        attemptTimeoutMs,
+        attempt,
+      )
       // The abort signal also bounds the body read; a stall while reading
       // is the same timeout category as a stall before headers.
       bodyText = await response.text()
@@ -264,8 +329,8 @@ export async function apiRequest(options: ApiRequestOptions): Promise<ApiSuccess
         throw error
       }
 
-      lastFailure = networkFailure(error, attempt)
-      if (lastFailure.retryable && attempt < MAX_ATTEMPTS) {
+      lastFailure = networkFailure(error, attempt, method)
+      if (retriesAllowed && lastFailure.retryable && attempt < MAX_ATTEMPTS) {
         await sleep(retryDelayMs(attempt, null, Math.max(0, deadline - Date.now())))
         continue
       }
@@ -274,6 +339,12 @@ export async function apiRequest(options: ApiRequestOptions): Promise<ApiSuccess
     }
 
     if (response.ok) {
+      // A 204 No Content reply (the documented delete success) carries no
+      // body, so there is nothing to parse.
+      if (response.status === 204) {
+        return {httpStatus: response.status, body: undefined, attempts: attempt}
+      }
+
       let body: unknown
       try {
         body = JSON.parse(bodyText)
@@ -292,7 +363,7 @@ export async function apiRequest(options: ApiRequestOptions): Promise<ApiSuccess
     }
 
     lastFailure = httpFailure(response.status, bodyText, attempt, options)
-    if (isRetryableStatus(response.status) && attempt < MAX_ATTEMPTS) {
+    if (retriesAllowed && isRetryableStatus(response.status) && attempt < MAX_ATTEMPTS) {
       const retryAfterMs = parseRetryAfter(response.headers.get('retry-after'), Date.now())
       await sleep(retryDelayMs(attempt, retryAfterMs, Math.max(0, deadline - Date.now())))
       continue

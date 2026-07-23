@@ -48,14 +48,38 @@ export interface ParameterContract {
 }
 
 /**
+ * One documented request-body field and the CLI flag that supplies it.
+ * Every field except `source` copies the archived OpenAPI document's data
+ * transfer object (DTO) schema verbatim; the contract suite compares them by
+ * exact equality.
+ */
+export interface RequestBodyFieldContract {
+  /** Documented JSON field name, for example "confidentialityId". */
+  name: string
+  /** Documented schema type, for example "integer" or "string". */
+  type: string
+  /** Documented schema format, for example "int32". Absent when undocumented. */
+  format?: string
+  /** True when the DTO lists the field in its required set. */
+  required: boolean
+  /** True when the documented schema marks the field nullable. */
+  nullable?: boolean
+  /** The CLI flag that supplies this field. */
+  source: {kind: 'flag'; name: string}
+}
+
+/**
  * The documented operation one API command maps to. The path is the exact
  * documented string; a path template keeps its "{name}" placeholder and
- * the command substitutes the validated identifier at run time.
+ * the command substitutes the validated identifier at run time. A write
+ * operation (post, put, or delete) may also document a request-body field
+ * contract; a read (get) never does.
  */
 export interface OperationContract {
-  method: 'get'
+  method: 'get' | 'post' | 'put' | 'delete'
   path: string
   parameters: ParameterContract[]
+  requestBody?: RequestBodyFieldContract[]
 }
 
 export interface CommandSpec {
@@ -207,6 +231,65 @@ const iclVersionIdFlag: FlagSpec = {
 }
 
 /**
+ * Shared flag literals for the data-type write commands. The three level
+ * flags carry integer identifiers from the matching `lookup data-type ...`
+ * command; the CLI validates that each is an integer but never checks it
+ * against the lookup catalog.
+ */
+const dataTypeNameFlag: FlagSpec = {
+  name: 'name',
+  type: 'option',
+  required: true,
+  summary: 'Data type name, sent as the required "name" body field.',
+}
+
+const dataTypeDescriptionFlag: FlagSpec = {
+  name: 'description',
+  type: 'option',
+  required: false,
+  summary:
+    'Optional data type description, sent as the "description" body field. ' +
+    'Omitted from the body when not given.',
+}
+
+const confidentialityIdFlag: FlagSpec = {
+  name: 'confidentiality-id',
+  type: 'option',
+  required: true,
+  summary:
+    'Integer confidentiality level identifier from ' +
+    '`lookup data-type confidentiality-levels`, sent as the required ' +
+    '"confidentialityId" body field.',
+}
+
+const integrityIdFlag: FlagSpec = {
+  name: 'integrity-id',
+  type: 'option',
+  required: true,
+  summary:
+    'Integer integrity level identifier from ' +
+    '`lookup data-type integrity-levels`, sent as the required ' +
+    '"integrityId" body field.',
+}
+
+const availabilityIdFlag: FlagSpec = {
+  name: 'availability-id',
+  type: 'option',
+  required: true,
+  summary:
+    'Integer availability level identifier from ' +
+    '`lookup data-type availability-levels`, sent as the required ' +
+    '"availabilityId" body field.',
+}
+
+const yesFlag: FlagSpec = {
+  name: 'yes',
+  type: 'boolean',
+  required: false,
+  summary: 'Skip the delete confirmation prompt and delete without pausing.',
+}
+
+/**
  * Shared parameter contracts. One literal per documented parameter shape
  * keeps the documented facts identical across the command specs, exactly
  * like the shared flag literals above.
@@ -283,9 +366,65 @@ const iclVersionIdParameter: ParameterContract = {
   source: {kind: 'flag', name: 'icl-version-id'},
 }
 
+/**
+ * The documented DataTypeCreateDTO and DataTypeUpdateDTO share this body
+ * field contract. Each field copies the archived DTO schema verbatim and
+ * names the flag that supplies it.
+ */
+const dataTypeBodyFields: RequestBodyFieldContract[] = [
+  {name: 'name', type: 'string', required: true, source: {kind: 'flag', name: 'name'}},
+  {
+    name: 'description',
+    type: 'string',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'description'},
+  },
+  {
+    name: 'confidentialityId',
+    type: 'integer',
+    format: 'int32',
+    required: true,
+    source: {kind: 'flag', name: 'confidentiality-id'},
+  },
+  {
+    name: 'integrityId',
+    type: 'integer',
+    format: 'int32',
+    required: true,
+    source: {kind: 'flag', name: 'integrity-id'},
+  },
+  {
+    name: 'availabilityId',
+    type: 'integer',
+    format: 'int32',
+    required: true,
+    source: {kind: 'flag', name: 'availability-id'},
+  },
+]
+
 /** Contract for one documented GET operation. */
 function get(path: string, parameters: ParameterContract[] = []): OperationContract {
   return {method: 'get', path, parameters}
+}
+
+/** Contract for one documented POST operation with a request-body contract. */
+function post(path: string, requestBody: RequestBodyFieldContract[]): OperationContract {
+  return {method: 'post', path, parameters: [], requestBody}
+}
+
+/** Contract for one documented PUT operation with a path and request body. */
+function put(
+  path: string,
+  parameters: ParameterContract[],
+  requestBody: RequestBodyFieldContract[],
+): OperationContract {
+  return {method: 'put', path, parameters, requestBody}
+}
+
+/** Contract for one documented DELETE operation, which carries no body. */
+function del(path: string, parameters: ParameterContract[]): OperationContract {
+  return {method: 'delete', path, parameters}
 }
 
 export const commandSpecs: CommandSpec[] = [
@@ -519,6 +658,49 @@ export const commandSpecs: CommandSpec[] = [
     args: [],
     flags: [profileFlag, apiOutputFlag],
     contract: get('/v1/DataTypes'),
+  },
+  {
+    id: 'data-type create',
+    summary: 'Create one data type for the profile tenant.',
+    kind: 'api',
+    permission: 'DataTypes: Write',
+    args: [],
+    flags: [
+      profileFlag,
+      dataTypeNameFlag,
+      dataTypeDescriptionFlag,
+      confidentialityIdFlag,
+      integrityIdFlag,
+      availabilityIdFlag,
+      apiOutputFlag,
+    ],
+    contract: post('/v1/DataTypes', dataTypeBodyFields),
+  },
+  {
+    id: 'data-type update',
+    summary: 'Update one data type by its integer identifier.',
+    kind: 'api',
+    permission: 'DataTypes: Write',
+    args: [dataTypeIdArg],
+    flags: [
+      profileFlag,
+      dataTypeNameFlag,
+      dataTypeDescriptionFlag,
+      confidentialityIdFlag,
+      integrityIdFlag,
+      availabilityIdFlag,
+      apiOutputFlag,
+    ],
+    contract: put('/v1/DataTypes/{id}', [idPathParameter], dataTypeBodyFields),
+  },
+  {
+    id: 'data-type delete',
+    summary: 'Delete one data type by its integer identifier, after a confirmation pause.',
+    kind: 'api',
+    permission: 'DataTypes: Write',
+    args: [dataTypeIdArg],
+    flags: [profileFlag, yesFlag, apiOutputFlag],
+    contract: del('/v1/DataTypes/{id}', [idPathParameter]),
   },
   {
     id: 'facility list',
