@@ -12,6 +12,8 @@ export interface FakeResponse {
   /** Raw body string. Takes precedence over body. */
   rawBody?: string
   headers?: Record<string, string>
+  /** Delay before the response is written, for client-timeout tests. */
+  delayMs?: number
 }
 
 /**
@@ -50,12 +52,25 @@ export class FakeApi {
         status: 599,
         body: {error: 'fake-api-empty-queue'},
       }
-      const payload = next.rawBody ?? JSON.stringify(next.body ?? null)
-      res.writeHead(next.status ?? 200, {
-        'content-type': 'application/json',
-        ...next.headers,
-      })
-      res.end(payload)
+      const send = () => {
+        // The client may have aborted (timeout tests); a write to the
+        // closed socket must not crash the fake server.
+        try {
+          const payload = next.rawBody ?? JSON.stringify(next.body ?? null)
+          res.writeHead(next.status ?? 200, {
+            'content-type': 'application/json',
+            ...next.headers,
+          })
+          res.end(payload)
+        } catch {
+          // Ignored: the recorded request is what the test asserts on.
+        }
+      }
+      if (next.delayMs) {
+        setTimeout(send, next.delayMs).unref()
+      } else {
+        send()
+      }
     })
 
     await new Promise<void>((resolve) => {

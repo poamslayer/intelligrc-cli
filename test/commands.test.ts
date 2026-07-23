@@ -3,8 +3,8 @@ import {test} from 'node:test'
 
 import {runCli} from './helpers/run-cli.ts'
 
-// Expected catalog, written out by hand from issues #2 and #3. This literal
-// is the independent source of truth; it must not be derived from
+// Expected catalog, written out by hand from issues #2, #3, and #4. This
+// literal is the independent source of truth; it must not be derived from
 // src/manifest.ts.
 const expectedCatalog = {
   catalogVersion: 1,
@@ -89,6 +89,44 @@ const expectedCatalog = {
       permission: null,
       args: [],
       flags: [
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'doctor',
+      summary: 'Diagnose one profile without printing credential or tenant values.',
+      kind: 'profile',
+      permission: null,
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile name to diagnose.',
+        },
+      ],
+    },
+    {
+      id: 'tenant list',
+      summary: 'List the tenants manageable by the profile credential.',
+      kind: 'api',
+      permission: null,
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential and base URL.',
+        },
         {
           name: 'output',
           type: 'option',

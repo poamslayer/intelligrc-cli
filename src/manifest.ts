@@ -30,11 +30,17 @@ export interface CommandSpec {
   summary: string
   /**
    * 'local' commands never contact a network service. 'profile' commands
-   * manage local profiles; among them only `auth login` sends a request —
-   * one tenant-discovery call to the documented tenant-list operation.
+   * manage or diagnose local profiles; among them `auth login` and `doctor`
+   * send one request each to the documented tenant-list operation. 'api'
+   * commands map to one documented GET operation through the guarded
+   * request runtime.
    */
-  kind: 'local' | 'profile'
-  /** Documented IntelliGRC permission. Always null for local and profile commands. */
+  kind: 'local' | 'profile' | 'api'
+  /**
+   * Documented IntelliGRC permission. Null for local and profile commands,
+   * and for API operations whose contract documents no permission (the
+   * tenant-list operation).
+   */
   permission: null
   args: ArgSpec[]
   flags: FlagSpec[]
@@ -121,6 +127,44 @@ export const commandSpecs: CommandSpec[] = [
     permission: null,
     args: [],
     flags: [
+      {
+        name: 'output',
+        type: 'option',
+        required: false,
+        allowedValues: ['json'],
+        default: 'json',
+        summary: 'Output format.',
+      },
+    ],
+  },
+  {
+    id: 'doctor',
+    summary: 'Diagnose one profile without printing credential or tenant values.',
+    kind: 'profile',
+    permission: null,
+    args: [],
+    flags: [
+      {
+        name: 'profile',
+        type: 'option',
+        required: true,
+        summary: 'Profile name to diagnose.',
+      },
+    ],
+  },
+  {
+    id: 'tenant list',
+    summary: 'List the tenants manageable by the profile credential.',
+    kind: 'api',
+    permission: null,
+    args: [],
+    flags: [
+      {
+        name: 'profile',
+        type: 'option',
+        required: true,
+        summary: 'Profile that supplies the credential and base URL.',
+      },
       {
         name: 'output',
         type: 'option',
