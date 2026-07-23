@@ -68,6 +68,14 @@ export function parseRetryAfter(value: string | null, nowMs: number): number | n
 const DEFAULT_BACKOFF_MS = [500, 1000]
 
 /**
+ * Floor for a server-provided delay. A "Retry-After: 0" reconnects with
+ * no gap, which trips a libuv teardown assertion on Windows (async.c,
+ * uv_async_send on a closing handle) and hammers an API that just asked
+ * for restraint. One hundred milliseconds still honors the header.
+ */
+const MIN_SERVER_DELAY_MS = 100
+
+/**
  * Delay before the attempt that follows `attempt` (1-based). A parsed
  * server delay wins over the default backoff; both are capped at the
  * remaining policy budget.
@@ -78,6 +86,8 @@ export function retryDelayMs(
   remainingBudgetMs: number,
 ): number {
   const wanted =
-    retryAfterMs ?? DEFAULT_BACKOFF_MS[Math.min(attempt, DEFAULT_BACKOFF_MS.length) - 1]
+    retryAfterMs === null
+      ? DEFAULT_BACKOFF_MS[Math.min(attempt, DEFAULT_BACKOFF_MS.length) - 1]
+      : Math.max(retryAfterMs, MIN_SERVER_DELAY_MS)
   return Math.max(0, Math.min(wanted, remainingBudgetMs))
 }

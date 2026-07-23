@@ -11,8 +11,33 @@ import {fakeKeyringEnv, isolatedEnv, packageVersion, projectRoot} from './helper
 
 const execFileAsync = promisify(execFile)
 
+/**
+ * Cross-platform invocation. Windows cannot spawn the npm or oclif .cmd
+ * shims directly: npm resolves to the npm-cli.js that launched this test
+ * run, and any other .cmd or .bat shim runs through cmd.exe.
+ */
+function toSpawnable(command: string, args: string[]): [string, string[]] {
+  if (command === 'npm') {
+    const execpath = process.env.npm_execpath
+    if (execpath && execpath.endsWith('.js')) {
+      return [process.execPath, [execpath, ...args]]
+    }
+
+    if (process.platform === 'win32') {
+      return ['cmd.exe', ['/d', '/s', '/c', 'npm', ...args]]
+    }
+  }
+
+  if (process.platform === 'win32' && /\.(cmd|bat)$/i.test(command)) {
+    return ['cmd.exe', ['/d', '/s', '/c', command, ...args]]
+  }
+
+  return [command, args]
+}
+
 function run(command: string, args: string[], cwd: string, env?: Record<string, string>): string {
-  return execFileSync(command, args, {
+  const [spawnCommand, spawnArgs] = toSpawnable(command, args)
+  return execFileSync(spawnCommand, spawnArgs, {
     cwd,
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -31,7 +56,8 @@ async function runAgainstFakeApi(
   cwd: string,
   env: Record<string, string>,
 ): Promise<string> {
-  const {stdout} = await execFileAsync(command, args, {cwd, env, encoding: 'utf8'})
+  const [spawnCommand, spawnArgs] = toSpawnable(command, args)
+  const {stdout} = await execFileAsync(spawnCommand, spawnArgs, {cwd, env, encoding: 'utf8'})
   return stdout
 }
 
@@ -60,7 +86,7 @@ test('a clean checkout builds, packs, installs, and serves the documented surfac
 
   run('npm', ['ci'], cleanRoom)
   const packOutput = run('npm', ['pack', '--pack-destination', workDir], cleanRoom)
-  const tarball = join(workDir, packOutput.trim().split('\n').at(-1)!)
+  const tarball = join(workDir, packOutput.trim().split(/\r?\n/).at(-1)!)
 
   // The tarball must carry the built commands, not just bin/.
   const tarballListing = run('tar', ['-tzf', tarball], workDir)
@@ -73,15 +99,21 @@ test('a clean checkout builds, packs, installs, and serves the documented surfac
   // live responses, tenant data, session data, tests, and the archived
   // OpenAPI document can never ship because any unlisted entry fails
   // here, and a non-JavaScript file under dist/ fails the same way.
+  // Split on \r?\n: Windows bsdtar terminates listing lines with CRLF.
   const allowedEntry = /^package\/(package\.json|README\.md|bin\/[^/]+|dist\/.+\.js)$/
-  for (const entry of tarballListing.trim().split('\n')) {
+  for (const entry of tarballListing.trim().split(/\r?\n/)) {
     assert.match(entry, allowedEntry, `Unexpected file in the package: ${entry}`)
   }
 
   // Global installation into an isolated prefix exposes the executable.
   const globalPrefix = join(workDir, 'global')
   run('npm', ['install', '--global', '--prefix', globalPrefix, tarball], workDir)
-  const installedBin = join(globalPrefix, 'bin', 'intelligrc')
+  // npm places the executable shim at the prefix root on Windows and
+  // under bin/ elsewhere.
+  const installedBin =
+    process.platform === 'win32'
+      ? join(globalPrefix, 'intelligrc.cmd')
+      : join(globalPrefix, 'bin', 'intelligrc')
   const globalVersion = run(installedBin, ['version'], workDir)
   assert.equal(globalVersion, `${packageVersion}\n`)
 

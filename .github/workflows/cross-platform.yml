@@ -1,0 +1,115 @@
+# Cross-platform proof for the IntelliGRC CLI (issue #12).
+#
+# Every job runs with fake credentials against local fake responses only:
+# the workflow reads no repository secret and contacts no IntelliGRC host.
+# Generated test-secret values never appear in logs or artifacts — the
+# native-store check fails when any output or file contains one.
+#
+# A failure on any operating system blocks release: the publish work in
+# issue #14 requires this workflow to pass on the release commit.
+name: cross-platform
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      # A native @napi-rs/keyring package that fails to install for a
+      # supported target fails here and blocks release.
+      - name: Install dependencies
+        run: npm ci
+
+      # Contract suite, process-level fake-API suite, and the pack test
+      # (which builds, packs, and installs the artifact as a consumer
+      # would, then runs the installed executable).
+      - name: Run automated suite
+        run: npm run test:ci
+
+      # Install the packed artifact the way a consumer would and run the
+      # public executable offline.
+      - name: Pack the artifact
+        run: npm pack --pack-destination "${{ runner.temp }}"
+
+      - name: Install the packed artifact and run the public executable (POSIX)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          PREFIX="${{ runner.temp }}/consumer-prefix"
+          npm install --global --prefix "$PREFIX" "${{ runner.temp }}"/intelligrc-cli-*.tgz
+          "$PREFIX/bin/intelligrc" version
+          "$PREFIX/bin/intelligrc" commands --output json > /dev/null
+          echo "INTELLIGRC_INSTALLED_BIN=$PREFIX/bin/intelligrc" >> "$GITHUB_ENV"
+
+      - name: Install the packed artifact and run the public executable (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $prefix = Join-Path $env:RUNNER_TEMP 'consumer-prefix'
+          $tarball = Get-ChildItem -Path $env:RUNNER_TEMP -Filter 'intelligrc-cli-*.tgz' | Select-Object -First 1
+          npm install --global --prefix $prefix $tarball.FullName
+          & (Join-Path $prefix 'intelligrc.cmd') version
+          & (Join-Path $prefix 'intelligrc.cmd') commands --output json | Out-Null
+          $runJs = Join-Path $prefix 'node_modules\intelligrc-cli\bin\run.js'
+          Add-Content -Path $env:GITHUB_ENV -Value "INTELLIGRC_INSTALLED_RUN_JS=$runJs"
+
+      # Native protected storage: set, retrieve, replace, and delete a
+      # generated secret through the installed public executable against
+      # the real operating-system store. The check script fails when any
+      # output or file contains a generated secret value.
+      - name: Native store check (Linux, Secret Service via gnome-keyring)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gnome-keyring dbus dbus-x11
+          # The upstream keyring-node CI recipe: clear any stale keyring
+          # shipped in the runner image, then create and unlock the login
+          # keyring (the default Secret Service collection) with a
+          # throwaway password inside one D-Bus session.
+          dbus-run-session -- bash -c '
+            rm -f "$HOME/.local/share/keyrings/"*
+            echo -n "ci-throwaway" | gnome-keyring-daemon --unlock
+            npm run check:native-store -- "$INTELLIGRC_INSTALLED_BIN"
+          '
+
+      - name: Native store check (macOS, Keychain)
+        if: runner.os == 'macOS'
+        run: |
+          security create-keychain -p ci-throwaway ci.keychain-db
+          security set-keychain-settings ci.keychain-db
+          security unlock-keychain -p ci-throwaway ci.keychain-db
+          security default-keychain -s ci.keychain-db
+          security list-keychains -d user -s ci.keychain-db login.keychain-db
+          npm run check:native-store -- "$INTELLIGRC_INSTALLED_BIN"
+
+      - name: Native store check (Windows, Credential Manager)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: npm run check:native-store -- node $env:INTELLIGRC_INSTALLED_RUN_JS
+
+      # The report holds test names and pass/fail results only: no tenant
+      # identifier, no command response data, no credential material.
+      - name: Store the test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-report-${{ matrix.os }}
+          path: test-report.xml
+          if-no-files-found: warn
