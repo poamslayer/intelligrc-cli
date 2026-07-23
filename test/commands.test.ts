@@ -3,7 +3,7 @@ import {test} from 'node:test'
 
 import {runCli} from './helpers/run-cli.ts'
 
-// Expected catalog, written out by hand from issues #2, #3, #4, and #5.
+// Expected catalog, written out by hand from issues #2, #3, #4, #5, and #6.
 // This literal is the independent source of truth; it must not be derived
 // from src/manifest.ts.
 const expectedCatalog = {
@@ -138,6 +138,29 @@ const expectedCatalog = {
       ],
     },
     {
+      id: 'evaluation list',
+      summary: 'List the evaluations for the profile tenant.',
+      kind: 'api',
+      permission: 'Evaluations: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
       id: 'assessment-objective list',
       summary: 'List assessment objectives and their statuses for an evaluation.',
       kind: 'api',
@@ -164,6 +187,45 @@ const expectedCatalog = {
           required: false,
           summary:
             'Framework identifier (UUID), sent as the documented frameworkId ' +
+            'query parameter. Omitted from the request when not given.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'assessment-objective history',
+      summary: 'Show the history of one assessment objective and its statuses.',
+      kind: 'api',
+      permission: 'GapAnalysis: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'assessment-objective-id',
+          type: 'option',
+          required: true,
+          summary:
+            'Assessment objective identifier (UUID), sent as the documented ' +
+            'assessmentObjectiveId query parameter.',
+        },
+        {
+          name: 'evaluation-id',
+          type: 'option',
+          required: false,
+          summary:
+            'Integer evaluation identifier, sent as the documented evaluationId ' +
             'query parameter. Omitted from the request when not given.',
         },
         {
@@ -243,6 +305,161 @@ const expectedCatalog = {
           summary:
             'Framework identifier (UUID), sent as the documented frameworkId ' +
             'query parameter. Omitted from the request when not given.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'evidence list',
+      summary: 'List all uploaded evidence for the profile tenant.',
+      kind: 'api',
+      permission: 'Evidence: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'evidence-folder list',
+      summary: 'List evidence folders, optionally under one parent folder.',
+      kind: 'api',
+      permission: 'Evidence: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'parent-id',
+          type: 'option',
+          required: false,
+          summary:
+            'Parent folder identifier (UUID), sent as the documented parentId ' +
+            'query parameter. Omitted from the request when not given, which ' +
+            'lists all folders.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'lookup assessment-objective statuses',
+      summary: 'List the assessment objective status options.',
+      kind: 'api',
+      permission: 'GapAnalysis: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'lookup icl-version list',
+      summary: 'List the published Intelligent Control Library versions.',
+      kind: 'api',
+      permission: 'Evaluations: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'lookup icl-version latest-frameworks',
+      summary: 'List published frameworks for the latest Intelligent Control Library version.',
+      kind: 'api',
+      permission: 'Evaluations: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'lookup icl-version frameworks',
+      summary: 'List published frameworks for one Intelligent Control Library version.',
+      kind: 'api',
+      permission: 'Evaluations: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'icl-version-id',
+          type: 'option',
+          required: true,
+          summary:
+            'Intelligent Control Library version identifier (UUID), substituted ' +
+            'into the documented request path.',
         },
         {
           name: 'output',
