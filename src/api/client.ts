@@ -11,10 +11,10 @@
 import {CliFailure, EXIT} from '../errors.js'
 import {apiErrorFromBody} from './response.js'
 import {
-  ATTEMPT_TIMEOUT_MS,
   MAX_ATTEMPTS,
   isRetryableStatus,
   parseRetryAfter,
+  resolveAttemptTimeoutMs,
   retryDelayMs,
 } from './retry.js'
 
@@ -41,28 +41,39 @@ export interface ApiSuccess {
   attempts: number
 }
 
-/**
- * Per-attempt limit. INTELLIGRC_ATTEMPT_TIMEOUT_MS exists for automated
- * fake-API tests, which cannot wait 30 seconds to observe the timeout
- * category. It only shortens or lengthens the wait; it bypasses nothing.
- */
-function resolveAttemptTimeoutMs(env: NodeJS.ProcessEnv): number {
-  const raw = env.INTELLIGRC_ATTEMPT_TIMEOUT_MS
-  if (raw !== undefined && /^\d+$/.test(raw) && Number(raw) > 0) {
-    return Number(raw)
-  }
-
-  return ATTEMPT_TIMEOUT_MS
-}
-
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => {
     setTimeout(resolve, ms)
   })
 }
 
-function sameHost(a: URL, b: URL): boolean {
+function sameOrigin(a: URL, b: URL): boolean {
   return a.protocol === b.protocol && a.hostname === b.hostname && a.port === b.port
+}
+
+/**
+ * OpenSSL and Node TLS error codes that mean certificate validation
+ * failed. A certificate failure is permanent for the duration of a
+ * command, so it gets one attempt and is never marked retryable.
+ */
+const CERTIFICATE_ERROR_CODES = new Set([
+  'CERT_HAS_EXPIRED',
+  'CERT_NOT_YET_VALID',
+  'CERT_REVOKED',
+  'CERT_SIGNATURE_FAILURE',
+  'CERT_UNTRUSTED',
+  'DEPTH_ZERO_SELF_SIGNED_CERT',
+  'ERR_TLS_CERT_ALTNAME_INVALID',
+  'HOSTNAME_MISMATCH',
+  'SELF_SIGNED_CERT_IN_CHAIN',
+  'UNABLE_TO_GET_ISSUER_CERT',
+  'UNABLE_TO_GET_ISSUER_CERT_LOCALLY',
+  'UNABLE_TO_VERIFY_LEAF_SIGNATURE',
+])
+
+function isCertificateError(error: unknown): boolean {
+  const cause = error instanceof Error ? (error.cause as {code?: unknown}) : undefined
+  return typeof cause?.code === 'string' && CERTIFICATE_ERROR_CODES.has(cause.code)
 }
 
 function networkFailure(error: unknown, attempts: number): CliFailure {
@@ -71,6 +82,19 @@ function networkFailure(error: unknown, attempts: number): CliFailure {
     error instanceof Error
       ? (error.cause instanceof Error ? `${error.message}: ${error.cause.message}` : error.message)
       : String(error)
+
+  if (isCertificateError(error)) {
+    return new CliFailure({
+      code: 'tls-certificate-invalid',
+      message:
+        `Certificate validation failed: ${detail}. The CLI keeps ` +
+        'certificate validation enabled and offers no bypass.',
+      exitCode: EXIT.network,
+      retryable: false,
+      attempts,
+    })
+  }
+
   return new CliFailure({
     code: timedOut ? 'network-timeout' : 'network-failure',
     message: timedOut
@@ -176,7 +200,7 @@ async function fetchAttempt(
     }
 
     const target = new URL(location, url)
-    if (!sameHost(url, target)) {
+    if (!sameOrigin(url, target)) {
       throw new CliFailure({
         code: 'redirect-cross-host',
         message:
@@ -230,7 +254,7 @@ export async function apiRequest(options: ApiRequestOptions): Promise<ApiSuccess
       }
 
       lastFailure = networkFailure(error, attempt)
-      if (attempt < MAX_ATTEMPTS) {
+      if (lastFailure.retryable && attempt < MAX_ATTEMPTS) {
         await sleep(retryDelayMs(attempt, null, Math.max(0, deadline - Date.now())))
         continue
       }

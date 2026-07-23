@@ -125,6 +125,21 @@ test('doctor reports tenant disagreement with exit 3 and no values', async () =>
   assertRedacted(result, 'drifted')
 })
 
+test('doctor treats a renamed tenant as disagreement', async () => {
+  const ctx = setupAuthContext()
+  await createProfile(api, ctx, 'renamed')
+
+  // Same tenant ID, different display name: not exact agreement.
+  api.enqueueTenants([{id: 'tenant-renamed', name: 'New Display Name'}])
+
+  const result = await doctor(ctx, 'renamed')
+
+  assert.equal(result.code, 3)
+  assert.equal(result.stdout, '')
+  assert.equal(JSON.parse(result.stderr).error.code, 'doctor-tenant-mismatch')
+  assertRedacted(result, 'renamed')
+})
+
 test('doctor treats zero and multiple returned tenants as disagreement', async () => {
   const ctx = setupAuthContext()
   await createProfile(api, ctx, 'zero')

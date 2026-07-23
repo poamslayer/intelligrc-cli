@@ -1,6 +1,12 @@
 import {Command} from '@oclif/core'
 
 import {apiRequest, emitRetryDiagnostic} from '../api/client.js'
+import {
+  clientSecretMissingFailure,
+  profileBaseUrlInvalidFailure,
+  profileIncompleteFailure,
+  profileNotFoundFailure,
+} from '../api/resolve.js'
 import {resolveBaseUrl} from '../base-url.js'
 import {CliFailure, EXIT, emitFailure} from '../errors.js'
 import {commandSpec, oclifFlags} from '../manifest.js'
@@ -43,24 +49,12 @@ export default class Doctor extends Command {
       // Check 1: the profile exists and is complete.
       const profile = new ProfileStore(this.config.configDir).get(profileName)
       if (!profile) {
-        throw new CliFailure({
-          code: 'profile-not-found',
-          message:
-            `The profile "${profileName}" does not exist. ` +
-            'Create it with: intelligrc auth login --profile NAME --client-id ID',
-          exitCode: EXIT.localConfiguration,
-        })
+        throw profileNotFoundFailure(profileName)
       }
 
       redactionValues.push(profile.clientId, profile.tenantId)
       if (!profile.clientId || !profile.tenantId || !profile.baseUrl) {
-        throw new CliFailure({
-          code: 'profile-incomplete',
-          message:
-            `The profile "${profileName}" is missing a client ID, tenant ID, ` +
-            'or base URL. Recreate it with: intelligrc auth login --replace',
-          exitCode: EXIT.localConfiguration,
-        })
+        throw profileIncompleteFailure(profileName)
       }
 
       passed.push({check: 'profile-complete', status: 'pass'})
@@ -68,14 +62,7 @@ export default class Doctor extends Command {
       // Check 2: the protected secret store returns the client secret.
       const clientSecret = new KeyringSecretStore().get(profileName)
       if (!clientSecret) {
-        throw new CliFailure({
-          code: 'client-secret-missing',
-          message:
-            `No client secret exists for the profile "${profileName}" in ` +
-            'the protected secret store. Recreate the profile with: ' +
-            'intelligrc auth login --replace',
-          exitCode: EXIT.localConfiguration,
-        })
+        throw clientSecretMissingFailure(profileName)
       }
 
       redactionValues.push(clientSecret)
@@ -86,12 +73,7 @@ export default class Doctor extends Command {
       try {
         baseUrl = resolveBaseUrl(profile.baseUrl, process.env)
       } catch (error) {
-        const detail = error instanceof CliFailure ? error.message : String(error)
-        throw new CliFailure({
-          code: 'profile-base-url-invalid',
-          message: `The saved base URL for profile "${profileName}" is invalid: ${detail}`,
-          exitCode: EXIT.localConfiguration,
-        })
+        throw profileBaseUrlInvalidFailure(profileName, error)
       }
 
       passed.push({check: 'base-url-https', status: 'pass'})
@@ -121,19 +103,24 @@ export default class Doctor extends Command {
         })
       }
 
-      const returnedIds = result.body.map((tenant: {id?: unknown}) =>
-        String(tenant?.id ?? ''),
-      )
-      redactionValues.push(...returnedIds)
-      if (result.body.length !== 1 || returnedIds[0] !== profile.tenantId) {
+      const returned = result.body.map((tenant: {id?: unknown; name?: unknown}) => ({
+        id: String(tenant?.id ?? ''),
+        name: typeof tenant?.name === 'string' ? tenant.name : null,
+      }))
+      redactionValues.push(...returned.map((tenant) => tenant.id))
+      const agrees =
+        returned.length === 1 &&
+        returned[0].id === profile.tenantId &&
+        returned[0].name === profile.tenantName
+      if (!agrees) {
         throw new CliFailure({
           code: 'doctor-tenant-mismatch',
           message:
-            result.body.length === 1
-              ? 'The credential returned one tenant, but it is not the saved ' +
-                'profile tenant. Recreate the profile with: intelligrc auth ' +
-                'login --replace'
-              : `The credential returned ${result.body.length} tenants; the ` +
+            returned.length === 1
+              ? 'The credential returned one tenant, but its identifier or ' +
+                'name differs from the saved profile. Recreate the profile ' +
+                'with: intelligrc auth login --replace'
+              : `The credential returned ${returned.length} tenants; the ` +
                 'saved profile names exactly one. Recreate the profile with: ' +
                 'intelligrc auth login --replace',
           exitCode: EXIT.localConfiguration,
@@ -147,15 +134,7 @@ export default class Doctor extends Command {
       const failedCheck = CHECKS[passed.length] ?? 'unexpected'
       const failure =
         error instanceof CliFailure
-          ? new CliFailure({
-              code: error.code,
-              message: `Doctor stopped at check "${failedCheck}": ${error.message}`,
-              exitCode: error.exitCode,
-              httpStatus: error.httpStatus,
-              retryable: error.retryable,
-              attempts: error.attempts,
-              apiError: error.apiError,
-            })
+          ? error.withMessagePrefix(`Doctor stopped at check "${failedCheck}": `)
           : error
       this.exit(emitFailure(failure, redactionValues))
     }

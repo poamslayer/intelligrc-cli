@@ -19,6 +19,54 @@ export interface ApiContext {
   redactionValues: string[]
 }
 
+/**
+ * Failure constructors shared with `doctor`, which walks the same profile
+ * checks one at a time. One constructor per condition keeps the code,
+ * message, and exit category from drifting between the two callers.
+ */
+export function profileNotFoundFailure(profileName: string): CliFailure {
+  return new CliFailure({
+    code: 'profile-not-found',
+    message:
+      `The profile "${profileName}" does not exist. ` +
+      'Create it with: intelligrc auth login --profile NAME --client-id ID',
+    exitCode: EXIT.localConfiguration,
+  })
+}
+
+export function profileIncompleteFailure(profileName: string): CliFailure {
+  return new CliFailure({
+    code: 'profile-incomplete',
+    message:
+      `The profile "${profileName}" is missing a client ID, tenant ID, or ` +
+      'base URL. Recreate it with: intelligrc auth login --replace',
+    exitCode: EXIT.localConfiguration,
+  })
+}
+
+export function clientSecretMissingFailure(profileName: string): CliFailure {
+  return new CliFailure({
+    code: 'client-secret-missing',
+    message:
+      `No client secret exists for the profile "${profileName}" in the ` +
+      'protected secret store. Recreate the profile with: ' +
+      'intelligrc auth login --replace',
+    exitCode: EXIT.localConfiguration,
+  })
+}
+
+export function profileBaseUrlInvalidFailure(
+  profileName: string,
+  error: unknown,
+): CliFailure {
+  const detail = error instanceof CliFailure ? error.message : String(error)
+  return new CliFailure({
+    code: 'profile-base-url-invalid',
+    message: `The resolved base URL for profile "${profileName}" is invalid: ${detail}`,
+    exitCode: EXIT.localConfiguration,
+  })
+}
+
 export function resolveApiContext(
   profileName: string,
   configDir: string,
@@ -26,13 +74,7 @@ export function resolveApiContext(
 ): ApiContext {
   const profile = new ProfileStore(configDir).get(profileName)
   if (!profile) {
-    throw new CliFailure({
-      code: 'profile-not-found',
-      message:
-        `The profile "${profileName}" does not exist. ` +
-        'Create it with: intelligrc auth login --profile NAME --client-id ID',
-      exitCode: EXIT.localConfiguration,
-    })
+    throw profileNotFoundFailure(profileName)
   }
 
   const clientId = env.INTELLIGRC_CLIENT_ID ?? profile.clientId
@@ -40,38 +82,20 @@ export function resolveApiContext(
   const baseUrlCandidate = env.INTELLIGRC_BASE_URL ?? profile.baseUrl
 
   if (!clientId || !tenantId || !baseUrlCandidate) {
-    throw new CliFailure({
-      code: 'profile-incomplete',
-      message:
-        `The profile "${profileName}" is missing a client ID, tenant ID, or ` +
-        'base URL. Recreate it with: intelligrc auth login --replace',
-      exitCode: EXIT.localConfiguration,
-    })
+    throw profileIncompleteFailure(profileName)
   }
 
   let baseUrl: string
   try {
     baseUrl = resolveBaseUrl(baseUrlCandidate, env)
   } catch (error) {
-    const detail = error instanceof CliFailure ? error.message : String(error)
-    throw new CliFailure({
-      code: 'profile-base-url-invalid',
-      message: `The resolved base URL for profile "${profileName}" is invalid: ${detail}`,
-      exitCode: EXIT.localConfiguration,
-    })
+    throw profileBaseUrlInvalidFailure(profileName, error)
   }
 
   const clientSecret =
     env.INTELLIGRC_CLIENT_SECRET ?? new KeyringSecretStore().get(profileName)
   if (!clientSecret) {
-    throw new CliFailure({
-      code: 'client-secret-missing',
-      message:
-        `No client secret exists for the profile "${profileName}" in the ` +
-        'protected secret store. Recreate the profile with: ' +
-        'intelligrc auth login --replace',
-      exitCode: EXIT.localConfiguration,
-    })
+    throw clientSecretMissingFailure(profileName)
   }
 
   return {

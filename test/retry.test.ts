@@ -4,7 +4,9 @@ import {test} from 'node:test'
 import {
   isRetryableStatus,
   parseRetryAfter,
+  resolveAttemptTimeoutMs,
   retryDelayMs,
+  ATTEMPT_TIMEOUT_MS,
   MAX_ATTEMPTS,
   TOTAL_BUDGET_MS,
 } from '../src/api/retry.ts'
@@ -66,4 +68,18 @@ test('retryDelayMs backs off 500ms then 1000ms without a server delay', () => {
 test('retryDelayMs never exceeds the remaining budget', () => {
   assert.equal(retryDelayMs(2, null, 300), 300)
   assert.equal(retryDelayMs(1, null, 0), 0)
+})
+
+test('the test-only attempt-timeout variable can shorten but never extend', () => {
+  assert.equal(resolveAttemptTimeoutMs({}), ATTEMPT_TIMEOUT_MS)
+  assert.equal(resolveAttemptTimeoutMs({INTELLIGRC_ATTEMPT_TIMEOUT_MS: '400'}), 400)
+  assert.equal(
+    resolveAttemptTimeoutMs({INTELLIGRC_ATTEMPT_TIMEOUT_MS: '600000'}),
+    ATTEMPT_TIMEOUT_MS,
+  )
+  assert.equal(resolveAttemptTimeoutMs({INTELLIGRC_ATTEMPT_TIMEOUT_MS: '0'}), ATTEMPT_TIMEOUT_MS)
+  assert.equal(
+    resolveAttemptTimeoutMs({INTELLIGRC_ATTEMPT_TIMEOUT_MS: 'fast'}),
+    ATTEMPT_TIMEOUT_MS,
+  )
 })

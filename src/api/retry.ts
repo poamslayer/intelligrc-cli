@@ -14,6 +14,22 @@ export const ATTEMPT_TIMEOUT_MS = 30_000
 /** Total request policy budget: MAX_ATTEMPTS attempts of 30 seconds each. */
 export const TOTAL_BUDGET_MS = MAX_ATTEMPTS * ATTEMPT_TIMEOUT_MS
 
+/**
+ * Per-attempt limit for one request. INTELLIGRC_ATTEMPT_TIMEOUT_MS exists
+ * for automated fake-API tests, which cannot wait 30 seconds to observe
+ * the timeout category. It can only shorten an attempt: the contractual
+ * 30-second limit stays the ceiling, so the variable cannot extend any
+ * request.
+ */
+export function resolveAttemptTimeoutMs(env: NodeJS.ProcessEnv): number {
+  const raw = env.INTELLIGRC_ATTEMPT_TIMEOUT_MS
+  if (raw !== undefined && /^\d+$/.test(raw) && Number(raw) > 0) {
+    return Math.min(Number(raw), ATTEMPT_TIMEOUT_MS)
+  }
+
+  return ATTEMPT_TIMEOUT_MS
+}
+
 const RETRYABLE_STATUSES = new Set([408, 429, 500, 502, 503, 504])
 
 export function isRetryableStatus(status: number): boolean {

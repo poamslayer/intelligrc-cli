@@ -197,7 +197,7 @@ test('a cross-host redirect exits 5 and sends nothing to the other host', async 
   }
 })
 
-test('certificate validation stays enabled: a self-signed host exits 5', async () => {
+test('certificate validation stays enabled: a self-signed host exits 5 in one attempt', async () => {
   const tls = await startSelfSignedTlsApi()
   try {
     const result = await listTenants({INTELLIGRC_BASE_URL: tls.url})
@@ -205,6 +205,11 @@ test('certificate validation stays enabled: a self-signed host exits 5', async (
     assert.equal(result.code, 5)
     assert.equal(result.stdout, '')
     assert.equal(tls.requestCount(), 0)
+    const error = stderrError(result)
+    assert.equal(error.code, 'tls-certificate-invalid')
+    // A certificate failure is permanent: no retries.
+    assert.equal(error.retryable, false)
+    assert.equal(error.attempts, 1)
   } finally {
     await tls.close()
   }
