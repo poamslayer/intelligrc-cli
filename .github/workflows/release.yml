@@ -1,0 +1,110 @@
+# First fixed private release (issue #14).
+#
+# Design: this workflow publishes the package exactly as committed — it
+# never rewrites package.json — so the published artifact is the same
+# package that passed cross-platform and live validation on this commit.
+#
+# Operator prerequisites, before the first dispatch:
+# 1. Choose the user-controlled npm scope. A scope that appears to belong
+#    to IntelliGRC is prohibited without written authorization.
+# 2. Commit the scope onto the package: set "name" to
+#    "@<scope>/intelligrc-cli", remove "private": true, and add
+#    "publishConfig": {"access": "restricted"} so the registry records
+#    the release as private. Let the cross-platform workflow pass on that
+#    commit.
+# 3. Create a GitHub environment named "release" with required reviewers
+#    and an NPM_TOKEN secret that can publish to the chosen scope.
+# 4. Dispatch this workflow from the validated commit, passing the exact
+#    package name and version as a cross-check.
+#
+# The job fails before publishing when the inputs disagree with
+# package.json, when the package is still marked private, or when any
+# test fails. Logs and artifacts never contain the npm token or any
+# IntelliGRC credential; this workflow reads no IntelliGRC secret at all.
+name: release
+
+on:
+  workflow_dispatch:
+    inputs:
+      package-name:
+        description: "Exact package name, for example @scope/intelligrc-cli"
+        required: true
+      version:
+        description: "Exact fixed version to publish, for example 0.1.0"
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: release
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+
+      - name: Verify the inputs match the committed package
+        run: |
+          name=$(node -p "require('./package.json').name")
+          version=$(node -p "require('./package.json').version")
+          private=$(node -p "String(require('./package.json').private ?? false)")
+          access=$(node -p "require('./package.json').publishConfig?.access ?? ''")
+          test "$name" = "${{ inputs.package-name }}" || { echo "package.json name is $name, not ${{ inputs.package-name }}"; exit 1; }
+          test "$version" = "${{ inputs.version }}" || { echo "package.json version is $version, not ${{ inputs.version }}"; exit 1; }
+          test "$private" = "false" || { echo "package.json still carries \"private\": true"; exit 1; }
+          test "$access" = "restricted" || { echo "publishConfig.access must be \"restricted\" so the release records as private"; exit 1; }
+          case "$name" in
+            @*/intelligrc-cli) ;;
+            *) echo "The package name must use a scope: @<scope>/intelligrc-cli"; exit 1;;
+          esac
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run the automated suite
+        run: npm test
+
+      - name: Publish the fixed version
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish
+
+      # Consumer verification from the registry, in fresh directories:
+      # pinned npx execution and global installation must both serve the
+      # public executable and the offline catalog.
+      - name: Verify pinned npx execution and global installation
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          spec="${{ inputs.package-name }}@${{ inputs.version }}"
+          workdir=$(mktemp -d)
+          cd "$workdir"
+
+          npx_version=$(npx --yes "$spec" version)
+          test "$npx_version" = "${{ inputs.version }}" || { echo "npx served $npx_version"; exit 1; }
+
+          prefix="$workdir/global"
+          npm install --global --prefix "$prefix" "$spec"
+          installed_version=$("$prefix/bin/intelligrc" version)
+          test "$installed_version" = "${{ inputs.version }}" || { echo "global install served $installed_version"; exit 1; }
+          "$prefix/bin/intelligrc" commands --output json > /dev/null
+
+      - name: Record release evidence without credentials
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm view "${{ inputs.package-name }}@${{ inputs.version }}" name version dist.integrity dist.shasum --json > release-evidence.json
+          cat release-evidence.json
+
+      - name: Store the release evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-evidence
+          path: release-evidence.json
+          if-no-files-found: warn

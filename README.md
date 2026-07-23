@@ -125,3 +125,15 @@ Assumed, not verified:
   which exists for automated tests.
 - The CLI follows same-host redirects only and never sends credential headers to a
   different host.
+- Normal commands make no automatic update check. The CLI installs no update plugin
+  and contacts only the IntelliGRC API host the profile names.
+
+## Releasing
+
+The release workflow (`.github/workflows/release.yml`) publishes one fixed version to
+the chosen private npm scope. It runs only from a manual dispatch inside the protected
+`release` environment, publishes the package exactly as committed, verifies pinned
+`npx` execution and global installation from the registry, and stores credential-free
+release evidence. The workflow header documents the operator prerequisites: commit the
+chosen scope onto `package.json`, let the cross-platform workflow pass on that commit,
+and create the `release` environment with a scoped `NPM_TOKEN`.
