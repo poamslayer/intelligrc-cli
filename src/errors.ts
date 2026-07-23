@@ -45,6 +45,19 @@ export class CliFailure extends Error {
     this.attempts = fields.attempts ?? 0
     this.apiError = fields.apiError
   }
+
+  /** Copy of this failure with a prefixed message and every field kept. */
+  withMessagePrefix(prefix: string): CliFailure {
+    return new CliFailure({
+      code: this.code,
+      message: `${prefix}${this.message}`,
+      exitCode: this.exitCode,
+      httpStatus: this.httpStatus,
+      retryable: this.retryable,
+      attempts: this.attempts,
+      apiError: this.apiError,
+    })
+  }
 }
 
 /** Replace every occurrence of each secret value with a fixed marker. */
