@@ -56,6 +56,16 @@ test('retryDelayMs uses the server delay when one is parsed', () => {
   assert.equal(retryDelayMs(1, 2000, 60_000), 2000)
 })
 
+test('retryDelayMs floors a server delay below 100ms to 100ms', () => {
+  // A zero-delay reconnect trips a libuv teardown assertion on Windows
+  // (async.c uv_async_send on a closing handle), and an immediate retry
+  // against a rate-limited API is wrong anyway.
+  assert.equal(retryDelayMs(1, 0, 60_000), 100)
+  assert.equal(retryDelayMs(1, 40, 60_000), 100)
+  // The remaining budget still wins over the floor.
+  assert.equal(retryDelayMs(1, 0, 60), 60)
+})
+
 test('retryDelayMs caps the server delay at the remaining budget', () => {
   assert.equal(retryDelayMs(1, 30_000, 4000), 4000)
 })
