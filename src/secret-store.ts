@@ -10,14 +10,6 @@ import {CliFailure, EXIT} from './errors.js'
 
 const SERVICE = 'intelligrc-cli'
 
-export interface SecretStore {
-  /** Return the stored secret, or null when no entry exists. */
-  get(profileName: string): string | null
-  set(profileName: string, secret: string): void
-  /** Delete the entry. Returns false when no entry existed. */
-  delete(profileName: string): boolean
-}
-
 function isNoEntryError(error: unknown): boolean {
   return error instanceof Error && /no matching entry|no entry/i.test(error.message)
 }
@@ -33,7 +25,8 @@ function storeFailure(operation: string, error: unknown): CliFailure {
   })
 }
 
-export class KeyringSecretStore implements SecretStore {
+export class KeyringSecretStore {
+  /** Return the stored secret, or null when no entry exists. */
   get(profileName: string): string | null {
     try {
       return new Entry(SERVICE, profileName).getPassword()
@@ -54,6 +47,7 @@ export class KeyringSecretStore implements SecretStore {
     }
   }
 
+  /** Delete the entry. Returns false when no entry existed. */
   delete(profileName: string): boolean {
     try {
       return new Entry(SERVICE, profileName).deleteCredential()

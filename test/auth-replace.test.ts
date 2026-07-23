@@ -1,31 +1,31 @@
 import assert from 'node:assert/strict'
-import {chmodSync, readFileSync} from 'node:fs'
-import {join} from 'node:path'
+import {chmodSync, mkdirSync} from 'node:fs'
+import {dirname} from 'node:path'
 import {test} from 'node:test'
 
+import {
+  type AuthContext,
+  profilesPath,
+  readKeyring,
+  readProfiles,
+  setupAuthContext,
+} from './helpers/auth-fixtures.ts'
 import {type FakeApi, startFakeApi} from './helpers/fake-api.ts'
-import {fakeKeyringEnv, makeIsolatedHome, runCli} from './helpers/run-cli.ts'
+import {runCli} from './helpers/run-cli.ts'
 
 const FIRST_SECRET = 'first-secret-value-111'
 const SECOND_SECRET = 'second-secret-value-222'
 
-function setup() {
-  const home = makeIsolatedHome()
-  const keyringFile = join(home, 'fake-keyring.json')
-  const env = {
-    ...fakeKeyringEnv(keyringFile),
-    INTELLIGRC_ALLOW_HTTP_LOCALHOST: '1',
+function setup(): AuthContext {
+  return setupAuthContext({
     FIRST_SECRET_VAR: FIRST_SECRET,
     SECOND_SECRET_VAR: SECOND_SECRET,
-  }
-  return {home, keyringFile, env}
+  })
 }
-
-type Context = ReturnType<typeof setup>
 
 function login(
   api: FakeApi,
-  ctx: Context,
+  ctx: AuthContext,
   options: {
     secretEnv?: string
     clientId?: string
@@ -51,23 +51,18 @@ function login(
   )
 }
 
-async function createInitialProfile(api: FakeApi, ctx: Context): Promise<void> {
+async function createInitialProfile(api: FakeApi, ctx: AuthContext): Promise<void> {
   api.enqueueTenants([{id: 'tenant-1', name: 'Original'}])
   const result = await login(api, ctx)
   assert.equal(result.code, 0, result.stderr)
 }
 
-function readProfile(ctx: Context): Record<string, unknown> {
-  const file = JSON.parse(
-    readFileSync(join(ctx.home, '.config', 'intelligrc', 'profiles.json'), 'utf8'),
-  ) as {profiles: Record<string, Record<string, unknown>>}
-  return file.profiles.acme
+function readProfile(ctx: AuthContext): Record<string, unknown> {
+  return readProfiles(ctx.home).profiles.acme
 }
 
-function storedSecrets(ctx: Context): string[] {
-  return Object.values(
-    JSON.parse(readFileSync(ctx.keyringFile, 'utf8')) as Record<string, string>,
-  )
+function storedSecrets(ctx: AuthContext): string[] {
+  return Object.values(readKeyring(ctx))
 }
 
 test('login without --replace leaves an existing profile unchanged', async () => {
@@ -124,12 +119,12 @@ test(
   async () => {
     const ctx = setup()
     const api = await startFakeApi()
-    const configDir = join(ctx.home, '.config', 'intelligrc')
+    const configDir = dirname(profilesPath(ctx.home))
     try {
       await createInitialProfile(api, ctx)
       api.enqueueTenants([{id: 'tenant-2', name: 'Replacement'}])
 
-      // Make profiles.json unwritable so the configuration write fails
+      // Make profiles.json unwritable so the profiles.json write fails
       // after the new secret is already stored.
       chmodSync(configDir, 0o500)
 
@@ -180,3 +175,38 @@ test('a failed secret write during replacement leaves the configuration untouche
     await api.close()
   }
 })
+
+test(
+  'a failed rollback names the secret store entry that requires repair',
+  {skip: process.platform === 'win32'},
+  async () => {
+    const ctx = setup()
+    const api = await startFakeApi()
+    const configDir = dirname(profilesPath(ctx.home))
+    try {
+      // Fresh profile: the profiles.json write fails, and rollback (which
+      // deletes the just-written secret) fails too.
+      mkdirSync(configDir, {recursive: true})
+      chmodSync(configDir, 0o500)
+      api.enqueueTenants([{id: 'tenant-1', name: 'Original'}])
+
+      const result = await login(api, ctx, {
+        env: {...ctx.env, INTELLIGRC_FAKE_KEYRING_FAIL: 'delete'},
+      })
+
+      assert.equal(result.code, 3)
+      const error = (JSON.parse(result.stderr) as {error: {code: string; message: string}})
+        .error
+      assert.equal(error.code, 'rollback-failed')
+      // The exact component that requires repair is named.
+      assert.ok(error.message.includes('intelligrc-cli'))
+      assert.ok(error.message.includes('acme'))
+
+      // The stranded secret is the state the message describes.
+      assert.deepEqual(storedSecrets(ctx), [FIRST_SECRET])
+    } finally {
+      chmodSync(configDir, 0o700)
+      await api.close()
+    }
+  },
+)

@@ -1,60 +1,27 @@
 import assert from 'node:assert/strict'
-import {readFileSync} from 'node:fs'
-import {join} from 'node:path'
+import {chmodSync} from 'node:fs'
+import {dirname} from 'node:path'
 import {test} from 'node:test'
 
+import {
+  type AuthContext,
+  createProfile,
+  profilesPath,
+  readKeyring,
+  readProfiles,
+  setupAuthContext,
+} from './helpers/auth-fixtures.ts'
 import {startFakeApi} from './helpers/fake-api.ts'
-import {fakeKeyringEnv, makeIsolatedHome, runCli} from './helpers/run-cli.ts'
+import {runCli} from './helpers/run-cli.ts'
 
-const SECRET = 'super-secret-value-123'
-
-function setup() {
-  const home = makeIsolatedHome()
-  const keyringFile = join(home, 'fake-keyring.json')
-  const env = {
-    ...fakeKeyringEnv(keyringFile),
-    INTELLIGRC_ALLOW_HTTP_LOCALHOST: '1',
-    TEST_CLIENT_SECRET: SECRET,
-  }
-  return {home, keyringFile, env}
-}
-
-async function createProfile(
-  api: Awaited<ReturnType<typeof startFakeApi>>,
-  ctx: ReturnType<typeof setup>,
-  name: string,
-): Promise<void> {
-  api.enqueueTenants([{id: `tenant-${name}`, name: `Tenant ${name}`}])
-  const result = await runCli(
-    [
-      'auth',
-      'login',
-      '--profile',
-      name,
-      '--client-id',
-      `client-${name}`,
-      '--client-secret-env',
-      'TEST_CLIENT_SECRET',
-      '--base-url',
-      api.url,
-    ],
-    {home: ctx.home, env: ctx.env},
-  )
-  assert.equal(result.code, 0, result.stderr)
-}
-
-async function listNames(ctx: ReturnType<typeof setup>): Promise<string[]> {
+async function listNames(ctx: AuthContext): Promise<string[]> {
   const result = await runCli(['auth', 'list'], {home: ctx.home, env: ctx.env})
   assert.equal(result.code, 0, result.stderr)
   return (JSON.parse(result.stdout) as Array<{name: string}>).map((row) => row.name)
 }
 
-function readKeyring(ctx: ReturnType<typeof setup>): Record<string, string> {
-  return JSON.parse(readFileSync(ctx.keyringFile, 'utf8'))
-}
-
 test('remove deletes exactly the named profile and its secret together', async () => {
-  const ctx = setup()
+  const ctx = setupAuthContext()
   const api = await startFakeApi()
   try {
     await createProfile(api, ctx, 'alpha')
@@ -82,7 +49,7 @@ test('remove deletes exactly the named profile and its secret together', async (
 })
 
 test('remove fails with exit code 3 for an unknown profile', async () => {
-  const ctx = setup()
+  const ctx = setupAuthContext()
 
   const result = await runCli(['auth', 'remove', '--profile', 'ghost'], {
     home: ctx.home,
@@ -95,7 +62,7 @@ test('remove fails with exit code 3 for an unknown profile', async () => {
 })
 
 test('remove reports the secret store as the failed component and keeps the profile', async () => {
-  const ctx = setup()
+  const ctx = setupAuthContext()
   const api = await startFakeApi()
   try {
     await createProfile(api, ctx, 'alpha')
@@ -117,3 +84,39 @@ test('remove reports the secret store as the failed component and keeps the prof
     await api.close()
   }
 })
+
+test(
+  'remove names profiles.json as the failed component when the write fails',
+  {skip: process.platform === 'win32'},
+  async () => {
+    const ctx = setupAuthContext()
+    const api = await startFakeApi()
+    const configDir = dirname(profilesPath(ctx.home))
+    try {
+      await createProfile(api, ctx, 'alpha')
+
+      // profiles.json stays readable inside the read-only directory, so
+      // remove proceeds past the secret deletion and fails on the write.
+      chmodSync(configDir, 0o500)
+
+      const result = await runCli(['auth', 'remove', '--profile', 'alpha'], {
+        home: ctx.home,
+        env: ctx.env,
+      })
+
+      assert.equal(result.code, 3)
+      const error = (JSON.parse(result.stderr) as {error: {code: string; message: string}})
+        .error
+      assert.equal(error.code, 'profiles-file-write-failed')
+      assert.ok(error.message.includes('profiles.json'))
+
+      // The secret is already gone; the profile entry remains for repair.
+      chmodSync(configDir, 0o700)
+      assert.deepEqual(readKeyring(ctx), {})
+      assert.ok(readProfiles(ctx.home).profiles.alpha)
+    } finally {
+      chmodSync(configDir, 0o700)
+      await api.close()
+    }
+  },
+)

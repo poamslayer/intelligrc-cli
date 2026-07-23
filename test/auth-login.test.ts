@@ -1,45 +1,19 @@
 import assert from 'node:assert/strict'
 import {existsSync, readFileSync} from 'node:fs'
-import {join} from 'node:path'
 import {test} from 'node:test'
 
+import {
+  type AuthContext,
+  profilesPath,
+  readKeyring,
+  readProfiles,
+  setupAuthContext as setup,
+  TEST_SECRET as SECRET,
+} from './helpers/auth-fixtures.ts'
 import {type FakeApi, startFakeApi} from './helpers/fake-api.ts'
-import {fakeKeyringEnv, makeIsolatedHome, runCli} from './helpers/run-cli.ts'
+import {runCli} from './helpers/run-cli.ts'
 
-const SECRET = 'super-secret-value-123'
-
-interface Context {
-  home: string
-  keyringFile: string
-  env: Record<string, string>
-}
-
-function setup(): Context {
-  const home = makeIsolatedHome()
-  const keyringFile = join(home, 'fake-keyring.json')
-  const env = {
-    ...fakeKeyringEnv(keyringFile),
-    INTELLIGRC_ALLOW_HTTP_LOCALHOST: '1',
-    TEST_CLIENT_SECRET: SECRET,
-  }
-  return {home, keyringFile, env}
-}
-
-function profilesPath(home: string): string {
-  return join(home, '.config', 'intelligrc', 'profiles.json')
-}
-
-function readProfiles(home: string): {profiles: Record<string, unknown>} {
-  return JSON.parse(readFileSync(profilesPath(home), 'utf8'))
-}
-
-function readKeyring(ctx: Context): Record<string, string> {
-  if (!existsSync(ctx.keyringFile)) {
-    return {}
-  }
-
-  return JSON.parse(readFileSync(ctx.keyringFile, 'utf8'))
-}
+type Context = AuthContext
 
 interface LoginOptions {
   secretEnv?: string
@@ -301,7 +275,9 @@ test('login redacts the client secret from an upstream error body', async () => 
   try {
     api.enqueue({
       status: 500,
-      rawBody: JSON.stringify({detail: `server saw secret ${SECRET} and failed`}),
+      rawBody: JSON.stringify({
+        detail: `server saw secret ${SECRET} for client client-1 and failed`,
+      }),
     })
 
     const result = await login(api, ctx)
@@ -309,8 +285,32 @@ test('login redacts the client secret from an upstream error body', async () => 
     assert.equal(result.code, 8)
     assert.ok(!result.stdout.includes(SECRET))
     assert.ok(!result.stderr.includes(SECRET))
+    assert.ok(!result.stderr.includes('client-1'), 'client ID must be redacted')
     assert.notEqual(result.stderr, '')
     assert.ok(!existsSync(profilesPath(ctx.home)))
+  } finally {
+    await api.close()
+  }
+})
+
+test('login redacts before bounding an oversized upstream error body', async () => {
+  const ctx = setup()
+  const api = await startFakeApi()
+  try {
+    // The secret sits past the 16 KiB bound. Bounding before redaction
+    // would cut the secret in half and leak its prefix.
+    const boundary = 16 * 1024
+    api.enqueue({
+      status: 500,
+      rawBody: `${'x'.repeat(boundary - 10)}${SECRET}${'y'.repeat(200)}`,
+    })
+
+    const result = await login(api, ctx)
+
+    assert.equal(result.code, 8)
+    assert.ok(!result.stderr.includes(SECRET))
+    assert.ok(!result.stderr.includes(SECRET.slice(0, 10)), 'no secret prefix may leak')
+    assert.ok(result.stderr.includes('[truncated]'))
   } finally {
     await api.close()
   }

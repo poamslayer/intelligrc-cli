@@ -48,10 +48,13 @@ export default class AuthLogin extends Command {
 
     const {flags} = await this.parse(AuthLogin)
 
+    // Values that must never reach any output. The client ID and tenant ID
+    // join the client secret per the issue #1 redaction decision.
     const secrets: string[] = []
     try {
       const profileName = flags.profile as string
       const clientId = flags['client-id'] as string
+      secrets.push(clientId)
 
       if (!PROFILE_NAME_PATTERN.test(profileName)) {
         throw new CliFailure({
@@ -104,6 +107,7 @@ export default class AuthLogin extends Command {
       }
 
       const tenant = tenants[0]
+      secrets.push(tenant.id)
       const settings: ProfileSettings = {
         clientId,
         tenantId: tenant.id,
@@ -183,7 +187,7 @@ export default class AuthLogin extends Command {
   }
 
   /**
-   * Undo the secret write after a failed configuration write. A failed
+   * Undo the secret write after a failed profiles.json write. A failed
    * restore surfaces the exact component that requires repair.
    */
   private rollbackSecret(

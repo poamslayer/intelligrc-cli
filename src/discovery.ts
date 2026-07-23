@@ -4,7 +4,7 @@
  * array of tenants. Login uses a single attempt with a 30-second limit; the
  * general read-retry policy ships with the API commands.
  */
-import {CliFailure, EXIT} from './errors.js'
+import {CliFailure, EXIT, redact} from './errors.js'
 
 export interface DiscoveredTenant {
   id: string
@@ -12,11 +12,21 @@ export interface DiscoveredTenant {
 }
 
 const REQUEST_TIMEOUT_MS = 30_000
-/** Preserve at most this much upstream error text after redaction. */
-const MAX_PRESERVED_BODY_BYTES = 16 * 1024
+/**
+ * Bound for preserved upstream error text, applied after redaction so a
+ * credential straddling the boundary can never leave a partial value
+ * behind. Measured in UTF-16 code units, which equals bytes for the
+ * ASCII bodies the contract describes.
+ */
+const MAX_PRESERVED_BODY_LENGTH = 16 * 1024
+const TRUNCATION_MARKER = '…[truncated]'
 
-function apiErrorFromBody(bodyText: string): unknown {
-  const bounded = bodyText.slice(0, MAX_PRESERVED_BODY_BYTES)
+function apiErrorFromBody(bodyText: string, redactionValues: string[]): unknown {
+  const redacted = redact(bodyText, redactionValues)
+  const bounded =
+    redacted.length > MAX_PRESERVED_BODY_LENGTH
+      ? redacted.slice(0, MAX_PRESERVED_BODY_LENGTH) + TRUNCATION_MARKER
+      : redacted
   try {
     return JSON.parse(bounded)
   } catch {
@@ -56,6 +66,7 @@ export async function discoverTenants(
   }
 
   const bodyText = await response.text()
+  const redactionValues = [clientId, clientSecret]
 
   if (response.status === 401 || response.status === 403) {
     throw new CliFailure({
@@ -64,7 +75,7 @@ export async function discoverTenants(
       exitCode: EXIT.authentication,
       httpStatus: response.status,
       attempts: 1,
-      apiError: apiErrorFromBody(bodyText),
+      apiError: apiErrorFromBody(bodyText, redactionValues),
     })
   }
 
@@ -88,7 +99,7 @@ export async function discoverTenants(
       httpStatus: response.status,
       retryable: [408, 429, 500, 502, 503, 504].includes(response.status),
       attempts: 1,
-      apiError: apiErrorFromBody(bodyText),
+      apiError: apiErrorFromBody(bodyText, redactionValues),
     })
   }
 
@@ -102,7 +113,7 @@ export async function discoverTenants(
       exitCode: EXIT.apiFailure,
       httpStatus: response.status,
       attempts: 1,
-      apiError: apiErrorFromBody(bodyText),
+      apiError: apiErrorFromBody(bodyText, redactionValues),
     })
   }
 
