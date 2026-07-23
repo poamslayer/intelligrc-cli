@@ -136,6 +136,13 @@ const dataTypeIdArg: ArgSpec = {
   summary: 'Integer data type identifier, substituted into the documented request path.',
 }
 
+const facilityIdArg: ArgSpec = {
+  name: 'id',
+  type: 'integer',
+  required: true,
+  summary: 'Integer facility identifier, substituted into the documented request path.',
+}
+
 const iclVersionIdFlag: FlagSpec = {
   name: 'icl-version-id',
   type: 'option',
@@ -364,6 +371,30 @@ export const commandSpecs: CommandSpec[] = [
     flags: [profileFlag, apiOutputFlag],
   },
   {
+    id: 'facility list',
+    summary: 'List the facilities for the profile tenant.',
+    kind: 'api',
+    permission: 'Locations: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'facility get',
+    summary: 'Show one facility by its integer identifier.',
+    kind: 'api',
+    permission: 'Locations: Read',
+    args: [facilityIdArg],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'facility data-types',
+    summary: 'List the data types associated with one facility.',
+    kind: 'api',
+    permission: 'Locations: Read',
+    args: [facilityIdArg],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
     id: 'lookup action-plan project-statuses',
     summary: 'List the action-plan project status options.',
     kind: 'api',
@@ -496,6 +527,38 @@ export const commandSpecs: CommandSpec[] = [
     summary: 'List the data-type availability level options.',
     kind: 'api',
     permission: 'DataTypes: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'lookup facility types',
+    summary: 'List the facility type options.',
+    kind: 'api',
+    permission: 'Locations: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'lookup facility states',
+    summary: 'List the supported US state and territory options for facilities.',
+    kind: 'api',
+    permission: 'Locations: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'lookup facility data-types',
+    summary: 'List the data type options that can be associated with a facility.',
+    kind: 'api',
+    permission: 'Locations: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'lookup facility asset-categories',
+    summary: 'List the asset category options that can be associated with a facility.',
+    kind: 'api',
+    permission: 'Locations: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
   },

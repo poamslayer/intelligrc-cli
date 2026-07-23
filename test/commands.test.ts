@@ -4,8 +4,8 @@ import {test} from 'node:test'
 import {runCli} from './helpers/run-cli.ts'
 
 // Expected catalog, written out by hand from issues #2, #3, #4, #5, #6,
-// #7, and #8. This literal is the independent source of truth; it must
-// not be derived from src/manifest.ts.
+// #7, #8, and #9. This literal is the independent source of truth; it
+// must not be derived from src/manifest.ts.
 const expectedCatalog = {
   catalogVersion: 1,
   commands: [
@@ -571,6 +571,89 @@ const expectedCatalog = {
       ],
     },
     {
+      id: 'facility list',
+      summary: 'List the facilities for the profile tenant.',
+      kind: 'api',
+      permission: 'Locations: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'facility get',
+      summary: 'Show one facility by its integer identifier.',
+      kind: 'api',
+      permission: 'Locations: Read',
+      args: [
+        {
+          name: 'id',
+          type: 'integer',
+          required: true,
+          summary: 'Integer facility identifier, substituted into the documented request path.',
+        },
+      ],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'facility data-types',
+      summary: 'List the data types associated with one facility.',
+      kind: 'api',
+      permission: 'Locations: Read',
+      args: [
+        {
+          name: 'id',
+          type: 'integer',
+          required: true,
+          summary: 'Integer facility identifier, substituted into the documented request path.',
+        },
+      ],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
       id: 'lookup action-plan project-statuses',
       summary: 'List the action-plan project status options.',
       kind: 'api',
@@ -943,6 +1026,98 @@ const expectedCatalog = {
       summary: 'List the data-type availability level options.',
       kind: 'api',
       permission: 'DataTypes: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'lookup facility types',
+      summary: 'List the facility type options.',
+      kind: 'api',
+      permission: 'Locations: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'lookup facility states',
+      summary: 'List the supported US state and territory options for facilities.',
+      kind: 'api',
+      permission: 'Locations: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'lookup facility data-types',
+      summary: 'List the data type options that can be associated with a facility.',
+      kind: 'api',
+      permission: 'Locations: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'lookup facility asset-categories',
+      summary: 'List the asset category options that can be associated with a facility.',
+      kind: 'api',
+      permission: 'Locations: Read',
       args: [],
       flags: [
         {
