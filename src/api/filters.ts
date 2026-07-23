@@ -14,6 +14,26 @@ const INT32_MAX = 2_147_483_647
 const INTEGER_PATTERN = /^-?\d+$/
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
+/**
+ * Build the query pairs for the shared optional filters. An omitted flag
+ * contributes nothing, so it never appears in the query string.
+ */
+export function buildFilterQuery(
+  evaluationId: string | undefined,
+  frameworkId: string | undefined,
+): Array<[name: string, value: string]> {
+  const query: Array<[name: string, value: string]> = []
+  if (evaluationId !== undefined) {
+    query.push(['evaluationId', parseEvaluationId(evaluationId)])
+  }
+
+  if (frameworkId !== undefined) {
+    query.push(['frameworkId', parseFrameworkId(frameworkId)])
+  }
+
+  return query
+}
+
 /** Validate one --evaluation-id value as a documented int32 integer. */
 export function parseEvaluationId(raw: string): string {
   const numeric = Number(raw)

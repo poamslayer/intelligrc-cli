@@ -37,13 +37,53 @@ export interface CommandSpec {
    */
   kind: 'local' | 'profile' | 'api'
   /**
-   * Documented IntelliGRC permission. Null for local and profile commands,
-   * and for API operations whose contract documents no permission (the
-   * tenant-list operation).
+   * Documented IntelliGRC permission, formatted "<Area>: <Permission>"
+   * from the operation's permission table. Null for local and profile
+   * commands, and for API operations whose contract documents no
+   * permission (the tenant-list operation). The CLI never checks whether
+   * the selected profile holds a documented permission.
    */
-  permission: null
+  permission: string | null
   args: ArgSpec[]
   flags: FlagSpec[]
+}
+
+/**
+ * Shared flag literals for API commands. One definition per flag keeps
+ * the wording and allowed values identical across the command specs.
+ */
+const profileFlag: FlagSpec = {
+  name: 'profile',
+  type: 'option',
+  required: true,
+  summary: 'Profile that supplies the credential, tenant, and base URL.',
+}
+
+const apiOutputFlag: FlagSpec = {
+  name: 'output',
+  type: 'option',
+  required: false,
+  allowedValues: ['json', 'jsonl', 'table'],
+  default: 'json',
+  summary: 'Output format.',
+}
+
+const evaluationIdFlag: FlagSpec = {
+  name: 'evaluation-id',
+  type: 'option',
+  required: false,
+  summary:
+    'Integer evaluation identifier, sent as the documented evaluationId ' +
+    'query parameter. Omitted from the request when not given.',
+}
+
+const frameworkIdFlag: FlagSpec = {
+  name: 'framework-id',
+  type: 'option',
+  required: false,
+  summary:
+    'Framework identifier (UUID), sent as the documented frameworkId ' +
+    'query parameter. Omitted from the request when not given.',
 }
 
 export const commandSpecs: CommandSpec[] = [
@@ -153,6 +193,38 @@ export const commandSpecs: CommandSpec[] = [
     ],
   },
   {
+    id: 'evaluation current',
+    summary: 'Show the current evaluation for the profile tenant.',
+    kind: 'api',
+    permission: 'Evaluations: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'assessment-objective list',
+    summary: 'List assessment objectives and their statuses for an evaluation.',
+    kind: 'api',
+    permission: 'GapAnalysis: Read',
+    args: [],
+    flags: [profileFlag, evaluationIdFlag, frameworkIdFlag, apiOutputFlag],
+  },
+  {
+    id: 'control list',
+    summary: 'List controls and their summary statements for an evaluation.',
+    kind: 'api',
+    permission: 'GapAnalysis: Read',
+    args: [],
+    flags: [profileFlag, evaluationIdFlag, frameworkIdFlag, apiOutputFlag],
+  },
+  {
+    id: 'evidence for-evaluation',
+    summary: 'List uploaded evidence for an evaluation.',
+    kind: 'api',
+    permission: 'Evidence: Read',
+    args: [],
+    flags: [profileFlag, evaluationIdFlag, frameworkIdFlag, apiOutputFlag],
+  },
+  {
     id: 'tenant list',
     summary: 'List the tenants manageable by the profile credential.',
     kind: 'api',
@@ -165,14 +237,7 @@ export const commandSpecs: CommandSpec[] = [
         required: true,
         summary: 'Profile that supplies the credential and base URL.',
       },
-      {
-        name: 'output',
-        type: 'option',
-        required: false,
-        allowedValues: ['json'],
-        default: 'json',
-        summary: 'Output format.',
-      },
+      apiOutputFlag,
     ],
   },
   {
