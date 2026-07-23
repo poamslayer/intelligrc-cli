@@ -143,6 +143,20 @@ const facilityIdArg: ArgSpec = {
   summary: 'Integer facility identifier, substituted into the documented request path.',
 }
 
+const interconnectionIdArg: ArgSpec = {
+  name: 'id',
+  type: 'integer',
+  required: true,
+  summary: 'Integer interconnection identifier, substituted into the documented request path.',
+}
+
+const personnelIdArg: ArgSpec = {
+  name: 'id',
+  type: 'integer',
+  required: true,
+  summary: 'Integer personnel identifier, substituted into the documented request path.',
+}
+
 const iclVersionIdFlag: FlagSpec = {
   name: 'icl-version-id',
   type: 'option',
@@ -395,6 +409,46 @@ export const commandSpecs: CommandSpec[] = [
     flags: [profileFlag, apiOutputFlag],
   },
   {
+    id: 'interconnection list',
+    summary: 'List the interconnections for the profile tenant.',
+    kind: 'api',
+    permission: 'Interconnections: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'interconnection get',
+    summary: 'Show one interconnection by its integer identifier.',
+    kind: 'api',
+    permission: 'Interconnections: Read',
+    args: [interconnectionIdArg],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'interconnection data-types',
+    summary: 'List the data types associated with one interconnection.',
+    kind: 'api',
+    permission: 'Interconnections: Read',
+    args: [interconnectionIdArg],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'personnel list',
+    summary: 'List the personnel for the profile tenant.',
+    kind: 'api',
+    permission: 'Personnel: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'personnel get',
+    summary: 'Show one person by their integer identifier.',
+    kind: 'api',
+    permission: 'Personnel: Read',
+    args: [personnelIdArg],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
     id: 'lookup action-plan project-statuses',
     summary: 'List the action-plan project status options.',
     kind: 'api',
@@ -559,6 +613,30 @@ export const commandSpecs: CommandSpec[] = [
     summary: 'List the asset category options that can be associated with a facility.',
     kind: 'api',
     permission: 'Locations: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'lookup interconnection types',
+    summary: 'List the interconnection type options, each with its sub-types.',
+    kind: 'api',
+    permission: 'Interconnections: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'lookup interconnection authorization-types',
+    summary: 'List the authorization type options for interconnections.',
+    kind: 'api',
+    permission: 'Interconnections: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'lookup interconnection asset-categories',
+    summary: 'List the asset category options that can be associated with an interconnection.',
+    kind: 'api',
+    permission: 'Interconnections: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
   },
