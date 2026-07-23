@@ -3,14 +3,18 @@
 #
 # Start conditions a human controls:
 # - Only workflow_dispatch starts this workflow, from a chosen branch.
-#   Pull-request code cannot trigger it.
-# - Every job runs in the "live" environment. The repository owner
-#   creates that environment, adds required reviewers to it, and stores
-#   the two secrets there, so a human review gates each run and
-#   unreviewed code never reaches the credential.
+#   Pull-request code cannot trigger it, and pull-request jobs never
+#   receive the environment secrets. Only a repository writer can start
+#   a run, and the run uses exactly the ref that writer selects.
+# - Every job runs in the "live" environment, which holds the secrets.
+#   Required-reviewer protection on environments needs a paid GitHub
+#   plan for private repositories; on the Free plan the dispatch step
+#   itself is the human gate. Upgrading the plan re-enables the reviewer
+#   rule without a workflow change.
 #
 # Operator prerequisites, before the first run:
-# 1. Create a GitHub environment named "live" with required reviewers.
+# 1. The GitHub environment named "live" exists (created 2026-07-23).
+#    Add required reviewers to it if the billing plan allows.
 # 2. Store these environment secrets:
 #    - INTELLIGRC_LIVE_CLIENT_ID: the dedicated credential's client ID.
 #    - INTELLIGRC_LIVE_CLIENT_SECRET: its client secret.
