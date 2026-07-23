@@ -64,12 +64,45 @@ export function parseEvaluationId(raw: string): string {
 
 /** Validate one --framework-id value as a universally unique identifier. */
 export function parseFrameworkId(raw: string): string {
+  return parseUuid(raw, 'invalid-framework-id', 'framework', 'frameworkId parameter')
+}
+
+/** Validate one --assessment-objective-id value as a universally unique identifier. */
+export function parseAssessmentObjectiveId(raw: string): string {
+  return parseUuid(
+    raw,
+    'invalid-assessment-objective-id',
+    'assessment objective',
+    'assessmentObjectiveId parameter',
+  )
+}
+
+/** Validate one --parent-id value as a universally unique identifier. */
+export function parseParentId(raw: string): string {
+  return parseUuid(raw, 'invalid-parent-id', 'parent folder', 'parentId parameter')
+}
+
+/** Validate one --icl-version-id value as a universally unique identifier. */
+export function parseIclVersionId(raw: string): string {
+  return parseUuid(
+    raw,
+    'invalid-icl-version-id',
+    'Intelligent Control Library version',
+    'iclVersionId path parameter',
+  )
+}
+
+/**
+ * Shared UUID validation. Every documented UUID input fails the same way:
+ * exit 2 with a stable code, before any keyring or network access.
+ */
+function parseUuid(raw: string, code: string, label: string, documentedName: string): string {
   if (!UUID_PATTERN.test(raw)) {
     throw new CliFailure({
-      code: 'invalid-framework-id',
+      code,
       message:
-        `The value "${raw}" is not a valid framework identifier. ` +
-        'The documented frameworkId parameter is a universally unique ' +
+        `The value "${raw}" is not a valid ${label} identifier. ` +
+        `The documented ${documentedName} is a universally unique ` +
         'identifier (UUID), for example 3fa85f64-5717-4562-b3fc-2c963f66afa6.',
       exitCode: EXIT.invalidInput,
     })

@@ -40,6 +40,12 @@ export interface ApiGetOptions {
    */
   buildQuery?: () => QueryPairs
   /**
+   * Builds the request path when the documented path contains a path
+   * parameter. Runs before profile resolution under the same guarantee
+   * as buildQuery. When absent, the request uses `path` unchanged.
+   */
+  buildPath?: () => string
+  /**
    * False only for the tenant-list operation, which documents no
    * x-tenant-id header.
    */
@@ -50,6 +56,7 @@ export async function runApiGet(command: Command, options: ApiGetOptions): Promi
   let redactionValues: string[] = []
   try {
     const query = options.buildQuery?.() ?? []
+    const path = options.buildPath?.() ?? options.path
 
     const context = resolveApiContext(
       options.profile,
@@ -60,7 +67,7 @@ export async function runApiGet(command: Command, options: ApiGetOptions): Promi
 
     const result = await apiRequest({
       baseUrl: context.baseUrl,
-      path: options.path,
+      path,
       query,
       clientId: context.clientId,
       clientSecret: context.clientSecret,
