@@ -80,3 +80,41 @@ export function promptSecret(
     input.resume()
   })
 }
+
+/**
+ * Visible yes-or-no prompt for a destructive action, built on the same
+ * stdin-reading mechanism as promptSecret but without masking, so the reader
+ * sees what they type. It reads one line and resolves true only for an
+ * affirmative answer ("y" or "yes", case-insensitive). Every other answer,
+ * including a bare Enter, resolves false — the default is always "no", so an
+ * accidental Enter never confirms.
+ */
+export function promptConfirm(
+  input: PromptInput,
+  output: NodeJS.WritableStream,
+  promptText: string,
+): Promise<boolean> {
+  return new Promise((resolve) => {
+    output.write(promptText)
+
+    let value = ''
+
+    const finish = (answer: string): void => {
+      input.removeListener('data', onData)
+      input.pause()
+      const normalized = answer.trim().toLowerCase()
+      resolve(normalized === 'y' || normalized === 'yes')
+    }
+
+    const onData = (chunk: Buffer | string): void => {
+      value += chunk.toString('utf8')
+      const newlineIndex = value.search(/[\r\n]/)
+      if (newlineIndex !== -1) {
+        finish(value.slice(0, newlineIndex))
+      }
+    }
+
+    input.on('data', onData)
+    input.resume()
+  })
+}
