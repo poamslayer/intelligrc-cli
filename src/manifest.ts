@@ -7,7 +7,7 @@
  * Later slices extend this file with API commands and reuse it for command
  * registration checks, help text, permission text, and contract tests.
  */
-import {Flags, type Interfaces} from '@oclif/core'
+import {Args, Flags, type Interfaces} from '@oclif/core'
 
 import {OUTPUT_FORMATS} from './output.js'
 
@@ -127,6 +127,13 @@ const parentIdFlag: FlagSpec = {
     'Parent folder identifier (UUID), sent as the documented parentId ' +
     'query parameter. Omitted from the request when not given, which ' +
     'lists all folders.',
+}
+
+const dataTypeIdArg: ArgSpec = {
+  name: 'id',
+  type: 'integer',
+  required: true,
+  summary: 'Integer data type identifier, substituted into the documented request path.',
 }
 
 const iclVersionIdFlag: FlagSpec = {
@@ -333,6 +340,30 @@ export const commandSpecs: CommandSpec[] = [
     flags: [profileFlag, evaluationIdFlag, apiOutputFlag],
   },
   {
+    id: 'boundary list',
+    summary: 'List the boundaries (systems) for the profile tenant.',
+    kind: 'api',
+    permission: 'Boundaries: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'data-type get',
+    summary: 'Show one data type by its integer identifier.',
+    kind: 'api',
+    permission: 'DataTypes: Read',
+    args: [dataTypeIdArg],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'data-type list',
+    summary: 'List the data types for the profile tenant.',
+    kind: 'api',
+    permission: 'DataTypes: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
     id: 'lookup action-plan project-statuses',
     summary: 'List the action-plan project status options.',
     kind: 'api',
@@ -401,6 +432,70 @@ export const commandSpecs: CommandSpec[] = [
     summary: 'List the assessment objective status options.',
     kind: 'api',
     permission: 'GapAnalysis: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'lookup boundary operational-statuses',
+    summary: 'List the boundary operational status options.',
+    kind: 'api',
+    permission: 'Boundaries: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'lookup boundary information-system-types',
+    summary: 'List the boundary information system type options.',
+    kind: 'api',
+    permission: 'Boundaries: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'lookup boundary confidentiality-levels',
+    summary: 'List the boundary confidentiality level options.',
+    kind: 'api',
+    permission: 'Boundaries: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'lookup boundary integrity-levels',
+    summary: 'List the boundary integrity level options.',
+    kind: 'api',
+    permission: 'Boundaries: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'lookup boundary availability-levels',
+    summary: 'List the boundary availability level options.',
+    kind: 'api',
+    permission: 'Boundaries: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'lookup data-type confidentiality-levels',
+    summary: 'List the data-type confidentiality level options.',
+    kind: 'api',
+    permission: 'DataTypes: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'lookup data-type integrity-levels',
+    summary: 'List the data-type integrity level options.',
+    kind: 'api',
+    permission: 'DataTypes: Read',
+    args: [],
+    flags: [profileFlag, apiOutputFlag],
+  },
+  {
+    id: 'lookup data-type availability-levels',
+    summary: 'List the data-type availability level options.',
+    kind: 'api',
+    permission: 'DataTypes: Read',
     args: [],
     flags: [profileFlag, apiOutputFlag],
   },
@@ -474,6 +569,21 @@ export function commandSpec(id: string): CommandSpec {
   }
 
   return spec
+}
+
+/**
+ * Convert one spec's args into oclif argument definitions. Every arg is
+ * defined as a string; integer validation happens in the command through
+ * the shared filter parsers, so the failure keeps the stable error code
+ * and exit-2 contract.
+ */
+export function oclifArgs(spec: CommandSpec): Interfaces.ArgInput {
+  const args: Interfaces.ArgInput = {}
+  for (const arg of spec.args) {
+    args[arg.name] = Args.string({description: arg.summary, required: arg.required})
+  }
+
+  return args
 }
 
 /** Convert one spec's flags into oclif flag definitions. */

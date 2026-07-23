@@ -91,6 +91,25 @@ export function parseEvaluationId(raw: string): string {
   return String(numeric)
 }
 
+/**
+ * Validate one data-type identifier argument as a documented int32
+ * integer and return its canonical form, so "007" is sent as "7".
+ */
+export function parseDataTypeId(raw: string): string {
+  const numeric = Number(raw)
+  if (!INTEGER_PATTERN.test(raw) || numeric < INT32_MIN || numeric > INT32_MAX) {
+    throw new CliFailure({
+      code: 'invalid-data-type-id',
+      message:
+        `The value "${raw}" is not a valid data type identifier. ` +
+        'The documented id path parameter is an integer.',
+      exitCode: EXIT.invalidInput,
+    })
+  }
+
+  return String(numeric)
+}
+
 /** Validate one --framework-id value as a universally unique identifier. */
 export function parseFrameworkId(raw: string): string {
   return parseUuid(raw, 'invalid-framework-id', 'framework', 'frameworkId parameter')
