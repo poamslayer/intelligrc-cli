@@ -115,6 +115,22 @@ test('action-plan-task list sends the documented includeSubTasks value', async (
   assert.equal(api.requests.at(-1)!.path, '/v1/ActionPlanTasks?includeSubTasks=false')
 })
 
+test('action-plan-task list combines the evaluation filter in canonical form with the Boolean', async () => {
+  api.enqueue({status: 200, body: []})
+
+  const result = await run([
+    'action-plan-task', 'list', '--profile', 'main',
+    '--evaluation-id', '007',
+    '--include-subtasks', 'true',
+  ])
+
+  assert.equal(result.code, 0, result.stderr)
+  assert.equal(
+    api.requests.at(-1)!.path,
+    '/v1/ActionPlanTasks?evaluationId=7&includeSubTasks=true',
+  )
+})
+
 test('action-plan-subtask list appends the optional evaluation filter', async () => {
   api.enqueue({status: 200, body: []})
 
