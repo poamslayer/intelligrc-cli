@@ -5,6 +5,7 @@ import {discoverTenants} from '../../discovery.js'
 import {CliFailure, EXIT, emitFailure} from '../../errors.js'
 import {commandSpec, oclifFlags} from '../../manifest.js'
 import {ProfileStore, type ProfileSettings} from '../../profile-store.js'
+import {promptSecret} from '../../prompt.js'
 import {KeyringSecretStore} from '../../secret-store.js'
 
 const spec = commandSpec('auth login')
@@ -76,7 +77,7 @@ export default class AuthLogin extends Command {
         })
       }
 
-      const clientSecret = this.acquireSecret(
+      const clientSecret = await this.acquireSecret(
         flags['client-secret-env'] as string | undefined,
       )
       secrets.push(clientSecret)
@@ -142,7 +143,7 @@ export default class AuthLogin extends Command {
     }
   }
 
-  private acquireSecret(secretEnvName: string | undefined): string {
+  private async acquireSecret(secretEnvName: string | undefined): Promise<string> {
     if (secretEnvName) {
       const value = process.env[secretEnvName]
       if (!value) {
@@ -152,6 +153,20 @@ export default class AuthLogin extends Command {
             `The environment variable "${secretEnvName}" named by ` +
             '--client-secret-env is not set or is empty.',
           exitCode: EXIT.localConfiguration,
+        })
+      }
+
+      return value
+    }
+
+    if (process.stdin.isTTY && process.stderr.isTTY) {
+      // The prompt writes to stderr: stdout carries only requested data.
+      const value = await promptSecret(process.stdin, process.stderr)
+      if (!value) {
+        throw new CliFailure({
+          code: 'client-secret-empty',
+          message: 'The client secret must not be empty.',
+          exitCode: EXIT.invalidInput,
         })
       }
 

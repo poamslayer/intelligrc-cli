@@ -266,6 +266,35 @@ test('login maps an authentication rejection to exit code 4', async () => {
   }
 })
 
+test('login without a terminal and without --client-secret-env fails before any request', async () => {
+  const ctx = setup()
+  const api = await startFakeApi()
+  try {
+    // No --client-secret-env, and the spawned process has no TTY, so the
+    // masked prompt is unavailable.
+    const result = await runCli(
+      [
+        'auth',
+        'login',
+        '--profile',
+        'acme',
+        '--client-id',
+        'client-1',
+        '--base-url',
+        api.url,
+      ],
+      {home: ctx.home, env: ctx.env},
+    )
+
+    assert.equal(result.code, 2)
+    assert.equal(stderrError(result.stderr).code, 'client-secret-prompt-unavailable')
+    assert.ok(result.stderr.includes('--client-secret-env'))
+    assert.equal(api.requests.length, 0)
+  } finally {
+    await api.close()
+  }
+})
+
 test('login redacts the client secret from an upstream error body', async () => {
   const ctx = setup()
   const api = await startFakeApi()
