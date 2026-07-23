@@ -7,7 +7,7 @@ import {test} from 'node:test'
 import {promisify} from 'node:util'
 
 import {FakeApi} from './helpers/fake-api.ts'
-import {fakeKeyringEnv, packageVersion, projectRoot} from './helpers/run-cli.ts'
+import {fakeKeyringEnv, isolatedEnv, packageVersion, projectRoot} from './helpers/run-cli.ts'
 
 const execFileAsync = promisify(execFile)
 
@@ -36,25 +36,16 @@ async function runAgainstFakeApi(
 }
 
 /**
- * Environment for one installed-binary run: isolated per-user state, no
- * inherited INTELLIGRC_* variables, plus the file-backed fake keyring.
- * Mirrors the isolation contract of test/helpers/run-cli.ts for a binary
- * outside the repository checkout.
+ * Environment for one installed-binary run: the shared per-user isolation
+ * plus the file-backed fake keyring, for a binary outside the repository
+ * checkout.
  */
 function installedEnv(home: string, extra: Record<string, string> = {}): Record<string, string> {
-  const env: Record<string, string> = {}
-  for (const [key, value] of Object.entries(process.env)) {
-    if (value !== undefined && !key.startsWith('INTELLIGRC_')) {
-      env[key] = value
-    }
+  return {
+    ...isolatedEnv(home),
+    ...fakeKeyringEnv(join(home, 'fake-keyring.json')),
+    ...extra,
   }
-
-  env.HOME = home
-  env.XDG_CONFIG_HOME = join(home, '.config')
-  env.XDG_DATA_HOME = join(home, '.local', 'share')
-  env.XDG_CACHE_HOME = join(home, '.cache')
-  Object.assign(env, fakeKeyringEnv(join(home, 'fake-keyring.json')), extra)
-  return env
 }
 
 test('a clean checkout builds, packs, installs, and serves the documented surface', {timeout: 300_000}, async () => {
@@ -78,10 +69,11 @@ test('a clean checkout builds, packs, installs, and serves the documented surfac
   assert.match(tarballListing, /package\/README\.md/)
 
   // Whitelist: the package carries the manifest, the documentation, the
-  // executable, and the built output — nothing else. Credentials, live
-  // responses, tenant data, session data, tests, and the archived API
-  // documentation can never ship because any unlisted entry fails here.
-  const allowedEntry = /^package\/(package\.json|README\.md|bin\/|dist\/)/
+  // executable, and the built JavaScript — nothing else. Credentials,
+  // live responses, tenant data, session data, tests, and the archived
+  // OpenAPI document can never ship because any unlisted entry fails
+  // here, and a non-JavaScript file under dist/ fails the same way.
+  const allowedEntry = /^package\/(package\.json|README\.md|bin\/[^/]+|dist\/.+\.js)$/
   for (const entry of tarballListing.trim().split('\n')) {
     assert.match(entry, allowedEntry, `Unexpected file in the package: ${entry}`)
   }
@@ -112,8 +104,14 @@ test('a clean checkout builds, packs, installs, and serves the documented surfac
     commands: Array<{id: string; kind: string}>
   }
   assert.equal(catalog.catalogVersion, 1)
+  assert.equal(catalog.commands.length, 56)
   assert.equal(catalog.commands.filter((command) => command.kind === 'api').length, 50)
   assert.ok(catalog.commands.some((command) => command.id === 'evaluation current'))
+  // The six local and profile commands ship in the installed catalog too.
+  const installedIds = new Set(catalog.commands.map((command) => command.id))
+  for (const id of ['auth login', 'auth list', 'auth remove', 'commands', 'doctor', 'version']) {
+    assert.ok(installedIds.has(id), `Installed catalog is missing the "${id}" command`)
+  }
 
   // Representative API commands from the installed binary against the
   // fake API: one plain documented path and one path-template command.

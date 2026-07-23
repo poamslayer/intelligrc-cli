@@ -3,7 +3,8 @@ import {readFileSync} from 'node:fs'
 import {join} from 'node:path'
 import {test} from 'node:test'
 
-import {commandSpecs} from '../dist/manifest.js'
+import {commandSpecs as builtCommandSpecs} from '../dist/manifest.js'
+import type {CommandSpec, OperationContract} from '../src/manifest.ts'
 import {projectRoot} from './helpers/run-cli.ts'
 
 /**
@@ -11,7 +12,16 @@ import {projectRoot} from './helpers/run-cli.ts'
  * document is the expected side; the built command manifest is the actual
  * side. Every comparison uses exact string equality — a case-normalized,
  * missing, duplicated, or undocumented mapping fails.
+ *
+ * The manifest import is the built dist/manifest.js (source files cannot
+ * be imported directly under type stripping), so this suite compares the
+ * build that ships. `npm test` builds before it runs; a direct
+ * `node --test` run compares whatever dist/ currently holds.
  */
+
+// The runtime value comes from the untyped built module; the erased
+// type-only import above supplies its compile-time shape.
+const commandSpecs = builtCommandSpecs as CommandSpec[]
 
 interface SwaggerParameter {
   name: string
@@ -23,22 +33,6 @@ interface SwaggerParameter {
 interface SwaggerOperation {
   description?: string
   parameters?: SwaggerParameter[]
-}
-
-interface ContractParameter {
-  name: string
-  in: 'query' | 'path'
-  required: boolean
-  type: string
-  format?: string
-  default?: unknown
-  source: {kind: 'flag' | 'arg'; name: string}
-}
-
-interface OperationContract {
-  method: 'get'
-  path: string
-  parameters: ContractParameter[]
 }
 
 const HTTP_METHODS = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace']
@@ -79,14 +73,13 @@ function documentedPermissions(operation: SwaggerOperation): string[] {
 
 const apiSpecs = commandSpecs.filter((spec) => spec.kind === 'api')
 
-function contractOf(spec: (typeof commandSpecs)[number]): OperationContract {
-  const contract = (spec as {contract?: OperationContract}).contract
-  assert.ok(contract, `API command "${spec.id}" has no contract metadata in the manifest`)
-  return contract
+function contractOf(spec: CommandSpec): OperationContract {
+  assert.ok(spec.contract, `API command "${spec.id}" has no contract metadata in the manifest`)
+  return spec.contract
 }
 
 /** The manifest spec mapped to one documented GET path, by exact string. */
-function specForPath(path: string): (typeof commandSpecs)[number] {
+function specForPath(path: string): CommandSpec {
   const matches = apiSpecs.filter((spec) => contractOf(spec).path === path)
   assert.equal(matches.length, 1, `Expected exactly one command for documented path ${path}`)
   return matches[0]
@@ -98,11 +91,14 @@ test('the archived contract documents exactly 50 GET operations', () => {
 
 test('only API commands carry contract metadata', () => {
   for (const spec of commandSpecs) {
-    const contract = (spec as {contract?: OperationContract}).contract
     if (spec.kind === 'api') {
-      assert.ok(contract, `API command "${spec.id}" has no contract metadata`)
+      contractOf(spec)
     } else {
-      assert.equal(contract, undefined, `Non-API command "${spec.id}" must not carry contract metadata`)
+      assert.equal(
+        spec.contract,
+        undefined,
+        `Non-API command "${spec.id}" must not carry contract metadata`,
+      )
     }
   }
 })

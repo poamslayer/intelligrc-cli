@@ -41,8 +41,8 @@ export interface ApiGetOptions {
   /**
    * Builds the request path when the documented path contains a path
    * parameter. Runs before profile resolution under the same guarantee
-   * as buildQuery. When absent, the request uses the documented contract
-   * path unchanged.
+   * as buildQuery. When absent, the request uses the operation
+   * contract's path unchanged.
    */
   buildPath?: () => string
   /**

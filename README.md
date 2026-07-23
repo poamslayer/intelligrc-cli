@@ -97,16 +97,16 @@ output only; failures and retry diagnostics go to standard error as one JSON obj
 
 Keep these two categories separate when relying on this CLI.
 
-Verified against the archived API contract (`official-docs/swagger/v1/swagger.json` in
-the source repository):
+Verified against the archived OpenAPI document (`official-docs/swagger/v1/swagger.json`
+in the source repository):
 
-- The contract documents exactly 50 `GET` operations, and the CLI maps each one to one
-  command. An automated contract suite compares every path, parameter, and documented
-  permission against the archived contract on every test run.
+- The archived OpenAPI document defines exactly 50 `GET` operations, and the CLI maps
+  each one to one command. An automated contract suite compares every path, parameter,
+  and documented permission against the archived OpenAPI document on every test run.
 - Tenant-scoped operations document the `x-client-id`, `x-client-secret`, and
   `x-tenant-id` headers. The tenant-list operation documents no `x-tenant-id` header.
-- The contract documents no pagination, rate-limit, or complete error contract. The CLI
-  returns each response as one payload and does not synthesize pages.
+- The archived OpenAPI document defines no pagination, rate-limit, or complete error
+  behavior. The CLI returns each response as one payload and does not synthesize pages.
 
 Assumed, not verified:
 
