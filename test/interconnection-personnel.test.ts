@@ -206,25 +206,18 @@ test('a 403 on a personnel command names the documented Personnel permission', a
   assert.match(error.message, /Personnel: Read/)
 })
 
-test('a documented 404 on interconnection get exits 7 with the not-found code', async () => {
-  api.enqueue({status: 404, body: {title: 'Not Found', status: 404}})
+// All three identifier operations document a 404 ProblemDetails response.
+for (const [argv] of ID_COMMANDS) {
+  test(`a documented 404 on ${argv.join(' ')} exits 7 with the not-found code`, async () => {
+    api.enqueue({status: 404, body: {title: 'Not Found', status: 404}})
 
-  const result = await run(['interconnection', 'get', '42', '--profile', 'main'])
+    const result = await run([...argv, '42', '--profile', 'main'])
 
-  assert.equal(result.code, 7)
-  assert.equal(result.stdout, '')
-  assert.equal(JSON.parse(result.stderr).error.code, 'not-found')
-})
-
-test('a documented 404 on personnel get exits 7 with the not-found code', async () => {
-  api.enqueue({status: 404, body: {title: 'Not Found', status: 404}})
-
-  const result = await run(['personnel', 'get', '42', '--profile', 'main'])
-
-  assert.equal(result.code, 7)
-  assert.equal(result.stdout, '')
-  assert.equal(JSON.parse(result.stderr).error.code, 'not-found')
-})
+    assert.equal(result.code, 7)
+    assert.equal(result.stdout, '')
+    assert.equal(JSON.parse(result.stderr).error.code, 'not-found')
+  })
+}
 
 test('help output shows the documented permission for every issue #10 command', async () => {
   for (const [argv, , permission] of MAPPINGS) {
