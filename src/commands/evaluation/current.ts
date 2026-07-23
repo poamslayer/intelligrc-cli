@@ -1,20 +1,16 @@
 import {Command} from '@oclif/core'
 
-import {runApiGet} from '../../api/run-get.js'
+import {apiGetDescription, runApiGet} from '../../api/run-get.js'
 import {commandSpec, oclifFlags} from '../../manifest.js'
 import {type OutputFormat} from '../../output.js'
 
 const spec = commandSpec('evaluation current')
+const PATH = '/v1/Evaluations/Current'
 
 export default class EvaluationCurrent extends Command {
   static override summary = spec.summary
 
-  static override description =
-    'Sends one documented GET /v1/Evaluations/Current request with the ' +
-    'profile credential and tenant. Documented permission: ' +
-    `"${spec.permission}". The CLI does not check whether the selected ` +
-    'profile holds it. Output preserves the upstream field names and ' +
-    'response shape.'
+  static override description = apiGetDescription(spec, PATH)
 
   static override enableJsonFlag = false
 
@@ -25,7 +21,7 @@ export default class EvaluationCurrent extends Command {
 
     await runApiGet(this, {
       spec,
-      path: '/v1/Evaluations/Current',
+      path: PATH,
       profile: flags.profile as string,
       output: flags.output as OutputFormat,
       sendTenantHeader: true,

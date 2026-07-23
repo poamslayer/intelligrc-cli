@@ -92,6 +92,39 @@ test('evidence for-evaluation maps to GET /v1/Evidence/Evaluation', async () => 
   assert.equal(request.headers['x-tenant-id'], 'tenant-main')
 })
 
+test('evaluation current without --profile exits 2 before any network access', async () => {
+  const requestsBefore = api.requests.length
+
+  const result = await run(['evaluation', 'current'])
+
+  assert.equal(result.code, 2)
+  assert.equal(result.stdout, '')
+  assert.match(result.stderr, /profile/i)
+  assert.equal(api.requests.length, requestsBefore)
+})
+
+test('a single given filter appears alone in the query string', async () => {
+  api.enqueue({status: 200, body: []})
+
+  const result = await run([
+    'evidence', 'for-evaluation', '--profile', 'main', '--framework-id', FRAMEWORK_ID,
+  ])
+
+  assert.equal(result.code, 0, result.stderr)
+  assert.equal(api.requests.at(-1)!.path, `/v1/Evidence/Evaluation?frameworkId=${FRAMEWORK_ID}`)
+})
+
+test('an evaluation identifier is sent in canonical integer form', async () => {
+  api.enqueue({status: 200, body: []})
+
+  const result = await run([
+    'control', 'list', '--profile', 'main', '--evaluation-id', '007',
+  ])
+
+  assert.equal(result.code, 0, result.stderr)
+  assert.equal(api.requests.at(-1)!.path, '/v1/Controls?evaluationId=7')
+})
+
 test('a non-integer evaluation identifier exits 2 before any network access', async () => {
   const requestsBefore = api.requests.length
 

@@ -1,18 +1,32 @@
 /**
- * Shared execution path for API commands. One call runs the whole
- * sequence for one documented GET operation: build the validated query,
- * resolve the profile context, send the guarded request, report a retry
- * diagnostic on stderr, and print the formatted response body on stdout.
- * Every failure becomes one redacted JSON error object on stderr with the
- * contract exit code.
+ * Shared command runner for the guarded API runtime. One call runs the
+ * whole sequence for one documented GET operation: build the validated
+ * query, resolve the profile context, send the guarded request, report a
+ * retry diagnostic on stderr, and print the formatted response body on
+ * stdout. Every failure becomes one redacted JSON error object on stderr
+ * with the contract exit code.
  */
 import {type Command} from '@oclif/core'
 
 import {emitFailure} from '../errors.js'
 import {type CommandSpec} from '../manifest.js'
 import {formatOutput, type OutputFormat} from '../output.js'
-import {apiRequest, emitRetryDiagnostic} from './client.js'
+import {apiRequest, emitRetryDiagnostic, type QueryPairs} from './client.js'
 import {resolveApiContext} from './resolve.js'
+
+/**
+ * Shared help description for one documented GET operation that sends
+ * the tenant header and documents a permission.
+ */
+export function apiGetDescription(spec: CommandSpec, path: string): string {
+  return (
+    `Sends one documented GET ${path} request with the profile ` +
+    'credential and tenant. Documented permission: ' +
+    `"${spec.permission}". The CLI does not check whether the selected ` +
+    'profile holds that permission. Output preserves the upstream field ' +
+    'names and response shape.'
+  )
+}
 
 export interface ApiGetOptions {
   spec: CommandSpec
@@ -24,7 +38,7 @@ export interface ApiGetOptions {
    * Builds the validated query pairs. Runs before profile resolution, so
    * an invalid identifier exits 2 with zero keyring or network access.
    */
-  buildQuery?: () => Array<[name: string, value: string]>
+  buildQuery?: () => QueryPairs
   /**
    * False only for the tenant-list operation, which documents no
    * x-tenant-id header.

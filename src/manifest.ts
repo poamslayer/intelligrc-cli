@@ -9,6 +9,8 @@
  */
 import {Flags, type Interfaces} from '@oclif/core'
 
+import {OUTPUT_FORMATS} from './output.js'
+
 export interface FlagSpec {
   name: string
   type: 'option' | 'boolean'
@@ -63,7 +65,7 @@ const apiOutputFlag: FlagSpec = {
   name: 'output',
   type: 'option',
   required: false,
-  allowedValues: ['json', 'jsonl', 'table'],
+  allowedValues: [...OUTPUT_FORMATS],
   default: 'json',
   summary: 'Output format.',
 }

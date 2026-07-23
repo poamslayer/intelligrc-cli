@@ -20,15 +20,18 @@ import {
 
 const MAX_REDIRECT_HOPS = 5
 
+/** Query parameters under their documented names, in send order. */
+export type QueryPairs = Array<[name: string, value: string]>
+
 export interface ApiRequestOptions {
   baseUrl: string
   /** Documented path, for example "/v1/Tenants". */
   path: string
   /**
-   * Query parameters under their documented names. An omitted filter is
-   * absent from this list, so it never appears in the query string.
+   * Query parameters under their documented names. An omitted parameter
+   * is absent from this list, so it never appears in the query string.
    */
-  query?: Array<[name: string, value: string]>
+  query?: QueryPairs
   clientId: string
   clientSecret: string
   /** Omitted for the tenant-list operation, which documents no tenant header. */
