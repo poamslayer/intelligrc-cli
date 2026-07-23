@@ -24,6 +24,11 @@ export interface ApiRequestOptions {
   baseUrl: string
   /** Documented path, for example "/v1/Tenants". */
   path: string
+  /**
+   * Query parameters under their documented names. An omitted filter is
+   * absent from this list, so it never appears in the query string.
+   */
+  query?: Array<[name: string, value: string]>
   clientId: string
   clientSecret: string
   /** Omitted for the tenant-list operation, which documents no tenant header. */
@@ -234,6 +239,9 @@ export async function apiRequest(options: ApiRequestOptions): Promise<ApiSuccess
   }
 
   const startUrl = new URL(`${options.baseUrl}${options.path}`)
+  for (const [name, value] of options.query ?? []) {
+    startUrl.searchParams.append(name, value)
+  }
   const attemptTimeoutMs = resolveAttemptTimeoutMs(options.env)
   const deadline = Date.now() + MAX_ATTEMPTS * attemptTimeoutMs
 
