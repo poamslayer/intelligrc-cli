@@ -1,0 +1,35 @@
+{
+  "name": "intelligrc-cli",
+  "version": "0.1.0",
+  "description": "Read-only command-line interface for the IntelliGRC API",
+  "private": true,
+  "type": "module",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "bin": {
+    "intelligrc": "./bin/run.js"
+  },
+  "files": [
+    "/bin",
+    "/dist"
+  ],
+  "oclif": {
+    "bin": "intelligrc",
+    "dirname": "intelligrc",
+    "commands": "./dist/commands",
+    "topicSeparator": " "
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "npm run build && node --test \"test/*.test.ts\""
+  },
+  "dependencies": {
+    "@oclif/core": "^4.12.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1",
+    "typescript": "^7.0.2"
+  }
+}
