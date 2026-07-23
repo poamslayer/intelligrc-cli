@@ -20,10 +20,18 @@ import {
 
 const MAX_REDIRECT_HOPS = 5
 
+/** Query parameters under their documented names, in send order. */
+export type QueryPairs = Array<[name: string, value: string]>
+
 export interface ApiRequestOptions {
   baseUrl: string
   /** Documented path, for example "/v1/Tenants". */
   path: string
+  /**
+   * Query parameters under their documented names. An omitted parameter
+   * is absent from this list, so it never appears in the query string.
+   */
+  query?: QueryPairs
   clientId: string
   clientSecret: string
   /** Omitted for the tenant-list operation, which documents no tenant header. */
@@ -234,6 +242,9 @@ export async function apiRequest(options: ApiRequestOptions): Promise<ApiSuccess
   }
 
   const startUrl = new URL(`${options.baseUrl}${options.path}`)
+  for (const [name, value] of options.query ?? []) {
+    startUrl.searchParams.append(name, value)
+  }
   const attemptTimeoutMs = resolveAttemptTimeoutMs(options.env)
   const deadline = Date.now() + MAX_ATTEMPTS * attemptTimeoutMs
 

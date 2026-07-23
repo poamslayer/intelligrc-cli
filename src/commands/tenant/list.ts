@@ -1,9 +1,8 @@
 import {Command} from '@oclif/core'
 
-import {apiRequest, emitRetryDiagnostic} from '../../api/client.js'
-import {resolveApiContext} from '../../api/resolve.js'
-import {emitFailure} from '../../errors.js'
+import {runApiGet} from '../../api/run-get.js'
 import {commandSpec, oclifFlags} from '../../manifest.js'
+import {type OutputFormat} from '../../output.js'
 
 const spec = commandSpec('tenant list')
 
@@ -22,31 +21,14 @@ export default class TenantList extends Command {
   async run(): Promise<void> {
     const {flags} = await this.parse(TenantList)
 
-    let redactionValues: string[] = []
-    try {
-      const context = resolveApiContext(
-        flags.profile as string,
-        this.config.configDir,
-        process.env,
-      )
-      redactionValues = context.redactionValues
-
-      const result = await apiRequest({
-        baseUrl: context.baseUrl,
-        path: '/v1/Tenants',
-        clientId: context.clientId,
-        clientSecret: context.clientSecret,
-        // No tenantId: the documented tenant-list operation has no
-        // x-tenant-id header.
-        permission: spec.permission,
-        redactionValues,
-        env: process.env,
-      })
-
-      emitRetryDiagnostic(result.attempts)
-      this.log(JSON.stringify(result.body, null, 2))
-    } catch (error) {
-      this.exit(emitFailure(error, redactionValues))
-    }
+    await runApiGet(this, {
+      spec,
+      path: '/v1/Tenants',
+      profile: flags.profile as string,
+      output: flags.output as OutputFormat,
+      // No tenant header: the documented tenant-list operation has no
+      // x-tenant-id header.
+      sendTenantHeader: false,
+    })
   }
 }

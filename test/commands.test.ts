@@ -3,9 +3,9 @@ import {test} from 'node:test'
 
 import {runCli} from './helpers/run-cli.ts'
 
-// Expected catalog, written out by hand from issues #2, #3, and #4. This
-// literal is the independent source of truth; it must not be derived from
-// src/manifest.ts.
+// Expected catalog, written out by hand from issues #2, #3, #4, and #5.
+// This literal is the independent source of truth; it must not be derived
+// from src/manifest.ts.
 const expectedCatalog = {
   catalogVersion: 1,
   commands: [
@@ -115,6 +115,146 @@ const expectedCatalog = {
       ],
     },
     {
+      id: 'evaluation current',
+      summary: 'Show the current evaluation for the profile tenant.',
+      kind: 'api',
+      permission: 'Evaluations: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'assessment-objective list',
+      summary: 'List assessment objectives and their statuses for an evaluation.',
+      kind: 'api',
+      permission: 'GapAnalysis: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'evaluation-id',
+          type: 'option',
+          required: false,
+          summary:
+            'Integer evaluation identifier, sent as the documented evaluationId ' +
+            'query parameter. Omitted from the request when not given.',
+        },
+        {
+          name: 'framework-id',
+          type: 'option',
+          required: false,
+          summary:
+            'Framework identifier (UUID), sent as the documented frameworkId ' +
+            'query parameter. Omitted from the request when not given.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'control list',
+      summary: 'List controls and their summary statements for an evaluation.',
+      kind: 'api',
+      permission: 'GapAnalysis: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'evaluation-id',
+          type: 'option',
+          required: false,
+          summary:
+            'Integer evaluation identifier, sent as the documented evaluationId ' +
+            'query parameter. Omitted from the request when not given.',
+        },
+        {
+          name: 'framework-id',
+          type: 'option',
+          required: false,
+          summary:
+            'Framework identifier (UUID), sent as the documented frameworkId ' +
+            'query parameter. Omitted from the request when not given.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'evidence for-evaluation',
+      summary: 'List uploaded evidence for an evaluation.',
+      kind: 'api',
+      permission: 'Evidence: Read',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'evaluation-id',
+          type: 'option',
+          required: false,
+          summary:
+            'Integer evaluation identifier, sent as the documented evaluationId ' +
+            'query parameter. Omitted from the request when not given.',
+        },
+        {
+          name: 'framework-id',
+          type: 'option',
+          required: false,
+          summary:
+            'Framework identifier (UUID), sent as the documented frameworkId ' +
+            'query parameter. Omitted from the request when not given.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
       id: 'tenant list',
       summary: 'List the tenants manageable by the profile credential.',
       kind: 'api',
@@ -131,7 +271,7 @@ const expectedCatalog = {
           name: 'output',
           type: 'option',
           required: false,
-          allowedValues: ['json'],
+          allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
         },
