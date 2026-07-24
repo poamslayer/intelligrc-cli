@@ -164,9 +164,17 @@ export interface DataTypeBody {
 export function buildDataTypeBody(flags: Record<string, unknown>): DataTypeBody {
   const body: DataTypeBody = {
     name: flags.name as string,
-    confidentialityId: parseLevelId(flags['confidentiality-id'] as string, 'confidentiality-id'),
-    integrityId: parseLevelId(flags['integrity-id'] as string, 'integrity-id'),
-    availabilityId: parseLevelId(flags['availability-id'] as string, 'availability-id'),
+    confidentialityId: parseIntegerFlag(
+      flags['confidentiality-id'] as string,
+      'confidentiality-id',
+      'level identifier',
+    ),
+    integrityId: parseIntegerFlag(flags['integrity-id'] as string, 'integrity-id', 'level identifier'),
+    availabilityId: parseIntegerFlag(
+      flags['availability-id'] as string,
+      'availability-id',
+      'level identifier',
+    ),
   }
 
   const description = flags.description as string | undefined
@@ -274,17 +282,82 @@ export function parseAssessmentObjectiveIdList(values: string[]): string[] {
 }
 
 /**
- * Validate one data-type level flag as a documented int32 integer and return
- * its numeric value. The flag name appears in the stable error code and the
- * message so the user learns exactly which level was wrong.
+ * The validated body of an assessment-objective update request. The
+ * documented AssessmentObjectiveUpdateDTO marks every field optional and
+ * nullable, so this is a partial update: a field is present only when the
+ * user supplied its flag, and an omitted flag leaves the field out of the
+ * body. The two identifier fields are JSON numbers, so they serialize as the
+ * documented int32 integers; the four text fields pass through as strings.
+ * `validationMethods` is a single documented string, not a list.
  */
-function parseLevelId(raw: string, flagName: string): number {
+export interface AssessmentObjectiveUpdateBody {
+  evaluationId?: number
+  statusId?: number
+  implementationDetail?: string
+  findingDetail?: string
+  recommendationDetail?: string
+  validationMethods?: string
+}
+
+/**
+ * Build the validated assessment-objective update body from the update
+ * command's flags. Runs before profile resolution, so a non-integer
+ * evaluation or status identifier exits 2 with a stable code and zero keyring
+ * or network access. Each field is included only when the user supplied its
+ * flag, matching the documented partial-update contract.
+ */
+export function buildAssessmentObjectiveUpdateBody(
+  flags: Record<string, unknown>,
+): AssessmentObjectiveUpdateBody {
+  const body: AssessmentObjectiveUpdateBody = {}
+
+  const evaluationId = flags['evaluation-id'] as string | undefined
+  if (evaluationId !== undefined) {
+    body.evaluationId = parseIntegerFlag(evaluationId, 'evaluation-id', 'identifier')
+  }
+
+  const statusId = flags['status-id'] as string | undefined
+  if (statusId !== undefined) {
+    body.statusId = parseIntegerFlag(statusId, 'status-id', 'identifier')
+  }
+
+  const implementationDetail = flags['implementation-detail'] as string | undefined
+  if (implementationDetail !== undefined) {
+    body.implementationDetail = implementationDetail
+  }
+
+  const findingDetail = flags['finding-detail'] as string | undefined
+  if (findingDetail !== undefined) {
+    body.findingDetail = findingDetail
+  }
+
+  const recommendationDetail = flags['recommendation-detail'] as string | undefined
+  if (recommendationDetail !== undefined) {
+    body.recommendationDetail = recommendationDetail
+  }
+
+  const validationMethods = flags['validation-methods'] as string | undefined
+  if (validationMethods !== undefined) {
+    body.validationMethods = validationMethods
+  }
+
+  return body
+}
+
+/**
+ * Validate one integer body-field flag as a documented int32 integer and
+ * return its numeric value. The flag name appears in the stable error code and
+ * the message so the user learns exactly which flag was wrong; `label` names
+ * the kind of identifier in the message, for example "level identifier" for a
+ * data-type level flag or "identifier" for an evaluation or status flag.
+ */
+function parseIntegerFlag(raw: string, flagName: string, label: string): number {
   if (!isInt32(raw)) {
     throw new CliFailure({
       code: `invalid-${flagName}`,
       message:
-        `The value "${raw}" for --${flagName} is not a valid level ` +
-        'identifier. The documented field is an integer.',
+        `The value "${raw}" for --${flagName} is not a valid ${label}. ` +
+        'The documented field is an integer.',
       exitCode: EXIT.invalidInput,
     })
   }

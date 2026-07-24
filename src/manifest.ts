@@ -241,6 +241,13 @@ const evidenceIdArg: ArgSpec = {
   summary: 'Evidence identifier (UUID), substituted into the documented request path.',
 }
 
+const assessmentObjectiveIdArg: ArgSpec = {
+  name: 'id',
+  type: 'string',
+  required: true,
+  summary: 'Assessment objective identifier (UUID), substituted into the documented request path.',
+}
+
 const iclVersionIdFlag: FlagSpec = {
   name: 'icl-version-id',
   type: 'option',
@@ -369,6 +376,68 @@ const preserveExistingFlag: FlagSpec = {
 }
 
 /**
+ * Flag literals for the assessment-objective update command. The documented
+ * AssessmentObjectiveUpdateDTO marks every field optional and nullable, so
+ * each flag is optional and its field is sent only when the flag is supplied.
+ * The two identifier flags carry integers; the four detail flags carry text.
+ */
+const updateEvaluationIdFlag: FlagSpec = {
+  name: 'evaluation-id',
+  type: 'option',
+  required: false,
+  summary:
+    'Integer evaluation identifier, sent as the optional "evaluationId" body ' +
+    'field. Omitted from the body when not given.',
+}
+
+const updateStatusIdFlag: FlagSpec = {
+  name: 'status-id',
+  type: 'option',
+  required: false,
+  summary:
+    'Integer status identifier from `lookup assessment-objective statuses`, ' +
+    'sent as the optional "statusId" body field. Omitted from the body when ' +
+    'not given.',
+}
+
+const implementationDetailFlag: FlagSpec = {
+  name: 'implementation-detail',
+  type: 'option',
+  required: false,
+  summary:
+    'Implementation detail text, sent as the optional "implementationDetail" ' +
+    'body field. Omitted from the body when not given.',
+}
+
+const findingDetailFlag: FlagSpec = {
+  name: 'finding-detail',
+  type: 'option',
+  required: false,
+  summary:
+    'Finding detail text, sent as the optional "findingDetail" body field. ' +
+    'Omitted from the body when not given.',
+}
+
+const recommendationDetailFlag: FlagSpec = {
+  name: 'recommendation-detail',
+  type: 'option',
+  required: false,
+  summary:
+    'Recommendation detail text, sent as the optional "recommendationDetail" ' +
+    'body field. Omitted from the body when not given.',
+}
+
+const validationMethodsFlag: FlagSpec = {
+  name: 'validation-methods',
+  type: 'option',
+  required: false,
+  summary:
+    'Validation methods text, sent as the optional "validationMethods" body ' +
+    'field. The documented field is a single string, not a list. Omitted from ' +
+    'the body when not given.',
+}
+
+/**
  * Shared parameter contracts. One literal per documented parameter shape
  * keeps the documented facts identical across the command specs, exactly
  * like the shared flag literals above.
@@ -437,6 +506,15 @@ const idPathParameter: ParameterContract = {
 }
 
 const evidenceIdPathParameter: ParameterContract = {
+  name: 'id',
+  in: 'path',
+  required: true,
+  type: 'string',
+  format: 'uuid',
+  source: {kind: 'arg', name: 'id'},
+}
+
+const assessmentObjectiveIdPathParameter: ParameterContract = {
   name: 'id',
   in: 'path',
   required: true,
@@ -534,6 +612,61 @@ const assessmentObjectiveIdsBodyFields: RequestBodyFieldContract[] = [
     items: {type: 'string', format: 'uuid'},
     required: true,
     source: {kind: 'flag', name: 'assessment-objective-id'},
+  },
+]
+
+/**
+ * The documented AssessmentObjectiveUpdateDTO body field contract. Every
+ * field is optional and nullable in the archived DTO (the schema lists no
+ * required set), so the update is partial: each flag supplies its field only
+ * when given. `validationMethods` is a single string, not an array, so it
+ * records no item schema. Each field copies the archived DTO schema verbatim
+ * and names the flag that supplies it.
+ */
+const assessmentObjectiveUpdateBodyFields: RequestBodyFieldContract[] = [
+  {
+    name: 'evaluationId',
+    type: 'integer',
+    format: 'int32',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'evaluation-id'},
+  },
+  {
+    name: 'statusId',
+    type: 'integer',
+    format: 'int32',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'status-id'},
+  },
+  {
+    name: 'implementationDetail',
+    type: 'string',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'implementation-detail'},
+  },
+  {
+    name: 'findingDetail',
+    type: 'string',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'finding-detail'},
+  },
+  {
+    name: 'recommendationDetail',
+    type: 'string',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'recommendation-detail'},
+  },
+  {
+    name: 'validationMethods',
+    type: 'string',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'validation-methods'},
   },
 ]
 
@@ -702,6 +835,28 @@ export const commandSpecs: CommandSpec[] = [
     args: [],
     flags: [profileFlag, assessmentObjectiveIdFlag, evaluationIdFlag, apiOutputFlag],
     contract: get('/v1/AssessmentObjectives/History', [assessmentObjectiveIdParameter, evaluationIdParameter]),
+  },
+  {
+    id: 'assessment-objective update',
+    summary: 'Update one assessment objective by its identifier.',
+    kind: 'api',
+    permission: 'GapAnalysis: Write',
+    args: [assessmentObjectiveIdArg],
+    flags: [
+      profileFlag,
+      updateEvaluationIdFlag,
+      updateStatusIdFlag,
+      implementationDetailFlag,
+      findingDetailFlag,
+      recommendationDetailFlag,
+      validationMethodsFlag,
+      apiOutputFlag,
+    ],
+    contract: put(
+      '/v1/AssessmentObjectives/{id}',
+      [assessmentObjectiveIdPathParameter],
+      assessmentObjectiveUpdateBodyFields,
+    ),
   },
   {
     id: 'control list',

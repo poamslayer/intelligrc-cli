@@ -239,6 +239,87 @@ const expectedCatalog = {
       ],
     },
     {
+      id: 'assessment-objective update',
+      summary: 'Update one assessment objective by its identifier.',
+      kind: 'api',
+      permission: 'GapAnalysis: Write',
+      args: [
+        {
+          name: 'id',
+          type: 'string',
+          required: true,
+          summary:
+            'Assessment objective identifier (UUID), substituted into the documented request path.',
+        },
+      ],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'evaluation-id',
+          type: 'option',
+          required: false,
+          summary:
+            'Integer evaluation identifier, sent as the optional "evaluationId" body ' +
+            'field. Omitted from the body when not given.',
+        },
+        {
+          name: 'status-id',
+          type: 'option',
+          required: false,
+          summary:
+            'Integer status identifier from `lookup assessment-objective statuses`, ' +
+            'sent as the optional "statusId" body field. Omitted from the body when ' +
+            'not given.',
+        },
+        {
+          name: 'implementation-detail',
+          type: 'option',
+          required: false,
+          summary:
+            'Implementation detail text, sent as the optional "implementationDetail" ' +
+            'body field. Omitted from the body when not given.',
+        },
+        {
+          name: 'finding-detail',
+          type: 'option',
+          required: false,
+          summary:
+            'Finding detail text, sent as the optional "findingDetail" body field. ' +
+            'Omitted from the body when not given.',
+        },
+        {
+          name: 'recommendation-detail',
+          type: 'option',
+          required: false,
+          summary:
+            'Recommendation detail text, sent as the optional "recommendationDetail" ' +
+            'body field. Omitted from the body when not given.',
+        },
+        {
+          name: 'validation-methods',
+          type: 'option',
+          required: false,
+          summary:
+            'Validation methods text, sent as the optional "validationMethods" body ' +
+            'field. The documented field is a single string, not a list. Omitted from ' +
+            'the body when not given.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
       id: 'control list',
       summary: 'List controls and their summary statements for an evaluation.',
       kind: 'api',
