@@ -167,6 +167,33 @@ such as `50000` or `50000.50`. `--target-type` is an integer, not free text. A m
 required flag, or an invalid integer, number, UUID, or date, stops the command before any
 network access.
 
+## Creating a boundary
+
+`boundary create` sends the documented `POST /v1/Boundaries` request and prints the
+created record. It requires `--name`, `--unique-identifier`, `--operational-status-id`,
+and `--system-type-id`. Every other scalar field and all eight array fields are optional
+and are omitted from the body when their flag is absent.
+
+Each array field has its own repeatable flag. The six identifier lists take integers
+(`--device-id`, `--location-id`, `--sensitive-information-type-id`, `--interconnection-id`,
+`--law-regulation-policy-id`, `--personnel-id`), `--framework-id` takes UUIDs, and
+`--cage-code` takes plain text. Repeat a flag once per value.
+
+```sh
+# Create a boundary with a few associations. The command prints the created record.
+intelligrc boundary create --profile prod \
+  --name "Enclave" --unique-identifier "ENC-001" \
+  --operational-status-id 1 --system-type-id 2 \
+  --confidentiality-id 4 --integrity-id 5 --availability-id 6 \
+  --device-id 10 --device-id 11 \
+  --location-id 12 \
+  --framework-id 11111111-2222-3333-4444-555555555555 \
+  --cage-code 1ABC2
+```
+
+A missing required flag, or an invalid integer or UUID in any scalar or array field, stops
+the command before any network access.
+
 ## Output and exit codes
 
 `--output json` is the default. `--output jsonl` prints one array element per line.
