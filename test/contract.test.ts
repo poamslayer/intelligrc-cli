@@ -31,6 +31,8 @@ interface SwaggerSchema {
   $ref?: string
   required?: string[]
   properties?: Record<string, SwaggerSchema>
+  /** Present on an array schema: the documented schema of one array item. */
+  items?: SwaggerSchema
 }
 
 interface SwaggerParameter {
@@ -168,7 +170,7 @@ test('manifest GET mappings and documented GET operations form a bijection', () 
   assert.equal(manifestPairs.length, 50)
 })
 
-test('every mapped write operation is a documented write and the Data Types slice is complete', () => {
+test('every mapped write operation is a documented write and the mapped write set is complete', () => {
   const documentedWritePairs = new Set(documentedWrites.map((entry) => `${entry.method} ${entry.path}`))
 
   const manifestWritePairs = writeSpecs.map((spec) => {
@@ -185,11 +187,14 @@ test('every mapped write operation is a documented write and the Data Types slic
     'Duplicate write method-and-path mapping',
   )
 
-  // The first slice ships exactly the three Data Types writes and no more.
+  // The mapped writes are the three Data Types writes (#33) plus the two
+  // data-type association writes (#42), and no more.
   assert.deepEqual([...manifestWritePairs].sort(), [
     'delete /v1/DataTypes/{id}',
     'post /v1/DataTypes',
     'put /v1/DataTypes/{id}',
+    'put /v1/Facilities/{id}/datatypes',
+    'put /v1/Interconnections/{id}/datatypes',
   ])
 })
 
@@ -284,6 +289,17 @@ test('every write command body field matches the documented DTO and names one ex
       assert.equal(field.format, property.format, `Wrong format for ${label}`)
       assert.equal(field.required, requiredSet.has(name), `Wrong required status for ${label}`)
       assert.equal(field.nullable, property.nullable, `Wrong nullable status for ${label}`)
+
+      // An array field records its documented item schema; a scalar field
+      // records none. The item type is verified by exact equality, exactly
+      // like the scalar field's own type and format above.
+      if (property.type === 'array') {
+        assert.ok(field.items, `Array ${label} must record its item schema`)
+        assert.equal(field.items.type, property.items?.type, `Wrong item type for ${label}`)
+        assert.equal(field.items.format, property.items?.format, `Wrong item format for ${label}`)
+      } else {
+        assert.equal(field.items, undefined, `Scalar ${label} must not record an item schema`)
+      }
 
       const flagInputs = spec.flags.filter((flag) => flag.name === field.source.name)
       assert.equal(

@@ -158,6 +158,52 @@ export function buildDataTypeBody(flags: Record<string, unknown>): DataTypeBody 
 }
 
 /**
+ * The validated body of a data-type association request. The documented
+ * FacilityDataTypesUpdateDTO and InterconnectionDataTypesUpdateDTO share this
+ * shape: one array of int32 identifiers named `dataTypeIds`. The array is
+ * always present, so an omitted flag serializes as `{"dataTypeIds":[]}` and
+ * the server clears every association.
+ */
+export interface DataTypeIdsBody {
+  dataTypeIds: number[]
+}
+
+/**
+ * Build the validated data-type association body from the repeatable
+ * --data-type-id flag. Runs before profile resolution, so a non-integer
+ * element exits 2 with a stable code and zero keyring or network access. An
+ * omitted flag (oclif passes undefined) and an empty list both produce an
+ * empty array, which serializes as the documented empty `dataTypeIds` array.
+ */
+export function buildDataTypeIdsBody(flags: Record<string, unknown>): DataTypeIdsBody {
+  const values = (flags['data-type-id'] as string[] | undefined) ?? []
+  return {dataTypeIds: parseDataTypeIdList(values)}
+}
+
+/**
+ * Validate the repeatable --data-type-id flag as a list of documented int32
+ * integers, one element at a time, and return the canonical numeric values in
+ * the order supplied. A JSON number serializes as the documented int32
+ * integer rather than a string. The first non-integer element throws with the
+ * shared invalid-data-type-id code so the user learns which value was wrong.
+ */
+export function parseDataTypeIdList(values: string[]): number[] {
+  return values.map((value) => {
+    if (!isInt32(value)) {
+      throw new CliFailure({
+        code: 'invalid-data-type-id',
+        message:
+          `The value "${value}" for --data-type-id is not a valid data type ` +
+          'identifier. Each documented dataTypeIds item is an integer.',
+        exitCode: EXIT.invalidInput,
+      })
+    }
+
+    return Number(value)
+  })
+}
+
+/**
  * Validate one data-type level flag as a documented int32 integer and return
  * its numeric value. The flag name appears in the stable error code and the
  * message so the user learns exactly which level was wrong.
