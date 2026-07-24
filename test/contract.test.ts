@@ -4,7 +4,12 @@ import {join} from 'node:path'
 import {test} from 'node:test'
 
 import {commandSpecs as builtCommandSpecs} from '../dist/manifest.js'
-import type {CommandSpec, OperationContract, RequestBodyFieldContract} from '../src/manifest.ts'
+import type {
+  CommandSpec,
+  OperationContract,
+  RequestBodyFieldContract,
+  RequestBodyItemFieldContract,
+} from '../src/manifest.ts'
 import {projectRoot} from './helpers/run-cli.ts'
 
 /**
@@ -120,6 +125,52 @@ function specForOperation(method: string, path: string): CommandSpec {
  * document offers the body under three media types that all reference the
  * same data transfer object (DTO); the JSON media type is the one the CLI sends.
  */
+/**
+ * Resolve a schema that may be a $ref into the referenced schema. A schema
+ * without a $ref is returned unchanged, so a scalar array item schema
+ * (integer/int32, string/uuid) passes through while an object array item
+ * ($ref) is followed to its nested DTO.
+ */
+function resolveSchemaRef(schema: SwaggerSchema): SwaggerSchema {
+  if (!schema.$ref) {
+    return schema
+  }
+
+  const name = schema.$ref.replace('#/components/schemas/', '')
+  const resolved = swagger.components.schemas[name]
+  assert.ok(resolved, `The referenced schema "${name}" is missing from the archived document`)
+  return resolved
+}
+
+/**
+ * Compare the mapped sub-field contract of an object array item against the
+ * documented item DTO. This mirrors the top-level body-field comparison
+ * (matching names, and exact type, format, required, and nullable), without
+ * the flag check, because one flag supplies the whole array.
+ */
+function assertItemFieldsMatch(
+  mapped: RequestBodyItemFieldContract[],
+  itemSchema: SwaggerSchema,
+  label: string,
+): void {
+  assert.ok(itemSchema.properties, `Object item for ${label} has no documented properties`)
+  const documentedNames = Object.keys(itemSchema.properties).sort()
+  const mappedNames = mapped.map((field) => field.name).sort()
+  assert.deepEqual(mappedNames, documentedNames, `Object-item sub-fields for ${label} must match the DTO`)
+
+  const requiredSet = new Set(itemSchema.required ?? [])
+  for (const [name, property] of Object.entries(itemSchema.properties)) {
+    const fields = mapped.filter((field) => field.name === name)
+    assert.equal(fields.length, 1, `${label} must map item sub-field "${name}" exactly once`)
+    const field = fields[0]
+    const subLabel = `sub-field "${name}" of the item for ${label}`
+    assert.equal(field.type, property.type, `Wrong type for ${subLabel}`)
+    assert.equal(field.format, property.format, `Wrong format for ${subLabel}`)
+    assert.equal(field.required, requiredSet.has(name), `Wrong required status for ${subLabel}`)
+    assert.equal(field.nullable, property.nullable, `Wrong nullable status for ${subLabel}`)
+  }
+}
+
 function documentedBodySchema(operation: SwaggerOperation): SwaggerSchema | undefined {
   const content = operation.requestBody?.content
   if (!content) {
@@ -194,10 +245,12 @@ test('every mapped write operation is a documented write and the mapped write se
   assert.deepEqual([...manifestWritePairs].sort(), [
     'delete /v1/DataTypes/{id}',
     'post /v1/DataTypes',
+    'post /v1/Interconnections',
     'put /v1/AssessmentObjectives/{id}',
     'put /v1/DataTypes/{id}',
     'put /v1/Evidence/{id}/AssessmentObjectives',
     'put /v1/Facilities/{id}/datatypes',
+    'put /v1/Interconnections/{id}',
     'put /v1/Interconnections/{id}/datatypes',
   ])
 })
@@ -295,12 +348,23 @@ test('every write command body field matches the documented DTO and names one ex
       assert.equal(field.nullable, property.nullable, `Wrong nullable status for ${label}`)
 
       // An array field records its documented item schema; a scalar field
-      // records none. The item type is verified by exact equality, exactly
-      // like the scalar field's own type and format above.
+      // records none. A scalar item (integer/int32, string/uuid) records its
+      // type and format; an object item (a $ref to a nested DTO) records type
+      // "object" and the contract of each of its sub-fields. Both are verified
+      // by exact equality, exactly like the scalar field's own type and format.
       if (property.type === 'array') {
         assert.ok(field.items, `Array ${label} must record its item schema`)
-        assert.equal(field.items.type, property.items?.type, `Wrong item type for ${label}`)
-        assert.equal(field.items.format, property.items?.format, `Wrong item format for ${label}`)
+        assert.ok(property.items, `Documented array ${label} has no item schema`)
+        const itemSchema = resolveSchemaRef(property.items)
+        assert.equal(field.items.type, itemSchema.type, `Wrong item type for ${label}`)
+        assert.equal(field.items.format, itemSchema.format, `Wrong item format for ${label}`)
+
+        if (itemSchema.type === 'object') {
+          assert.ok(field.items.fields, `Object-item ${label} must record its sub-field contract`)
+          assertItemFieldsMatch(field.items.fields, itemSchema, label)
+        } else {
+          assert.equal(field.items.fields, undefined, `Scalar-item ${label} must not record sub-fields`)
+        }
       } else {
         assert.equal(field.items, undefined, `Scalar ${label} must not record an item schema`)
       }

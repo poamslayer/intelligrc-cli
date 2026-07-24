@@ -108,6 +108,37 @@ Three safety rules protect a write:
 - A `delete` pauses and asks for confirmation. A bare Enter declines. When no terminal is
   attached and `--yes` is absent, the command declines rather than deleting.
 
+## Writing interconnections
+
+`interconnection create` and `interconnection update` send the documented
+`POST /v1/Interconnections` and `PUT /v1/Interconnections/{id}` requests and print the
+record the API returned. `create` requires `--name`, `--authorizing-official-id`, and at
+least one `--authorization-type`. `update` requires only `--name`; every other flag is
+optional, and an omitted flag leaves that field unchanged.
+
+An interconnection carries a list of authorization types, so `--authorization-type` is the
+CLI convention for supplying a list of structured objects: repeat the flag once per object
+and write each object as comma-separated `key=value` pairs.
+
+```sh
+# Create an interconnection with two authorization types. The id values come from
+# `lookup interconnection authorization-types`. The command prints the created record.
+intelligrc interconnection create --profile prod \
+  --name "Vendor VPN" --authorizing-official-id 12 \
+  --authorization-type id=5 \
+  --authorization-type id=7,other="Site-to-site VPN"
+
+# Rename an interconnection. Omitting --authorization-type leaves its authorization
+# types unchanged. The command prints the updated record.
+intelligrc interconnection update 42 --profile prod --name "Vendor VPN (retired)"
+```
+
+The `--authorization-type` keys are `id` (required, the integer
+`interconnectionAuthorizationTypeId`) and `other` (optional free text for the `otherValue`
+field). A missing `id`, an unknown key, or a non-integer `id` stops the command before any
+network access. Providing `--authorization-type` on an update replaces every existing
+authorization type on that interconnection.
+
 ## Output and exit codes
 
 `--output json` is the default. `--output jsonl` prints one array element per line.

@@ -345,6 +345,215 @@ export function buildAssessmentObjectiveUpdateBody(
 }
 
 /**
+ * One validated element of the documented `authorizationTypes` array. The
+ * documented InterconnectionAuthorizationTypeInputDTO has one required int32
+ * field, `interconnectionAuthorizationTypeId`, and one optional nullable
+ * string field, `otherValue`. `otherValue` is present only when the user
+ * supplied it, so an omitted `other=` leaves the field out of the object.
+ */
+export interface AuthorizationTypeInput {
+  interconnectionAuthorizationTypeId: number
+  otherValue?: string
+}
+
+/**
+ * The validated body of an interconnection create request. The documented
+ * InterconnectionCreateDTO marks `name`, `authorizingOfficialId`, and
+ * `authorizationTypes` required; `provider` and `description` are optional and
+ * nullable, so each is present only when the user supplied its flag.
+ */
+export interface InterconnectionCreateBody {
+  name: string
+  provider?: string
+  description?: string
+  authorizingOfficialId: number
+  authorizationTypes: AuthorizationTypeInput[]
+}
+
+/**
+ * The validated body of an interconnection update request. The documented
+ * InterconnectionUpdateDTO marks only `name` required; `provider`,
+ * `description`, `authorizingOfficialId`, and `authorizationTypes` are optional
+ * and nullable. Each optional field is present only when the user supplied its
+ * flag, matching the documented partial-update contract. Providing
+ * `authorizationTypes` replaces all existing authorization type associations.
+ */
+export interface InterconnectionUpdateBody {
+  name: string
+  provider?: string
+  description?: string
+  authorizingOfficialId?: number
+  authorizationTypes?: AuthorizationTypeInput[]
+}
+
+/**
+ * Build the validated interconnection create body from the create command's
+ * flags. Runs before profile resolution, so a non-integer identifier or a
+ * malformed authorization-type value exits 2 with a stable code and zero
+ * keyring or network access. The `--name`, `--authorizing-official-id`, and
+ * `--authorization-type` flags are required, so oclif guarantees they are
+ * present; the optional `--provider` and `--description` flags contribute a
+ * field only when supplied.
+ */
+export function buildInterconnectionCreateBody(
+  flags: Record<string, unknown>,
+): InterconnectionCreateBody {
+  const body: InterconnectionCreateBody = {
+    name: flags.name as string,
+    authorizingOfficialId: parseIntegerFlag(
+      flags['authorizing-official-id'] as string,
+      'authorizing-official-id',
+      'identifier',
+    ),
+    authorizationTypes: parseAuthorizationTypeList(
+      (flags['authorization-type'] as string[] | undefined) ?? [],
+    ),
+  }
+
+  const provider = flags.provider as string | undefined
+  if (provider !== undefined) {
+    body.provider = provider
+  }
+
+  const description = flags.description as string | undefined
+  if (description !== undefined) {
+    body.description = description
+  }
+
+  return body
+}
+
+/**
+ * Build the validated interconnection update body from the update command's
+ * flags. Runs before profile resolution, so a non-integer identifier or a
+ * malformed authorization-type value exits 2 with a stable code and zero
+ * keyring or network access. `--name` is required; every other field is
+ * included only when the user supplied its flag, matching the documented
+ * partial-update contract.
+ */
+export function buildInterconnectionUpdateBody(
+  flags: Record<string, unknown>,
+): InterconnectionUpdateBody {
+  const body: InterconnectionUpdateBody = {name: flags.name as string}
+
+  const provider = flags.provider as string | undefined
+  if (provider !== undefined) {
+    body.provider = provider
+  }
+
+  const description = flags.description as string | undefined
+  if (description !== undefined) {
+    body.description = description
+  }
+
+  const authorizingOfficialId = flags['authorizing-official-id'] as string | undefined
+  if (authorizingOfficialId !== undefined) {
+    body.authorizingOfficialId = parseIntegerFlag(
+      authorizingOfficialId,
+      'authorizing-official-id',
+      'identifier',
+    )
+  }
+
+  const authorizationTypes = flags['authorization-type'] as string[] | undefined
+  if (authorizationTypes !== undefined) {
+    body.authorizationTypes = parseAuthorizationTypeList(authorizationTypes)
+  }
+
+  return body
+}
+
+/**
+ * Validate the repeatable --authorization-type flag as a list of documented
+ * InterconnectionAuthorizationTypeInputDTO objects, one flag occurrence at a
+ * time, and return the objects in the order supplied. Each occurrence is one
+ * object encoded as comma-separated key=value pairs: `id` (required int32,
+ * mapped to `interconnectionAuthorizationTypeId`) and `other` (optional text,
+ * mapped to `otherValue`). The first malformed occurrence throws with the
+ * shared invalid-authorization-type code so the user learns which value was
+ * wrong. This is the CLI convention for supplying an array of structured
+ * objects on the command line.
+ */
+export function parseAuthorizationTypeList(values: string[]): AuthorizationTypeInput[] {
+  return values.map((value) => parseAuthorizationType(value))
+}
+
+/**
+ * Parse and validate one --authorization-type occurrence into one documented
+ * authorization-type object. The value is comma-separated key=value pairs; the
+ * key/value split is on the first `=`, so an `other` value may itself contain
+ * `=`. A missing `id`, a duplicate key, an unknown key, a segment without `=`,
+ * or a non-integer `id` throws the shared invalid-authorization-type failure.
+ */
+function parseAuthorizationType(raw: string): AuthorizationTypeInput {
+  let id: number | undefined
+  let otherValue: string | undefined
+  const seen = new Set<string>()
+
+  for (const segment of raw.split(',')) {
+    const separator = segment.indexOf('=')
+    if (separator === -1) {
+      throw authorizationTypeFailure(
+        raw,
+        `the segment "${segment}" is not a key=value pair`,
+      )
+    }
+
+    const key = segment.slice(0, separator).trim()
+    const value = segment.slice(separator + 1)
+
+    if (seen.has(key)) {
+      throw authorizationTypeFailure(raw, `the key "${key}" appears more than once`)
+    }
+
+    seen.add(key)
+
+    if (key === 'id') {
+      if (!isInt32(value)) {
+        throw authorizationTypeFailure(raw, `the id "${value}" is not an integer`)
+      }
+
+      id = Number(value)
+    } else if (key === 'other') {
+      otherValue = value
+    } else {
+      throw authorizationTypeFailure(raw, `the key "${key}" is not "id" or "other"`)
+    }
+  }
+
+  if (id === undefined) {
+    throw authorizationTypeFailure(raw, 'the required "id" key is missing')
+  }
+
+  const authorizationType: AuthorizationTypeInput = {interconnectionAuthorizationTypeId: id}
+  if (otherValue !== undefined) {
+    authorizationType.otherValue = otherValue
+  }
+
+  return authorizationType
+}
+
+/**
+ * Build the shared invalid-authorization-type failure. Every malformed
+ * --authorization-type value fails the same way: exit 2 with a stable code,
+ * before any keyring or network access. `reason` names the specific problem so
+ * the user learns exactly what was wrong.
+ */
+function authorizationTypeFailure(raw: string, reason: string): CliFailure {
+  return new CliFailure({
+    code: 'invalid-authorization-type',
+    message:
+      `The value "${raw}" for --authorization-type is not valid: ${reason}. ` +
+      'Each --authorization-type is one authorization type, written as ' +
+      'comma-separated key=value pairs: id=<integer> for the required ' +
+      'interconnectionAuthorizationTypeId, and an optional other=<text> for ' +
+      'the otherValue field, for example --authorization-type id=5 or ' +
+      '--authorization-type id=7,other="Site-to-site VPN".',
+    exitCode: EXIT.invalidInput,
+  })
+}
+
+/**
  * Validate one integer body-field flag as a documented int32 integer and
  * return its numeric value. The flag name appears in the stable error code and
  * the message so the user learns exactly which flag was wrong; `label` names

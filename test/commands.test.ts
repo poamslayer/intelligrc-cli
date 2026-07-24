@@ -1126,6 +1126,150 @@ const expectedCatalog = {
       ],
     },
     {
+      id: 'interconnection create',
+      summary: 'Create one interconnection for the profile tenant.',
+      kind: 'api',
+      permission: 'Interconnections: Write',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'name',
+          type: 'option',
+          required: true,
+          summary: 'Interconnection name, sent as the required "name" body field.',
+        },
+        {
+          name: 'provider',
+          type: 'option',
+          required: false,
+          summary:
+            'Optional interconnection provider, sent as the "provider" body field. ' +
+            'Omitted from the body when not given.',
+        },
+        {
+          name: 'description',
+          type: 'option',
+          required: false,
+          summary:
+            'Optional interconnection description, sent as the "description" body ' +
+            'field. Omitted from the body when not given.',
+        },
+        {
+          name: 'authorizing-official-id',
+          type: 'option',
+          required: true,
+          summary:
+            'Integer personnel identifier of the authorizing official from ' +
+            '`personnel list`, sent as the required "authorizingOfficialId" body field.',
+        },
+        {
+          name: 'authorization-type',
+          type: 'option',
+          required: true,
+          multiple: true,
+          summary:
+            'One authorization type to associate, written as comma-separated ' +
+            'key=value pairs: id=<integer> for the required ' +
+            'interconnectionAuthorizationTypeId (from ' +
+            '`lookup interconnection authorization-types`), and an optional ' +
+            'other=<text> for the otherValue field. Repeat the flag to associate ' +
+            'more than one, for example --authorization-type id=5 ' +
+            '--authorization-type id=7,other="Site-to-site VPN". Every occurrence ' +
+            'becomes one element of the required "authorizationTypes" array body field.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'interconnection update',
+      summary: 'Update one interconnection by its integer identifier.',
+      kind: 'api',
+      permission: 'Interconnections: Write',
+      args: [
+        {
+          name: 'id',
+          type: 'integer',
+          required: true,
+          summary:
+            'Integer interconnection identifier, substituted into the documented request path.',
+        },
+      ],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'name',
+          type: 'option',
+          required: true,
+          summary: 'Interconnection name, sent as the required "name" body field.',
+        },
+        {
+          name: 'provider',
+          type: 'option',
+          required: false,
+          summary:
+            'Optional interconnection provider, sent as the "provider" body field. ' +
+            'Omitted from the body when not given.',
+        },
+        {
+          name: 'description',
+          type: 'option',
+          required: false,
+          summary:
+            'Optional interconnection description, sent as the "description" body ' +
+            'field. Omitted from the body when not given.',
+        },
+        {
+          name: 'authorizing-official-id',
+          type: 'option',
+          required: false,
+          summary:
+            'Integer personnel identifier of the authorizing official from ' +
+            '`personnel list`, sent as the optional "authorizingOfficialId" body ' +
+            'field. Omitted from the body when not given.',
+        },
+        {
+          name: 'authorization-type',
+          type: 'option',
+          required: false,
+          multiple: true,
+          summary:
+            'One authorization type to associate, written as comma-separated ' +
+            'key=value pairs: id=<integer> for the required ' +
+            'interconnectionAuthorizationTypeId (from ' +
+            '`lookup interconnection authorization-types`), and an optional ' +
+            'other=<text> for the otherValue field. Repeat the flag to associate ' +
+            'more than one. Providing this flag replaces all existing authorization ' +
+            'type associations; omit it to leave them unchanged.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
       id: 'personnel list',
       summary: 'List the personnel for the profile tenant.',
       kind: 'api',
