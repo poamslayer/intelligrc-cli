@@ -194,6 +194,42 @@ intelligrc boundary create --profile prod \
 A missing required flag, or an invalid integer or UUID in any scalar or array field, stops
 the command before any network access.
 
+## Creating action-plan work items
+
+`action-plan-project create`, `action-plan-task create`, and
+`action-plan-subtask create` send the documented `POST /v1/ActionPlanProjects`,
+`POST /v1/ActionPlanTasks`, and `POST /v1/ActionPlanSubTasks` requests and print the
+created record. A project requires `--name`, `--description`, and `--status-id`. A task
+also requires `--task-type-id`. A subtask requires `--title`, `--description`, `--task-id`
+(a UUID), and `--status-id`. Every other field is optional and is omitted from the body
+when its flag is absent.
+
+The three assignment lists are repeatable integer flags (`--assigned-department-id`,
+`--assigned-personnel-id`, `--assigned-watcher-id`); repeat one once per value. A task also
+takes a repeatable `--assigned-assessment-objective-id` (UUID). Date flags (`--due-date`,
+`--scheduled-completion-date`) take a `YYYY-MM-DD` calendar date and are sent as the
+documented date-time field at midnight UTC. `--is-assigned-to-organization` takes `true`
+or `false`.
+
+```sh
+# Create a project, then a task under it, then a subtask under the task.
+intelligrc action-plan-project create --profile prod \
+  --name "Remediation" --description "Close the gaps" --status-id 1 \
+  --due-date 2026-08-01 --assigned-personnel-id 12 --assigned-personnel-id 13
+
+intelligrc action-plan-task create --profile prod \
+  --name "Patch servers" --description "Apply updates" --status-id 1 --task-type-id 2 \
+  --project-id 3fa85f64-5717-4562-b3fc-2c963f66afa6 \
+  --is-assigned-to-organization true --assigned-external-organization "Acme MSP"
+
+intelligrc action-plan-subtask create --profile prod \
+  --title "Reboot" --description "Reboot the host" \
+  --task-id aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee --status-id 1
+```
+
+A missing required flag, or an invalid integer, number, date, or UUID in any field, stops
+the command before any network access.
+
 ## Output and exit codes
 
 `--output json` is the default. `--output jsonl` prints one array element per line.
