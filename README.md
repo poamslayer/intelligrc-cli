@@ -139,6 +139,34 @@ field). A missing `id`, an unknown key, or a non-integer `id` stops the command 
 network access. Providing `--authorization-type` on an update replaces every existing
 authorization type on that interconnection.
 
+## Creating an evaluation
+
+`evaluation create` sends the documented `POST /v1/Evaluations` request and prints the
+created record. It requires `--name`, `--reason`, `--boundary-id`, `--start-date`,
+`--end-date`, `--icl-version-id`, and at least one `--framework-id`. `--total-budget`,
+`--target-type`, and `--previous-evaluation-id` are optional and are omitted from the body
+when not given.
+
+```sh
+# Create an evaluation. The boundary, ICL version, and framework identifiers come from
+# `boundary list`, `lookup icl-version list`, and `lookup icl-version frameworks`.
+# The command prints the created record.
+intelligrc evaluation create --profile prod \
+  --name "CMMC L2 Assessment" --reason "Annual assessment" \
+  --boundary-id 5 \
+  --start-date 2026-07-24 --end-date 2026-12-31 \
+  --icl-version-id 3fa85f64-5717-4562-b3fc-2c963f66afa6 \
+  --framework-id 11111111-2222-3333-4444-555555555555 \
+  --framework-id aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee
+```
+
+`--start-date` and `--end-date` take a calendar date in `YYYY-MM-DD` form. The CLI checks
+that it is a real calendar day and sends it as the documented date-time field at midnight
+UTC, so `2026-07-24` becomes `2026-07-24T00:00:00Z`. `--total-budget` accepts a number
+such as `50000` or `50000.50`. `--target-type` is an integer, not free text. A missing
+required flag, or an invalid integer, number, UUID, or date, stops the command before any
+network access.
+
 ## Output and exit codes
 
 `--output json` is the default. `--output jsonl` prints one array element per line.

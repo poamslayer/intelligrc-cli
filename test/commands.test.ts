@@ -161,6 +161,109 @@ const expectedCatalog = {
       ],
     },
     {
+      id: 'evaluation create',
+      summary: 'Create one evaluation for the profile tenant.',
+      kind: 'api',
+      permission: 'Evaluations: Write',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'name',
+          type: 'option',
+          required: true,
+          summary: 'Evaluation name, sent as the required "name" body field.',
+        },
+        {
+          name: 'reason',
+          type: 'option',
+          required: true,
+          summary: 'Reason for the evaluation, sent as the required "reason" body field.',
+        },
+        {
+          name: 'boundary-id',
+          type: 'option',
+          required: true,
+          summary:
+            'Integer boundary identifier from `boundary list`, sent as the required ' +
+            '"boundaryId" body field.',
+        },
+        {
+          name: 'start-date',
+          type: 'option',
+          required: true,
+          summary:
+            'Evaluation start date in YYYY-MM-DD form, sent as the required ' +
+            '"startDate" date-time body field at midnight UTC.',
+        },
+        {
+          name: 'end-date',
+          type: 'option',
+          required: true,
+          summary:
+            'Evaluation end date in YYYY-MM-DD form, sent as the required "endDate" ' +
+            'date-time body field at midnight UTC.',
+        },
+        {
+          name: 'total-budget',
+          type: 'option',
+          required: false,
+          summary:
+            'Optional total budget number (for example 50000 or 50000.50), sent as ' +
+            'the "totalBudget" body field. Omitted from the body when not given.',
+        },
+        {
+          name: 'icl-version-id',
+          type: 'option',
+          required: true,
+          summary:
+            'Intelligent Control Library version identifier (UUID) from ' +
+            '`lookup icl-version list`, sent as the required "iclVersionId" body field.',
+        },
+        {
+          name: 'framework-id',
+          type: 'option',
+          required: true,
+          multiple: true,
+          summary:
+            'Framework identifier (UUID) to assess, from ' +
+            '`lookup icl-version frameworks`. Repeat the flag to assess more than one, ' +
+            'for example --framework-id <uuid> --framework-id <uuid>. Each value ' +
+            'becomes one element of the required "frameworkIds" array body field.',
+        },
+        {
+          name: 'target-type',
+          type: 'option',
+          required: false,
+          summary:
+            'Optional integer target type identifier, sent as the "targetType" body ' +
+            'field. The documented field is an integer, not free text. Omitted from ' +
+            'the body when not given.',
+        },
+        {
+          name: 'previous-evaluation-id',
+          type: 'option',
+          required: false,
+          summary:
+            'Optional integer identifier of the previous evaluation, sent as the ' +
+            '"previousEvaluationId" body field. Omitted from the body when not given.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
       id: 'assessment-objective list',
       summary: 'List assessment objectives and their statuses for an evaluation.',
       kind: 'api',
