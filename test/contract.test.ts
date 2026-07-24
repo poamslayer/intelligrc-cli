@@ -187,12 +187,14 @@ test('every mapped write operation is a documented write and the mapped write se
     'Duplicate write method-and-path mapping',
   )
 
-  // The mapped writes are the three Data Types writes (#33) plus the two
-  // data-type association writes (#42), and no more.
+  // The mapped writes are the three Data Types writes (#33), the two
+  // data-type association writes (#42), and the evidence
+  // assessment-objectives association write (#46), and no more.
   assert.deepEqual([...manifestWritePairs].sort(), [
     'delete /v1/DataTypes/{id}',
     'post /v1/DataTypes',
     'put /v1/DataTypes/{id}',
+    'put /v1/Evidence/{id}/AssessmentObjectives',
     'put /v1/Facilities/{id}/datatypes',
     'put /v1/Interconnections/{id}/datatypes',
   ])
@@ -329,11 +331,19 @@ test('every mapped API command reports its documented permission, and tenant lis
       continue
     }
 
-    assert.equal(permissions.length, 1, `Expected one documented permission row for ${contract.method} ${contract.path}`)
-    assert.equal(
-      spec.permission,
-      permissions[0],
-      `Command "${spec.id}" must report the documented permission for ${contract.path}`,
+    // Most operations document exactly one permission. The evidence
+    // assessment-objectives write documents two acceptable permissions
+    // ("At least one of the following": Evidence Write or Evidence Read), so
+    // the command must report one of the documented permissions rather than a
+    // single fixed row.
+    assert.ok(
+      permissions.length >= 1,
+      `Expected at least one documented permission row for ${contract.method} ${contract.path}`,
+    )
+    assert.ok(
+      spec.permission !== null && permissions.includes(spec.permission),
+      `Command "${spec.id}" must report a documented permission for ${contract.path}; ` +
+        `reported "${spec.permission}", documented ${JSON.stringify(permissions)}`,
     )
   }
 })

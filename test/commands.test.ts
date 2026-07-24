@@ -340,6 +340,58 @@ const expectedCatalog = {
       ],
     },
     {
+      id: 'evidence assessment-objectives set',
+      summary: 'Set the assessment objectives mapped to one piece of evidence.',
+      kind: 'api',
+      permission: 'Evidence: Write',
+      args: [
+        {
+          name: 'id',
+          type: 'string',
+          required: true,
+          summary: 'Evidence identifier (UUID), substituted into the documented request path.',
+        },
+      ],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'assessment-objective-id',
+          type: 'option',
+          required: true,
+          multiple: true,
+          summary:
+            'Assessment objective identifier (UUID) to map to the evidence. Repeat the ' +
+            'flag to map more than one, for example --assessment-objective-id <uuid> ' +
+            '--assessment-objective-id <uuid>. Each value becomes one element of the ' +
+            'required "assessmentObjectiveIds" array body field.',
+        },
+        {
+          name: 'preserve-existing',
+          type: 'option',
+          required: false,
+          allowedValues: ['true', 'false'],
+          summary:
+            'Explicit true or false, sent as the documented preserveExisting query ' +
+            'parameter. true adds the given objectives to the existing mappings; ' +
+            'omit the flag or pass false to replace all existing mappings (the ' +
+            'documented default).',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
       id: 'evidence-folder list',
       summary: 'List evidence folders, optionally under one parent folder.',
       kind: 'api',

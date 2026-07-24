@@ -234,6 +234,13 @@ const personnelIdArg: ArgSpec = {
   summary: 'Integer personnel identifier, substituted into the documented request path.',
 }
 
+const evidenceIdArg: ArgSpec = {
+  name: 'id',
+  type: 'string',
+  required: true,
+  summary: 'Evidence identifier (UUID), substituted into the documented request path.',
+}
+
 const iclVersionIdFlag: FlagSpec = {
   name: 'icl-version-id',
   type: 'option',
@@ -324,6 +331,44 @@ const dataTypeIdFlag: FlagSpec = {
 }
 
 /**
+ * The repeatable assessment-objective identifier flag for the evidence
+ * association command. The user supplies it once per objective to map; every
+ * value becomes one element of the documented `assessmentObjectiveIds` array
+ * body field. The documented DTO marks that field required, so this flag is
+ * required: oclif enforces at least one value. Each value is a documented
+ * UUID, unlike the integer identifiers of the data-type association flag.
+ */
+const assessmentObjectiveIdSetFlag: FlagSpec = {
+  name: 'assessment-objective-id',
+  type: 'option',
+  required: true,
+  multiple: true,
+  summary:
+    'Assessment objective identifier (UUID) to map to the evidence. Repeat the ' +
+    'flag to map more than one, for example --assessment-objective-id <uuid> ' +
+    '--assessment-objective-id <uuid>. Each value becomes one element of the ' +
+    'required "assessmentObjectiveIds" array body field.',
+}
+
+/**
+ * The optional preserve-existing flag for the evidence association command.
+ * The documented preserveExisting query parameter defaults to false, which
+ * replaces every existing mapping; true adds the given objectives to the
+ * existing mappings. Omitting the flag applies the documented default.
+ */
+const preserveExistingFlag: FlagSpec = {
+  name: 'preserve-existing',
+  type: 'option',
+  required: false,
+  allowedValues: ['true', 'false'],
+  summary:
+    'Explicit true or false, sent as the documented preserveExisting query ' +
+    'parameter. true adds the given objectives to the existing mappings; ' +
+    'omit the flag or pass false to replace all existing mappings (the ' +
+    'documented default).',
+}
+
+/**
  * Shared parameter contracts. One literal per documented parameter shape
  * keeps the documented facts identical across the command specs, exactly
  * like the shared flag literals above.
@@ -391,6 +436,24 @@ const idPathParameter: ParameterContract = {
   source: {kind: 'arg', name: 'id'},
 }
 
+const evidenceIdPathParameter: ParameterContract = {
+  name: 'id',
+  in: 'path',
+  required: true,
+  type: 'string',
+  format: 'uuid',
+  source: {kind: 'arg', name: 'id'},
+}
+
+const preserveExistingParameter: ParameterContract = {
+  name: 'preserveExisting',
+  in: 'query',
+  required: false,
+  type: 'boolean',
+  default: false,
+  source: {kind: 'flag', name: 'preserve-existing'},
+}
+
 const iclVersionIdParameter: ParameterContract = {
   name: 'iclVersionId',
   in: 'path',
@@ -452,6 +515,25 @@ const dataTypeIdsBodyFields: RequestBodyFieldContract[] = [
     required: false,
     nullable: true,
     source: {kind: 'flag', name: 'data-type-id'},
+  },
+]
+
+/**
+ * The documented EvidenceAssessmentObjectivesUpdateDTO body field contract:
+ * one required array of UUID identifiers named `assessmentObjectiveIds`,
+ * supplied by the repeatable --assessment-objective-id flag. The DTO marks the
+ * field required and does not mark it nullable, so this differs from the
+ * data-type association body, whose array is optional and nullable. The
+ * contract suite compares the array item type (string/uuid) against the
+ * archived DTO exactly as it compares a scalar field.
+ */
+const assessmentObjectiveIdsBodyFields: RequestBodyFieldContract[] = [
+  {
+    name: 'assessmentObjectiveIds',
+    type: 'array',
+    items: {type: 'string', format: 'uuid'},
+    required: true,
+    source: {kind: 'flag', name: 'assessment-objective-id'},
   },
 ]
 
@@ -647,6 +729,19 @@ export const commandSpecs: CommandSpec[] = [
     args: [],
     flags: [profileFlag, apiOutputFlag],
     contract: get('/v1/Evidence'),
+  },
+  {
+    id: 'evidence assessment-objectives set',
+    summary: 'Set the assessment objectives mapped to one piece of evidence.',
+    kind: 'api',
+    permission: 'Evidence: Write',
+    args: [evidenceIdArg],
+    flags: [profileFlag, assessmentObjectiveIdSetFlag, preserveExistingFlag, apiOutputFlag],
+    contract: put(
+      '/v1/Evidence/{id}/AssessmentObjectives',
+      [evidenceIdPathParameter, preserveExistingParameter],
+      assessmentObjectiveIdsBodyFields,
+    ),
   },
   {
     id: 'evidence-folder list',
