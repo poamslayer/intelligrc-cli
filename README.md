@@ -1,11 +1,11 @@
 # intelligrc-cli
 
 A command-line interface (CLI) for the IntelliGRC API. The CLI maps every one of the 50
-documented `GET` read operations to one stable command. It has also begun to write data:
-`data-type create`, `data-type update`, and `data-type delete` send the documented
-`POST /v1/DataTypes`, `PUT /v1/DataTypes/{id}`, and `DELETE /v1/DataTypes/{id}` requests.
-The remaining documented write operations are being added incrementally, each repeating
-the data-type pattern.
+documented `GET` read operations to one stable command. It also writes data: a growing
+set of commands create, update, delete, and associate records across several resources,
+and each reuses the same guarded write runtime. The remaining documented write operations
+are added incrementally. See the "Writing ..." and "Creating ..." sections below for the
+write commands available today.
 
 The CLI serves an IntelliGRC administrator or security engineer who supervises an AI
 agent on the same workstation. The agent discovers commands through the offline catalog
