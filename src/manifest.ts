@@ -663,6 +663,250 @@ const previousEvaluationIdFlag: FlagSpec = {
 }
 
 /**
+ * Flag literals for the boundary create command. The documented
+ * BoundaryCreateDTO is the largest write body: four required scalar fields,
+ * twelve optional scalar fields, and eight optional array fields whose item
+ * types differ (six int32 id arrays, one UUID array, and one plain string
+ * array). Each optional flag omits its field from the body when not given;
+ * each array flag is repeatable and contributes one array element per
+ * occurrence.
+ */
+const boundaryNameFlag: FlagSpec = {
+  name: 'name',
+  type: 'option',
+  required: true,
+  summary: 'Boundary name, sent as the required "name" body field.',
+}
+
+const uniqueIdentifierFlag: FlagSpec = {
+  name: 'unique-identifier',
+  type: 'option',
+  required: true,
+  summary:
+    'Boundary unique identifier, sent as the required "uniqueIdentifier" body field.',
+}
+
+const operationalStatusIdFlag: FlagSpec = {
+  name: 'operational-status-id',
+  type: 'option',
+  required: true,
+  summary:
+    'Integer operational status identifier from ' +
+    '`lookup boundary operational-statuses`, sent as the required ' +
+    '"operationalStatusId" body field.',
+}
+
+const systemTypeIdFlag: FlagSpec = {
+  name: 'system-type-id',
+  type: 'option',
+  required: true,
+  summary:
+    'Integer system type identifier, sent as the required "systemTypeId" body field.',
+}
+
+const boundaryDescriptionFlag: FlagSpec = {
+  name: 'description',
+  type: 'option',
+  required: false,
+  summary:
+    'Optional boundary description, sent as the "description" body field. ' +
+    'Omitted from the body when not given.',
+}
+
+const systemEnvironmentFlag: FlagSpec = {
+  name: 'system-environment',
+  type: 'option',
+  required: false,
+  summary:
+    'Optional system environment, sent as the "systemEnvironment" body field. ' +
+    'Omitted from the body when not given.',
+}
+
+const networkArchitectureDetailsFlag: FlagSpec = {
+  name: 'network-architecture-details',
+  type: 'option',
+  required: false,
+  summary:
+    'Optional network architecture details, sent as the ' +
+    '"networkArchitectureDetails" body field. Omitted from the body when not given.',
+}
+
+const operationalStatusDetailsFlag: FlagSpec = {
+  name: 'operational-status-details',
+  type: 'option',
+  required: false,
+  summary:
+    'Optional operational status details, sent as the ' +
+    '"operationalStatusDetails" body field. Omitted from the body when not given.',
+}
+
+const informationSystemTypeIdFlag: FlagSpec = {
+  name: 'information-system-type-id',
+  type: 'option',
+  required: false,
+  summary:
+    'Optional integer information system type identifier from ' +
+    '`lookup boundary information-system-types`, sent as the ' +
+    '"informationSystemTypeId" body field. Omitted from the body when not given.',
+}
+
+const informationSystemTypeDetailsFlag: FlagSpec = {
+  name: 'information-system-type-details',
+  type: 'option',
+  required: false,
+  summary:
+    'Optional information system type details, sent as the ' +
+    '"informationSystemTypeDetails" body field. Omitted from the body when not given.',
+}
+
+const boundaryConfidentialityIdFlag: FlagSpec = {
+  name: 'confidentiality-id',
+  type: 'option',
+  required: false,
+  summary:
+    'Optional integer confidentiality level identifier from ' +
+    '`lookup boundary confidentiality-levels`, sent as the "confidentialityId" ' +
+    'body field. Omitted from the body when not given.',
+}
+
+const boundaryIntegrityIdFlag: FlagSpec = {
+  name: 'integrity-id',
+  type: 'option',
+  required: false,
+  summary:
+    'Optional integer integrity level identifier from ' +
+    '`lookup boundary integrity-levels`, sent as the "integrityId" body field. ' +
+    'Omitted from the body when not given.',
+}
+
+const boundaryAvailabilityIdFlag: FlagSpec = {
+  name: 'availability-id',
+  type: 'option',
+  required: false,
+  summary:
+    'Optional integer availability level identifier from ' +
+    '`lookup boundary availability-levels`, sent as the "availabilityId" body ' +
+    'field. Omitted from the body when not given.',
+}
+
+const securityCategoryIdFlag: FlagSpec = {
+  name: 'security-category-id',
+  type: 'option',
+  required: false,
+  summary:
+    'Optional integer security category identifier, sent as the ' +
+    '"securityCategoryId" body field. Omitted from the body when not given.',
+}
+
+const networkDiagramIdFlag: FlagSpec = {
+  name: 'network-diagram-id',
+  type: 'option',
+  required: false,
+  summary:
+    'Optional integer network diagram identifier, sent as the ' +
+    '"networkDiagramId" body field. Omitted from the body when not given.',
+}
+
+const dataFlowDiagramIdFlag: FlagSpec = {
+  name: 'data-flow-diagram-id',
+  type: 'option',
+  required: false,
+  summary:
+    'Optional integer data flow diagram identifier, sent as the ' +
+    '"dataFlowDiagramId" body field. Omitted from the body when not given.',
+}
+
+const deviceIdFlag: FlagSpec = {
+  name: 'device-id',
+  type: 'option',
+  required: false,
+  multiple: true,
+  summary:
+    'Integer device identifier to associate. Repeat the flag to associate more ' +
+    'than one. Each value becomes one element of the "deviceIds" array body ' +
+    'field. Omitted from the body when not given.',
+}
+
+const locationIdFlag: FlagSpec = {
+  name: 'location-id',
+  type: 'option',
+  required: false,
+  multiple: true,
+  summary:
+    'Integer location identifier to associate. Repeat the flag to associate ' +
+    'more than one. Each value becomes one element of the "locationIds" array ' +
+    'body field. Omitted from the body when not given.',
+}
+
+const sensitiveInformationTypeIdFlag: FlagSpec = {
+  name: 'sensitive-information-type-id',
+  type: 'option',
+  required: false,
+  multiple: true,
+  summary:
+    'Integer sensitive information type identifier to associate. Repeat the ' +
+    'flag to associate more than one. Each value becomes one element of the ' +
+    '"sensitiveInformationTypeIds" array body field. Omitted from the body when ' +
+    'not given.',
+}
+
+const boundaryInterconnectionIdFlag: FlagSpec = {
+  name: 'interconnection-id',
+  type: 'option',
+  required: false,
+  multiple: true,
+  summary:
+    'Integer interconnection identifier to associate. Repeat the flag to ' +
+    'associate more than one. Each value becomes one element of the ' +
+    '"interconnectionIds" array body field. Omitted from the body when not given.',
+}
+
+const lawRegulationPolicyIdFlag: FlagSpec = {
+  name: 'law-regulation-policy-id',
+  type: 'option',
+  required: false,
+  multiple: true,
+  summary:
+    'Integer law, regulation, or policy identifier to associate. Repeat the ' +
+    'flag to associate more than one. Each value becomes one element of the ' +
+    '"lawRegulationPolicyIds" array body field. Omitted from the body when not given.',
+}
+
+const boundaryPersonnelIdFlag: FlagSpec = {
+  name: 'personnel-id',
+  type: 'option',
+  required: false,
+  multiple: true,
+  summary:
+    'Integer personnel identifier to associate. Repeat the flag to associate ' +
+    'more than one. Each value becomes one element of the "personnelIds" array ' +
+    'body field. Omitted from the body when not given.',
+}
+
+const boundaryFrameworkIdFlag: FlagSpec = {
+  name: 'framework-id',
+  type: 'option',
+  required: false,
+  multiple: true,
+  summary:
+    'Framework identifier (UUID) to associate, from ' +
+    '`lookup icl-version frameworks`. Repeat the flag to associate more than ' +
+    'one. Each value becomes one element of the "frameworkIds" array body field. ' +
+    'Omitted from the body when not given.',
+}
+
+const cageCodeFlag: FlagSpec = {
+  name: 'cage-code',
+  type: 'option',
+  required: false,
+  multiple: true,
+  summary:
+    'Commercial and Government Entity (CAGE) code to associate. Repeat the flag ' +
+    'to associate more than one. Each value becomes one element of the ' +
+    '"cageCodes" array body field. Omitted from the body when not given.',
+}
+
+/**
  * Shared parameter contracts. One literal per documented parameter shape
  * keeps the documented facts identical across the command specs, exactly
  * like the shared flag literals above.
@@ -1068,6 +1312,162 @@ const evaluationCreateBodyFields: RequestBodyFieldContract[] = [
   },
 ]
 
+/** A documented int32 array body field, supplied by one repeatable flag. */
+function int32ArrayField(name: string, flagName: string): RequestBodyFieldContract {
+  return {
+    name,
+    type: 'array',
+    items: {type: 'integer', format: 'int32'},
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: flagName},
+  }
+}
+
+/**
+ * The documented BoundaryCreateDTO body field contract. Four fields are
+ * required (`name`, `uniqueIdentifier`, `operationalStatusId`, `systemTypeId`);
+ * every other field is optional and nullable. The six `*Ids` arrays hold int32
+ * items, `frameworkIds` holds UUID strings, and `cageCodes` holds plain
+ * strings. Field order follows the archived DTO's property order.
+ */
+const boundaryCreateBodyFields: RequestBodyFieldContract[] = [
+  {name: 'name', type: 'string', required: true, source: {kind: 'flag', name: 'name'}},
+  {
+    name: 'uniqueIdentifier',
+    type: 'string',
+    required: true,
+    source: {kind: 'flag', name: 'unique-identifier'},
+  },
+  {
+    name: 'description',
+    type: 'string',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'description'},
+  },
+  {
+    name: 'systemEnvironment',
+    type: 'string',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'system-environment'},
+  },
+  {
+    name: 'networkArchitectureDetails',
+    type: 'string',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'network-architecture-details'},
+  },
+  {
+    name: 'operationalStatusId',
+    type: 'integer',
+    format: 'int32',
+    required: true,
+    source: {kind: 'flag', name: 'operational-status-id'},
+  },
+  {
+    name: 'operationalStatusDetails',
+    type: 'string',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'operational-status-details'},
+  },
+  {
+    name: 'informationSystemTypeId',
+    type: 'integer',
+    format: 'int32',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'information-system-type-id'},
+  },
+  {
+    name: 'informationSystemTypeDetails',
+    type: 'string',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'information-system-type-details'},
+  },
+  {
+    name: 'confidentialityId',
+    type: 'integer',
+    format: 'int32',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'confidentiality-id'},
+  },
+  {
+    name: 'integrityId',
+    type: 'integer',
+    format: 'int32',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'integrity-id'},
+  },
+  {
+    name: 'availabilityId',
+    type: 'integer',
+    format: 'int32',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'availability-id'},
+  },
+  {
+    name: 'securityCategoryId',
+    type: 'integer',
+    format: 'int32',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'security-category-id'},
+  },
+  {
+    name: 'networkDiagramId',
+    type: 'integer',
+    format: 'int32',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'network-diagram-id'},
+  },
+  {
+    name: 'dataFlowDiagramId',
+    type: 'integer',
+    format: 'int32',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'data-flow-diagram-id'},
+  },
+  {
+    name: 'systemTypeId',
+    type: 'integer',
+    format: 'int32',
+    required: true,
+    source: {kind: 'flag', name: 'system-type-id'},
+  },
+  int32ArrayField('deviceIds', 'device-id'),
+  int32ArrayField('locationIds', 'location-id'),
+  int32ArrayField('sensitiveInformationTypeIds', 'sensitive-information-type-id'),
+  int32ArrayField('interconnectionIds', 'interconnection-id'),
+  int32ArrayField('lawRegulationPolicyIds', 'law-regulation-policy-id'),
+  int32ArrayField('personnelIds', 'personnel-id'),
+  {
+    name: 'frameworkIds',
+    type: 'array',
+    items: {type: 'string', format: 'uuid'},
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'framework-id'},
+  },
+  {
+    name: 'cageCodes',
+    type: 'array',
+    items: {type: 'string'},
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'cage-code'},
+  },
+]
+
 /** Contract for one documented GET operation. */
 function get(path: string, parameters: ParameterContract[] = []): OperationContract {
   return {method: 'get', path, parameters}
@@ -1362,6 +1762,42 @@ export const commandSpecs: CommandSpec[] = [
     args: [],
     flags: [profileFlag, apiOutputFlag],
     contract: get('/v1/Boundaries'),
+  },
+  {
+    id: 'boundary create',
+    summary: 'Create one boundary (system) for the profile tenant.',
+    kind: 'api',
+    permission: 'Boundaries: Write',
+    args: [],
+    flags: [
+      profileFlag,
+      boundaryNameFlag,
+      uniqueIdentifierFlag,
+      operationalStatusIdFlag,
+      systemTypeIdFlag,
+      boundaryDescriptionFlag,
+      systemEnvironmentFlag,
+      networkArchitectureDetailsFlag,
+      operationalStatusDetailsFlag,
+      informationSystemTypeIdFlag,
+      informationSystemTypeDetailsFlag,
+      boundaryConfidentialityIdFlag,
+      boundaryIntegrityIdFlag,
+      boundaryAvailabilityIdFlag,
+      securityCategoryIdFlag,
+      networkDiagramIdFlag,
+      dataFlowDiagramIdFlag,
+      deviceIdFlag,
+      locationIdFlag,
+      sensitiveInformationTypeIdFlag,
+      boundaryInterconnectionIdFlag,
+      lawRegulationPolicyIdFlag,
+      boundaryPersonnelIdFlag,
+      boundaryFrameworkIdFlag,
+      cageCodeFlag,
+      apiOutputFlag,
+    ],
+    contract: post('/v1/Boundaries', boundaryCreateBodyFields),
   },
   {
     id: 'data-type get',

@@ -225,13 +225,34 @@ export function buildDataTypeIdsBody(flags: Record<string, unknown>): DataTypeId
  * shared invalid-data-type-id code so the user learns which value was wrong.
  */
 export function parseDataTypeIdList(values: string[]): number[] {
+  return parseInt32List(values, 'invalid-data-type-id', 'data-type-id', 'data type', 'dataTypeIds')
+}
+
+/**
+ * Validate a repeatable integer flag as a list of documented int32 integers,
+ * one element at a time, and return the canonical numeric values in the order
+ * supplied. This is the array counterpart of parseIntegerFlag, shared by every
+ * request-body flag whose documented field is an array of int32 identifiers. A
+ * JSON number serializes as the documented int32 integer rather than a string.
+ * The first non-integer element throws exit 2 with the caller's stable `code`;
+ * `flagName` names the flag in the message, `itemLabel` names the kind of
+ * identifier, and `arrayField` names the documented array field the values
+ * populate.
+ */
+function parseInt32List(
+  values: string[],
+  code: string,
+  flagName: string,
+  itemLabel: string,
+  arrayField: string,
+): number[] {
   return values.map((value) => {
     if (!isInt32(value)) {
       throw new CliFailure({
-        code: 'invalid-data-type-id',
+        code,
         message:
-          `The value "${value}" for --data-type-id is not a valid data type ` +
-          'identifier. Each documented dataTypeIds item is an integer.',
+          `The value "${value}" for --${flagName} is not a valid ${itemLabel} ` +
+          `identifier. Each documented ${arrayField} item is an integer.`,
         exitCode: EXIT.invalidInput,
       })
     }
@@ -648,6 +669,180 @@ export function buildEvaluationCreateBody(flags: Record<string, unknown>): Evalu
   }
 
   return body
+}
+
+/**
+ * The validated body of a boundary create request. This is the largest
+ * documented write body: the documented BoundaryCreateDTO marks `name`,
+ * `uniqueIdentifier`, `operationalStatusId`, and `systemTypeId` required; every
+ * other field is optional and nullable, so each is present only when the user
+ * supplied its flag. The scalar identifier fields are JSON numbers (int32); the
+ * six `*Ids` arrays hold int32 numbers; `frameworkIds` holds UUID strings; and
+ * `cageCodes` holds plain strings.
+ */
+export interface BoundaryCreateBody {
+  name: string
+  uniqueIdentifier: string
+  operationalStatusId: number
+  systemTypeId: number
+  description?: string
+  systemEnvironment?: string
+  networkArchitectureDetails?: string
+  operationalStatusDetails?: string
+  informationSystemTypeId?: number
+  informationSystemTypeDetails?: string
+  confidentialityId?: number
+  integrityId?: number
+  availabilityId?: number
+  securityCategoryId?: number
+  networkDiagramId?: number
+  dataFlowDiagramId?: number
+  deviceIds?: number[]
+  locationIds?: number[]
+  sensitiveInformationTypeIds?: number[]
+  interconnectionIds?: number[]
+  lawRegulationPolicyIds?: number[]
+  personnelIds?: number[]
+  frameworkIds?: string[]
+  cageCodes?: string[]
+}
+
+/**
+ * Build the validated boundary create body from the create command's flags.
+ * Runs before profile resolution, so a non-integer identifier or a malformed
+ * UUID in any scalar or array field exits 2 with a stable code and zero keyring
+ * or network access. The four required flags are enforced by oclif; each
+ * optional scalar or array field is included only when the user supplied its
+ * flag, so an omitted flag leaves the field out of the body entirely.
+ */
+export function buildBoundaryCreateBody(flags: Record<string, unknown>): BoundaryCreateBody {
+  const body: BoundaryCreateBody = {
+    name: flags.name as string,
+    uniqueIdentifier: flags['unique-identifier'] as string,
+    operationalStatusId: parseIntegerFlag(
+      flags['operational-status-id'] as string,
+      'operational-status-id',
+      'identifier',
+    ),
+    systemTypeId: parseIntegerFlag(flags['system-type-id'] as string, 'system-type-id', 'identifier'),
+  }
+
+  assignOptionalString(body, 'description', flags.description)
+  assignOptionalString(body, 'systemEnvironment', flags['system-environment'])
+  assignOptionalString(body, 'networkArchitectureDetails', flags['network-architecture-details'])
+  assignOptionalString(body, 'operationalStatusDetails', flags['operational-status-details'])
+  assignOptionalString(body, 'informationSystemTypeDetails', flags['information-system-type-details'])
+
+  assignOptionalInt(body, 'informationSystemTypeId', flags['information-system-type-id'], 'information-system-type-id')
+  assignOptionalInt(body, 'confidentialityId', flags['confidentiality-id'], 'confidentiality-id')
+  assignOptionalInt(body, 'integrityId', flags['integrity-id'], 'integrity-id')
+  assignOptionalInt(body, 'availabilityId', flags['availability-id'], 'availability-id')
+  assignOptionalInt(body, 'securityCategoryId', flags['security-category-id'], 'security-category-id')
+  assignOptionalInt(body, 'networkDiagramId', flags['network-diagram-id'], 'network-diagram-id')
+  assignOptionalInt(body, 'dataFlowDiagramId', flags['data-flow-diagram-id'], 'data-flow-diagram-id')
+
+  assignOptionalInt32List(body, 'deviceIds', flags['device-id'], 'device-id', 'device')
+  assignOptionalInt32List(body, 'locationIds', flags['location-id'], 'location-id', 'location')
+  assignOptionalInt32List(
+    body,
+    'sensitiveInformationTypeIds',
+    flags['sensitive-information-type-id'],
+    'sensitive-information-type-id',
+    'sensitive information type',
+  )
+  assignOptionalInt32List(body, 'interconnectionIds', flags['interconnection-id'], 'interconnection-id', 'interconnection')
+  assignOptionalInt32List(
+    body,
+    'lawRegulationPolicyIds',
+    flags['law-regulation-policy-id'],
+    'law-regulation-policy-id',
+    'law, regulation, or policy',
+  )
+  assignOptionalInt32List(body, 'personnelIds', flags['personnel-id'], 'personnel-id', 'personnel')
+
+  const frameworkIds = flags['framework-id'] as string[] | undefined
+  if (frameworkIds !== undefined) {
+    body.frameworkIds = parseFrameworkIdList(frameworkIds)
+  }
+
+  const cageCodes = flags['cage-code'] as string[] | undefined
+  if (cageCodes !== undefined) {
+    body.cageCodes = cageCodes
+  }
+
+  return body
+}
+
+/** Keys of BoundaryCreateBody whose value is an optional string. */
+type BoundaryStringKey =
+  | 'description'
+  | 'systemEnvironment'
+  | 'networkArchitectureDetails'
+  | 'operationalStatusDetails'
+  | 'informationSystemTypeDetails'
+
+/** Keys of BoundaryCreateBody whose value is an optional int32 number. */
+type BoundaryIntKey =
+  | 'informationSystemTypeId'
+  | 'confidentialityId'
+  | 'integrityId'
+  | 'availabilityId'
+  | 'securityCategoryId'
+  | 'networkDiagramId'
+  | 'dataFlowDiagramId'
+
+/** Keys of BoundaryCreateBody whose value is an optional int32 array. */
+type BoundaryIntListKey =
+  | 'deviceIds'
+  | 'locationIds'
+  | 'sensitiveInformationTypeIds'
+  | 'interconnectionIds'
+  | 'lawRegulationPolicyIds'
+  | 'personnelIds'
+
+/**
+ * Assign one optional string body field when its flag was supplied. An omitted
+ * flag (oclif passes undefined) leaves the field out of the body.
+ */
+function assignOptionalString(body: BoundaryCreateBody, field: BoundaryStringKey, raw: unknown): void {
+  if (raw !== undefined) {
+    body[field] = raw as string
+  }
+}
+
+/**
+ * Assign one optional int32 body field when its flag was supplied, validating
+ * it as a documented int32 integer. An omitted flag leaves the field out; a
+ * non-integer value exits 2 with the flag-specific code before any network or
+ * keyring access.
+ */
+function assignOptionalInt(
+  body: BoundaryCreateBody,
+  field: BoundaryIntKey,
+  raw: unknown,
+  flagName: string,
+): void {
+  if (raw !== undefined) {
+    body[field] = parseIntegerFlag(raw as string, flagName, 'identifier')
+  }
+}
+
+/**
+ * Assign one optional int32-array body field when its flag was supplied,
+ * validating each element as a documented int32 integer. An omitted flag
+ * leaves the field out; a non-integer element exits 2 with the flag-specific
+ * code before any network or keyring access.
+ */
+function assignOptionalInt32List(
+  body: BoundaryCreateBody,
+  field: BoundaryIntListKey,
+  raw: unknown,
+  flagName: string,
+  itemLabel: string,
+): void {
+  if (raw !== undefined) {
+    body[field] = parseInt32List(raw as string[], `invalid-${flagName}`, flagName, itemLabel, field)
+  }
 }
 
 /**
