@@ -16,7 +16,7 @@ import {type Command} from '@oclif/core'
 import {emitFailure} from '../errors.js'
 import {type ApiCommandSpec} from '../manifest.js'
 import {formatOutput, type OutputFormat} from '../output.js'
-import {apiRequest, emitRetryDiagnostic, type HttpMethod} from './client.js'
+import {apiRequest, emitRetryDiagnostic, type HttpMethod, type QueryPairs} from './client.js'
 import {resolveApiContext} from './resolve.js'
 
 /**
@@ -52,6 +52,12 @@ export interface ApiWriteOptions {
    */
   buildPath?: () => string
   /**
+   * Builds the validated query pairs when the documented operation carries a
+   * query parameter. Runs before profile resolution under the same guarantee
+   * as buildBody. When absent, the request sends no query string.
+   */
+  buildQuery?: () => QueryPairs
+  /**
    * Optional confirmation for a destructive operation. Runs after input
    * validation and before profile resolution. It resolves to proceed or
    * throws a CliFailure to decline, so a declined delete sends no request.
@@ -70,6 +76,7 @@ export async function runApiWrite(command: Command, options: ApiWriteOptions): P
   try {
     const body = options.buildBody?.()
     const path = options.buildPath?.() ?? options.spec.contract.path
+    const query = options.buildQuery?.() ?? []
 
     if (options.confirm) {
       await options.confirm()
@@ -85,6 +92,7 @@ export async function runApiWrite(command: Command, options: ApiWriteOptions): P
     const result = await apiRequest({
       baseUrl: context.baseUrl,
       path,
+      query,
       method: options.method,
       body,
       clientId: context.clientId,

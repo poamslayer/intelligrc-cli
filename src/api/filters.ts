@@ -79,6 +79,26 @@ export function actionPlanQueryFromFlags(flags: Record<string, unknown>): QueryP
 }
 
 /**
+ * Build the query pairs for the evidence assessment-objectives set command
+ * from the optional --preserve-existing flag. An omitted flag contributes
+ * nothing, so the server applies its documented default (false, which
+ * replaces the existing mappings). The value arrives already constrained to
+ * "true" or "false" by the flag's allowed values, so it passes through under
+ * the documented camelCase name.
+ */
+export function evidenceAssessmentObjectivesQueryFromFlags(
+  flags: Record<string, unknown>,
+): QueryPairs {
+  const query: QueryPairs = []
+  const preserveExisting = flags['preserve-existing'] as string | undefined
+  if (preserveExisting !== undefined) {
+    query.push(['preserveExisting', preserveExisting])
+  }
+
+  return query
+}
+
+/**
  * Validate one --evaluation-id value as a documented int32 integer and
  * return its canonical form, so "007" is sent as "7".
  */
@@ -204,6 +224,56 @@ export function parseDataTypeIdList(values: string[]): number[] {
 }
 
 /**
+ * The validated body of an evidence assessment-objectives association
+ * request. The documented EvidenceAssessmentObjectivesUpdateDTO has one
+ * required array field named `assessmentObjectiveIds`. Each element is a
+ * documented UUID, so the array holds strings rather than the numbers used
+ * by the data-type association body.
+ */
+export interface AssessmentObjectiveIdsBody {
+  assessmentObjectiveIds: string[]
+}
+
+/**
+ * Build the validated assessment-objective association body from the
+ * repeatable --assessment-objective-id flag. Runs before profile resolution,
+ * so a malformed UUID exits 2 with a stable code and zero keyring or network
+ * access. The flag is required, so oclif guarantees at least one value; the
+ * `?? []` guard keeps the builder total for direct callers.
+ */
+export function buildAssessmentObjectiveIdsBody(
+  flags: Record<string, unknown>,
+): AssessmentObjectiveIdsBody {
+  const values = (flags['assessment-objective-id'] as string[] | undefined) ?? []
+  return {assessmentObjectiveIds: parseAssessmentObjectiveIdList(values)}
+}
+
+/**
+ * Validate the repeatable --assessment-objective-id flag as a list of
+ * documented UUIDs, one element at a time, and return the values in the order
+ * supplied. The first malformed element throws with the shared
+ * invalid-assessment-objective-id code so the user learns which value was
+ * wrong.
+ */
+export function parseAssessmentObjectiveIdList(values: string[]): string[] {
+  return values.map((value) => {
+    if (!UUID_PATTERN.test(value)) {
+      throw new CliFailure({
+        code: 'invalid-assessment-objective-id',
+        message:
+          `The value "${value}" for --assessment-objective-id is not a valid ` +
+          'assessment objective identifier. Each documented assessmentObjectiveIds ' +
+          'item is a universally unique identifier (UUID), for example ' +
+          '3fa85f64-5717-4562-b3fc-2c963f66afa6.',
+        exitCode: EXIT.invalidInput,
+      })
+    }
+
+    return value
+  })
+}
+
+/**
  * Validate one data-type level flag as a documented int32 integer and return
  * its numeric value. The flag name appears in the stable error code and the
  * message so the user learns exactly which level was wrong.
@@ -254,6 +324,16 @@ export function parseAssessmentObjectiveId(raw: string): string {
     'assessment objective',
     'assessmentObjectiveId parameter',
   )
+}
+
+/**
+ * Validate one evidence identifier argument as a universally unique
+ * identifier. The documented {id} path parameter of the evidence
+ * assessment-objectives operation is a UUID, unlike the integer identifiers
+ * of the facility and interconnection association paths.
+ */
+export function parseEvidenceId(raw: string): string {
+  return parseUuid(raw, 'invalid-evidence-id', 'evidence', 'id path parameter')
 }
 
 /** Validate one --parent-id value as a universally unique identifier. */
