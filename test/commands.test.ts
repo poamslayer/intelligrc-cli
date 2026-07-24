@@ -462,6 +462,52 @@ const expectedCatalog = {
       ],
     },
     {
+      id: 'control update',
+      summary: 'Update the summary statement and evaluation of one control by its identifier.',
+      kind: 'api',
+      permission: 'GapAnalysis: Write',
+      args: [
+        {
+          name: 'id',
+          type: 'string',
+          required: true,
+          summary: 'Control identifier (UUID), substituted into the documented request path.',
+        },
+      ],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'evaluation-id',
+          type: 'option',
+          required: false,
+          summary:
+            'Integer evaluation identifier, sent as the optional "evaluationId" body ' +
+            'field. Omitted from the body when not given.',
+        },
+        {
+          name: 'summary-statement',
+          type: 'option',
+          required: false,
+          summary:
+            'Summary statement (implementation detail) text, sent as the optional ' +
+            '"summaryStatement" body field. Omitted from the body when not given.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
       id: 'evidence for-evaluation',
       summary: 'List uploaded evidence for an evaluation.',
       kind: 'api',

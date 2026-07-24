@@ -289,6 +289,13 @@ const assessmentObjectiveIdArg: ArgSpec = {
   summary: 'Assessment objective identifier (UUID), substituted into the documented request path.',
 }
 
+const controlIdArg: ArgSpec = {
+  name: 'id',
+  type: 'string',
+  required: true,
+  summary: 'Control identifier (UUID), substituted into the documented request path.',
+}
+
 const iclVersionIdFlag: FlagSpec = {
   name: 'icl-version-id',
   type: 'option',
@@ -476,6 +483,22 @@ const validationMethodsFlag: FlagSpec = {
     'Validation methods text, sent as the optional "validationMethods" body ' +
     'field. The documented field is a single string, not a list. Omitted from ' +
     'the body when not given.',
+}
+
+/**
+ * Flag literal for the control update command. The documented ControlUpdateDTO
+ * marks both fields optional and nullable, so this is a partial update. The
+ * `--evaluation-id` field reuses the shared updateEvaluationIdFlag; this flag
+ * supplies the free-text summary statement. The documented controlId path
+ * parameter is a UUID, supplied by the shared id argument (controlIdArg below).
+ */
+const summaryStatementFlag: FlagSpec = {
+  name: 'summary-statement',
+  type: 'option',
+  required: false,
+  summary:
+    'Summary statement (implementation detail) text, sent as the optional ' +
+    '"summaryStatement" body field. Omitted from the body when not given.',
 }
 
 /**
@@ -1216,6 +1239,21 @@ const assessmentObjectiveIdPathParameter: ParameterContract = {
   source: {kind: 'arg', name: 'id'},
 }
 
+/**
+ * The documented controlId path parameter of PUT /v1/Controls/{controlId}. It
+ * is a UUID, not an integer, and its documented name is "controlId" rather than
+ * the "id" used by the other write paths, so it records its own name while
+ * reusing the shared id argument as its source.
+ */
+const controlIdPathParameter: ParameterContract = {
+  name: 'controlId',
+  in: 'path',
+  required: true,
+  type: 'string',
+  format: 'uuid',
+  source: {kind: 'arg', name: 'id'},
+}
+
 const preserveExistingParameter: ParameterContract = {
   name: 'preserveExisting',
   in: 'query',
@@ -1360,6 +1398,31 @@ const assessmentObjectiveUpdateBodyFields: RequestBodyFieldContract[] = [
     required: false,
     nullable: true,
     source: {kind: 'flag', name: 'validation-methods'},
+  },
+]
+
+/**
+ * The documented ControlUpdateDTO body field contract. Both fields are optional
+ * and nullable in the archived DTO (the schema lists no required set), so the
+ * update is partial: each flag supplies its field only when given. `evaluationId`
+ * is an int32 integer; `summaryStatement` is a string. Each field copies the
+ * archived DTO schema verbatim and names the flag that supplies it.
+ */
+const controlUpdateBodyFields: RequestBodyFieldContract[] = [
+  {
+    name: 'evaluationId',
+    type: 'integer',
+    format: 'int32',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'evaluation-id'},
+  },
+  {
+    name: 'summaryStatement',
+    type: 'string',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'summary-statement'},
   },
 ]
 
@@ -2061,6 +2124,15 @@ export const commandSpecs: CommandSpec[] = [
     args: [],
     flags: [profileFlag, evaluationIdFlag, frameworkIdFlag, apiOutputFlag],
     contract: get('/v1/Controls', [evaluationIdParameter, frameworkIdParameter]),
+  },
+  {
+    id: 'control update',
+    summary: 'Update the summary statement and evaluation of one control by its identifier.',
+    kind: 'api',
+    permission: 'GapAnalysis: Write',
+    args: [controlIdArg],
+    flags: [profileFlag, updateEvaluationIdFlag, summaryStatementFlag, apiOutputFlag],
+    contract: put('/v1/Controls/{controlId}', [controlIdPathParameter], controlUpdateBodyFields),
   },
   {
     id: 'evidence for-evaluation',
