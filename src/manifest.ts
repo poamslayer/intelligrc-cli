@@ -564,6 +564,105 @@ const updateAuthorizationTypeFlag: FlagSpec = {
 }
 
 /**
+ * Flag literals for the evaluation create command. The documented
+ * EvaluationCreateDTO marks `name`, `reason`, `boundaryId`, `startDate`,
+ * `endDate`, `iclVersionId`, and `frameworkIds` required; `totalBudget`,
+ * `targetType`, and `previousEvaluationId` are optional. The date flags carry
+ * a calendar date that the CLI sends as the documented date-time field at
+ * midnight UTC. Note that `targetType` is a documented int32 integer, not
+ * free text.
+ */
+const evaluationNameFlag: FlagSpec = {
+  name: 'name',
+  type: 'option',
+  required: true,
+  summary: 'Evaluation name, sent as the required "name" body field.',
+}
+
+const evaluationReasonFlag: FlagSpec = {
+  name: 'reason',
+  type: 'option',
+  required: true,
+  summary: 'Reason for the evaluation, sent as the required "reason" body field.',
+}
+
+const boundaryIdBodyFlag: FlagSpec = {
+  name: 'boundary-id',
+  type: 'option',
+  required: true,
+  summary:
+    'Integer boundary identifier from `boundary list`, sent as the required ' +
+    '"boundaryId" body field.',
+}
+
+const startDateFlag: FlagSpec = {
+  name: 'start-date',
+  type: 'option',
+  required: true,
+  summary:
+    'Evaluation start date in YYYY-MM-DD form, sent as the required ' +
+    '"startDate" date-time body field at midnight UTC.',
+}
+
+const endDateFlag: FlagSpec = {
+  name: 'end-date',
+  type: 'option',
+  required: true,
+  summary:
+    'Evaluation end date in YYYY-MM-DD form, sent as the required "endDate" ' +
+    'date-time body field at midnight UTC.',
+}
+
+const totalBudgetFlag: FlagSpec = {
+  name: 'total-budget',
+  type: 'option',
+  required: false,
+  summary:
+    'Optional total budget number (for example 50000 or 50000.50), sent as ' +
+    'the "totalBudget" body field. Omitted from the body when not given.',
+}
+
+const evaluationIclVersionIdFlag: FlagSpec = {
+  name: 'icl-version-id',
+  type: 'option',
+  required: true,
+  summary:
+    'Intelligent Control Library version identifier (UUID) from ' +
+    '`lookup icl-version list`, sent as the required "iclVersionId" body field.',
+}
+
+const evaluationFrameworkIdFlag: FlagSpec = {
+  name: 'framework-id',
+  type: 'option',
+  required: true,
+  multiple: true,
+  summary:
+    'Framework identifier (UUID) to assess, from ' +
+    '`lookup icl-version frameworks`. Repeat the flag to assess more than one, ' +
+    'for example --framework-id <uuid> --framework-id <uuid>. Each value ' +
+    'becomes one element of the required "frameworkIds" array body field.',
+}
+
+const targetTypeFlag: FlagSpec = {
+  name: 'target-type',
+  type: 'option',
+  required: false,
+  summary:
+    'Optional integer target type identifier, sent as the "targetType" body ' +
+    'field. The documented field is an integer, not free text. Omitted from ' +
+    'the body when not given.',
+}
+
+const previousEvaluationIdFlag: FlagSpec = {
+  name: 'previous-evaluation-id',
+  type: 'option',
+  required: false,
+  summary:
+    'Optional integer identifier of the previous evaluation, sent as the ' +
+    '"previousEvaluationId" body field. Omitted from the body when not given.',
+}
+
+/**
  * Shared parameter contracts. One literal per documented parameter shape
  * keeps the documented facts identical across the command specs, exactly
  * like the shared flag literals above.
@@ -897,6 +996,78 @@ const interconnectionUpdateBodyFields: RequestBodyFieldContract[] = [
   },
 ]
 
+/**
+ * The documented EvaluationCreateDTO body field contract. Seven fields are
+ * required; `totalBudget`, `targetType`, and `previousEvaluationId` are
+ * optional. `startDate` and `endDate` are documented date-time strings.
+ * `boundaryId`, `targetType`, and `previousEvaluationId` are int32 integers;
+ * `totalBudget` is a double number. `frameworkIds` is a required array of UUID
+ * strings, supplied by the repeatable --framework-id flag. `targetType` and
+ * `previousEvaluationId` are documented nullable.
+ */
+const evaluationCreateBodyFields: RequestBodyFieldContract[] = [
+  {name: 'name', type: 'string', required: true, source: {kind: 'flag', name: 'name'}},
+  {name: 'reason', type: 'string', required: true, source: {kind: 'flag', name: 'reason'}},
+  {
+    name: 'boundaryId',
+    type: 'integer',
+    format: 'int32',
+    required: true,
+    source: {kind: 'flag', name: 'boundary-id'},
+  },
+  {
+    name: 'startDate',
+    type: 'string',
+    format: 'date-time',
+    required: true,
+    source: {kind: 'flag', name: 'start-date'},
+  },
+  {
+    name: 'endDate',
+    type: 'string',
+    format: 'date-time',
+    required: true,
+    source: {kind: 'flag', name: 'end-date'},
+  },
+  {
+    name: 'totalBudget',
+    type: 'number',
+    format: 'double',
+    required: false,
+    source: {kind: 'flag', name: 'total-budget'},
+  },
+  {
+    name: 'iclVersionId',
+    type: 'string',
+    format: 'uuid',
+    required: true,
+    source: {kind: 'flag', name: 'icl-version-id'},
+  },
+  {
+    name: 'frameworkIds',
+    type: 'array',
+    items: {type: 'string', format: 'uuid'},
+    required: true,
+    source: {kind: 'flag', name: 'framework-id'},
+  },
+  {
+    name: 'targetType',
+    type: 'integer',
+    format: 'int32',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'target-type'},
+  },
+  {
+    name: 'previousEvaluationId',
+    type: 'integer',
+    format: 'int32',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'previous-evaluation-id'},
+  },
+]
+
 /** Contract for one documented GET operation. */
 function get(path: string, parameters: ParameterContract[] = []): OperationContract {
   return {method: 'get', path, parameters}
@@ -1044,6 +1215,28 @@ export const commandSpecs: CommandSpec[] = [
     args: [],
     flags: [profileFlag, apiOutputFlag],
     contract: get('/v1/Evaluations'),
+  },
+  {
+    id: 'evaluation create',
+    summary: 'Create one evaluation for the profile tenant.',
+    kind: 'api',
+    permission: 'Evaluations: Write',
+    args: [],
+    flags: [
+      profileFlag,
+      evaluationNameFlag,
+      evaluationReasonFlag,
+      boundaryIdBodyFlag,
+      startDateFlag,
+      endDateFlag,
+      totalBudgetFlag,
+      evaluationIclVersionIdFlag,
+      evaluationFrameworkIdFlag,
+      targetTypeFlag,
+      previousEvaluationIdFlag,
+      apiOutputFlag,
+    ],
+    contract: post('/v1/Evaluations', evaluationCreateBodyFields),
   },
   {
     id: 'assessment-objective list',

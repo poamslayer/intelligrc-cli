@@ -1,9 +1,12 @@
 /**
- * Pre-network validation for the documented optional filters. Each parser
- * runs after flag parsing and before profile resolution, so an invalid
- * identifier exits 2 (invalid input) with zero keyring or network access.
- * The returned value goes into the query string under the documented
- * camelCase parameter name.
+ * Pre-network input validation for the documented API commands. Two kinds of
+ * builder live here: query-filter builders that turn optional flags into the
+ * documented query parameters, and request-body builders that turn write-command
+ * flags into the documented request body. Every parser runs after flag parsing
+ * and before profile resolution, so an invalid identifier, number, UUID, or
+ * date exits 2 (invalid input) with zero keyring or network access. A query
+ * value goes into the query string under the documented camelCase parameter
+ * name; a body value goes into the JSON body under the documented field name.
  */
 import {CliFailure, EXIT} from '../errors.js'
 import {type QueryPairs} from './client.js'
@@ -14,6 +17,12 @@ const INT32_MAX = 2_147_483_647
 
 const INTEGER_PATTERN = /^-?\d+$/
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/** A finite decimal number for a documented "number, format: double" field. */
+const DECIMAL_PATTERN = /^-?\d+(\.\d+)?$/
+
+/** A calendar date in the documented YYYY-MM-DD form. */
+const CALENDAR_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/
 
 /** True when the value is a well-formed integer inside the documented int32 range. */
 function isInt32(raw: string): boolean {
@@ -264,14 +273,39 @@ export function buildAssessmentObjectiveIdsBody(
  * wrong.
  */
 export function parseAssessmentObjectiveIdList(values: string[]): string[] {
+  return parseUuidList(
+    values,
+    'invalid-assessment-objective-id',
+    'assessment-objective-id',
+    'assessment objective',
+    'assessmentObjectiveIds',
+  )
+}
+
+/**
+ * Validate a repeatable UUID flag as a list of documented UUIDs, one element at
+ * a time, and return the values in the order supplied. This is the array
+ * counterpart of parseUuid, shared by every request-body flag whose documented
+ * field is an array of UUID identifiers. The first malformed element throws
+ * exit 2 with the caller's stable `code`; `flagName` names the flag in the
+ * message, `itemLabel` names the kind of identifier, and `arrayField` names the
+ * documented array field the values populate.
+ */
+function parseUuidList(
+  values: string[],
+  code: string,
+  flagName: string,
+  itemLabel: string,
+  arrayField: string,
+): string[] {
   return values.map((value) => {
     if (!UUID_PATTERN.test(value)) {
       throw new CliFailure({
-        code: 'invalid-assessment-objective-id',
+        code,
         message:
-          `The value "${value}" for --assessment-objective-id is not a valid ` +
-          'assessment objective identifier. Each documented assessmentObjectiveIds ' +
-          'item is a universally unique identifier (UUID), for example ' +
+          `The value "${value}" for --${flagName} is not a valid ${itemLabel} ` +
+          `identifier. Each documented ${arrayField} item is a universally ` +
+          'unique identifier (UUID), for example ' +
           '3fa85f64-5717-4562-b3fc-2c963f66afa6.',
         exitCode: EXIT.invalidInput,
       })
@@ -551,6 +585,137 @@ function authorizationTypeFailure(raw: string, reason: string): CliFailure {
       '--authorization-type id=7,other="Site-to-site VPN".',
     exitCode: EXIT.invalidInput,
   })
+}
+
+/**
+ * The validated body of an evaluation create request. The documented
+ * EvaluationCreateDTO marks `name`, `reason`, `boundaryId`, `startDate`,
+ * `endDate`, `iclVersionId`, and `frameworkIds` required; `totalBudget`,
+ * `targetType`, and `previousEvaluationId` are optional, so each is present
+ * only when the user supplied its flag. The two date fields are documented as
+ * date-time strings; `boundaryId`, `targetType`, and `previousEvaluationId`
+ * are JSON numbers (int32); `totalBudget` is a JSON number (double);
+ * `frameworkIds` is a required array of UUID strings.
+ */
+export interface EvaluationCreateBody {
+  name: string
+  reason: string
+  boundaryId: number
+  startDate: string
+  endDate: string
+  totalBudget?: number
+  iclVersionId: string
+  frameworkIds: string[]
+  targetType?: number
+  previousEvaluationId?: number
+}
+
+/**
+ * Build the validated evaluation create body from the create command's flags.
+ * Runs before profile resolution, so a non-integer identifier, a non-numeric
+ * budget, a malformed UUID, or an invalid date exits 2 with a stable code and
+ * zero keyring or network access. The seven required flags are enforced by
+ * oclif; each optional field is included only when the user supplied its flag.
+ */
+export function buildEvaluationCreateBody(flags: Record<string, unknown>): EvaluationCreateBody {
+  const body: EvaluationCreateBody = {
+    name: flags.name as string,
+    reason: flags.reason as string,
+    boundaryId: parseIntegerFlag(flags['boundary-id'] as string, 'boundary-id', 'identifier'),
+    startDate: parseDateFlag(flags['start-date'] as string, 'start-date'),
+    endDate: parseDateFlag(flags['end-date'] as string, 'end-date'),
+    iclVersionId: parseIclVersionId(flags['icl-version-id'] as string),
+    frameworkIds: parseFrameworkIdList((flags['framework-id'] as string[] | undefined) ?? []),
+  }
+
+  const totalBudget = flags['total-budget'] as string | undefined
+  if (totalBudget !== undefined) {
+    body.totalBudget = parseNumberFlag(totalBudget, 'total-budget', 'amount')
+  }
+
+  const targetType = flags['target-type'] as string | undefined
+  if (targetType !== undefined) {
+    body.targetType = parseIntegerFlag(targetType, 'target-type', 'target type')
+  }
+
+  const previousEvaluationId = flags['previous-evaluation-id'] as string | undefined
+  if (previousEvaluationId !== undefined) {
+    body.previousEvaluationId = parseIntegerFlag(
+      previousEvaluationId,
+      'previous-evaluation-id',
+      'identifier',
+    )
+  }
+
+  return body
+}
+
+/**
+ * Validate the repeatable --framework-id flag as a list of documented UUIDs,
+ * one element at a time, and return the values in the order supplied. The flag
+ * is required, so oclif guarantees at least one value; the `?? []` guard keeps
+ * the builder total for direct callers. The first malformed element throws
+ * with the shared invalid-framework-id code so the user learns which value was
+ * wrong. This mirrors the assessment-objective UUID array parser.
+ */
+export function parseFrameworkIdList(values: string[]): string[] {
+  return parseUuidList(values, 'invalid-framework-id', 'framework-id', 'framework', 'frameworkIds')
+}
+
+/**
+ * Validate one calendar-date flag and return the documented date-time string
+ * it maps to. The documented field is a date-time, and the flag names a date,
+ * so the CLI accepts a calendar date in YYYY-MM-DD form and sends it at
+ * midnight UTC, for example 2026-07-24 becomes 2026-07-24T00:00:00Z. The value
+ * must be a real calendar day: a round-trip through UTC rejects an impossible
+ * date such as 2026-02-30, and the fixed form rejects a bare date-time so the
+ * sent instant is never ambiguous. A malformed value throws exit 2 with the
+ * flag-specific code, before any keyring or network access.
+ */
+function parseDateFlag(raw: string, flagName: string): string {
+  if (CALENDAR_DATE_PATTERN.test(raw)) {
+    const [year, month, day] = raw.split('-').map(Number)
+    const date = new Date(Date.UTC(year, month - 1, day))
+    if (
+      date.getUTCFullYear() === year &&
+      date.getUTCMonth() === month - 1 &&
+      date.getUTCDate() === day
+    ) {
+      return `${raw}T00:00:00Z`
+    }
+  }
+
+  throw new CliFailure({
+    code: `invalid-${flagName}`,
+    message:
+      `The value "${raw}" for --${flagName} is not a valid date. Use a ` +
+      'calendar date in YYYY-MM-DD form, for example 2026-07-24. The CLI ' +
+      'sends it as the documented date-time field at midnight UTC ' +
+      '(2026-07-24T00:00:00Z).',
+    exitCode: EXIT.invalidInput,
+  })
+}
+
+/**
+ * Validate one number body-field flag as a documented finite decimal and
+ * return its numeric value, so it serializes as the documented "number,
+ * format: double" field rather than a string. The flag name appears in the
+ * stable error code and the message; `label` names the kind of value, for
+ * example "amount" for a budget. A non-numeric value throws exit 2 before any
+ * keyring or network access.
+ */
+function parseNumberFlag(raw: string, flagName: string, label: string): number {
+  if (!DECIMAL_PATTERN.test(raw)) {
+    throw new CliFailure({
+      code: `invalid-${flagName}`,
+      message:
+        `The value "${raw}" for --${flagName} is not a valid ${label}. ` +
+        'The documented field is a number, for example 50000 or 50000.50.',
+      exitCode: EXIT.invalidInput,
+    })
+  }
+
+  return Number(raw)
 }
 
 /**
