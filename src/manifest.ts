@@ -54,6 +54,46 @@ export interface ParameterContract {
 }
 
 /**
+ * One documented sub-field of an object array item. This is the nested
+ * counterpart of RequestBodyFieldContract, without a `source`: one repeatable
+ * flag supplies the whole array and encodes each sub-field within its value,
+ * so a sub-field has no flag of its own. Every field copies the archived
+ * item DTO schema verbatim; the contract suite compares them by exact equality.
+ */
+export interface RequestBodyItemFieldContract {
+  /** Documented JSON field name, for example "interconnectionAuthorizationTypeId". */
+  name: string
+  /** Documented schema type, for example "integer" or "string". */
+  type: string
+  /** Documented schema format, for example "int32". Absent when undocumented. */
+  format?: string
+  /** True when the item DTO lists the sub-field in its required set. */
+  required: boolean
+  /** True when the documented schema marks the sub-field nullable. */
+  nullable?: boolean
+}
+
+/**
+ * The documented schema of one array item. A scalar item records only its
+ * type and optional format, for example integer/int32 or string/uuid. An
+ * object item (a $ref to a nested DTO in the archived document) records type
+ * "object" and the contract of each of its documented sub-fields.
+ */
+export interface RequestBodyItemContract {
+  /** Documented item type: a scalar type, or "object" for a $ref item. */
+  type: string
+  /** Documented item format, for example "int32". Absent for an object item. */
+  format?: string
+  /**
+   * Present for an object item: the contract of each documented sub-field.
+   * Absent for a scalar item. The contract suite resolves the documented
+   * item $ref and compares these against its properties exactly as it compares
+   * the top-level body fields.
+   */
+  fields?: RequestBodyItemFieldContract[]
+}
+
+/**
  * One documented request-body field and the CLI flag that supplies it.
  * Every field except `source` copies the archived OpenAPI document's data
  * transfer object (DTO) schema verbatim; the contract suite compares them by
@@ -68,11 +108,12 @@ export interface RequestBodyFieldContract {
   format?: string
   /**
    * For an array field (type "array"), the documented schema of one array
-   * item, for example integer/int32. Absent for a scalar field. The contract
-   * suite compares this against the documented `items` schema exactly as it
-   * compares a scalar field's own type and format.
+   * item — a scalar item (for example integer/int32) or an object item (a
+   * nested DTO). Absent for a scalar field. The contract suite compares this
+   * against the documented `items` schema exactly as it compares a scalar
+   * field's own type and format.
    */
-  items?: {type: string; format?: string}
+  items?: RequestBodyItemContract
   /** True when the DTO lists the field in its required set. */
   required: boolean
   /** True when the documented schema marks the field nullable. */
@@ -438,6 +479,91 @@ const validationMethodsFlag: FlagSpec = {
 }
 
 /**
+ * Flag literals for the interconnection create and update commands. The two
+ * documented DTOs differ in what they require: InterconnectionCreateDTO marks
+ * `name`, `authorizingOfficialId`, and `authorizationTypes` required;
+ * InterconnectionUpdateDTO marks only `name` required. So the two commands
+ * share the name, provider, and description flags but use separate
+ * authorizing-official-id and authorization-type flags with the matching
+ * required status. The contract suite checks each flag's required status
+ * against its own DTO's required set.
+ */
+const interconnectionNameFlag: FlagSpec = {
+  name: 'name',
+  type: 'option',
+  required: true,
+  summary: 'Interconnection name, sent as the required "name" body field.',
+}
+
+const interconnectionProviderFlag: FlagSpec = {
+  name: 'provider',
+  type: 'option',
+  required: false,
+  summary:
+    'Optional interconnection provider, sent as the "provider" body field. ' +
+    'Omitted from the body when not given.',
+}
+
+const interconnectionDescriptionFlag: FlagSpec = {
+  name: 'description',
+  type: 'option',
+  required: false,
+  summary:
+    'Optional interconnection description, sent as the "description" body ' +
+    'field. Omitted from the body when not given.',
+}
+
+const createAuthorizingOfficialIdFlag: FlagSpec = {
+  name: 'authorizing-official-id',
+  type: 'option',
+  required: true,
+  summary:
+    'Integer personnel identifier of the authorizing official from ' +
+    '`personnel list`, sent as the required "authorizingOfficialId" body field.',
+}
+
+const updateAuthorizingOfficialIdFlag: FlagSpec = {
+  name: 'authorizing-official-id',
+  type: 'option',
+  required: false,
+  summary:
+    'Integer personnel identifier of the authorizing official from ' +
+    '`personnel list`, sent as the optional "authorizingOfficialId" body ' +
+    'field. Omitted from the body when not given.',
+}
+
+const createAuthorizationTypeFlag: FlagSpec = {
+  name: 'authorization-type',
+  type: 'option',
+  required: true,
+  multiple: true,
+  summary:
+    'One authorization type to associate, written as comma-separated ' +
+    'key=value pairs: id=<integer> for the required ' +
+    'interconnectionAuthorizationTypeId (from ' +
+    '`lookup interconnection authorization-types`), and an optional ' +
+    'other=<text> for the otherValue field. Repeat the flag to associate ' +
+    'more than one, for example --authorization-type id=5 ' +
+    '--authorization-type id=7,other="Site-to-site VPN". Every occurrence ' +
+    'becomes one element of the required "authorizationTypes" array body field.',
+}
+
+const updateAuthorizationTypeFlag: FlagSpec = {
+  name: 'authorization-type',
+  type: 'option',
+  required: false,
+  multiple: true,
+  summary:
+    'One authorization type to associate, written as comma-separated ' +
+    'key=value pairs: id=<integer> for the required ' +
+    'interconnectionAuthorizationTypeId (from ' +
+    '`lookup interconnection authorization-types`), and an optional ' +
+    'other=<text> for the otherValue field. Repeat the flag to associate ' +
+    'more than one. Providing this flag replaces all existing authorization ' +
+    'type associations; omit it to leave them unchanged.',
+}
+
+/**
  * Shared parameter contracts. One literal per documented parameter shape
  * keeps the documented facts identical across the command specs, exactly
  * like the shared flag literals above.
@@ -667,6 +793,107 @@ const assessmentObjectiveUpdateBodyFields: RequestBodyFieldContract[] = [
     required: false,
     nullable: true,
     source: {kind: 'flag', name: 'validation-methods'},
+  },
+]
+
+/**
+ * The documented InterconnectionAuthorizationTypeInputDTO, the item schema of
+ * the `authorizationTypes` array in both the create and update DTOs. It is a
+ * nested object with one required int32 field and one optional nullable string
+ * field. The contract suite resolves the array item $ref and compares these
+ * sub-fields against the archived item DTO exactly as it compares the
+ * top-level body fields.
+ */
+const authorizationTypeItem: RequestBodyItemContract = {
+  type: 'object',
+  fields: [
+    {
+      name: 'interconnectionAuthorizationTypeId',
+      type: 'integer',
+      format: 'int32',
+      required: true,
+    },
+    {name: 'otherValue', type: 'string', required: false, nullable: true},
+  ],
+}
+
+/**
+ * The documented InterconnectionCreateDTO body field contract. The DTO marks
+ * `name`, `authorizingOfficialId`, and `authorizationTypes` required;
+ * `provider` and `description` are optional and nullable. `authorizationTypes`
+ * is an array of the nested authorization-type object, supplied by the
+ * repeatable --authorization-type flag.
+ */
+const interconnectionCreateBodyFields: RequestBodyFieldContract[] = [
+  {name: 'name', type: 'string', required: true, source: {kind: 'flag', name: 'name'}},
+  {
+    name: 'provider',
+    type: 'string',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'provider'},
+  },
+  {
+    name: 'description',
+    type: 'string',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'description'},
+  },
+  {
+    name: 'authorizingOfficialId',
+    type: 'integer',
+    format: 'int32',
+    required: true,
+    source: {kind: 'flag', name: 'authorizing-official-id'},
+  },
+  {
+    name: 'authorizationTypes',
+    type: 'array',
+    items: authorizationTypeItem,
+    required: true,
+    source: {kind: 'flag', name: 'authorization-type'},
+  },
+]
+
+/**
+ * The documented InterconnectionUpdateDTO body field contract. The DTO marks
+ * only `name` required; every other field is optional and nullable, so this is
+ * a partial update. `authorizingOfficialId` and `authorizationTypes` are
+ * therefore optional and nullable here, unlike the create DTO where they are
+ * required. The array item schema is the same nested authorization-type object.
+ */
+const interconnectionUpdateBodyFields: RequestBodyFieldContract[] = [
+  {name: 'name', type: 'string', required: true, source: {kind: 'flag', name: 'name'}},
+  {
+    name: 'provider',
+    type: 'string',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'provider'},
+  },
+  {
+    name: 'description',
+    type: 'string',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'description'},
+  },
+  {
+    name: 'authorizingOfficialId',
+    type: 'integer',
+    format: 'int32',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'authorizing-official-id'},
+  },
+  {
+    name: 'authorizationTypes',
+    type: 'array',
+    items: authorizationTypeItem,
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'authorization-type'},
   },
 ]
 
@@ -1075,6 +1302,40 @@ export const commandSpecs: CommandSpec[] = [
     args: [interconnectionIdArg],
     flags: [profileFlag, dataTypeIdFlag, apiOutputFlag],
     contract: put('/v1/Interconnections/{id}/datatypes', [idPathParameter], dataTypeIdsBodyFields),
+  },
+  {
+    id: 'interconnection create',
+    summary: 'Create one interconnection for the profile tenant.',
+    kind: 'api',
+    permission: 'Interconnections: Write',
+    args: [],
+    flags: [
+      profileFlag,
+      interconnectionNameFlag,
+      interconnectionProviderFlag,
+      interconnectionDescriptionFlag,
+      createAuthorizingOfficialIdFlag,
+      createAuthorizationTypeFlag,
+      apiOutputFlag,
+    ],
+    contract: post('/v1/Interconnections', interconnectionCreateBodyFields),
+  },
+  {
+    id: 'interconnection update',
+    summary: 'Update one interconnection by its integer identifier.',
+    kind: 'api',
+    permission: 'Interconnections: Write',
+    args: [interconnectionIdArg],
+    flags: [
+      profileFlag,
+      interconnectionNameFlag,
+      interconnectionProviderFlag,
+      interconnectionDescriptionFlag,
+      updateAuthorizingOfficialIdFlag,
+      updateAuthorizationTypeFlag,
+      apiOutputFlag,
+    ],
+    contract: put('/v1/Interconnections/{id}', [idPathParameter], interconnectionUpdateBodyFields),
   },
   {
     id: 'personnel list',
