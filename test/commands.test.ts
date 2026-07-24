@@ -825,6 +825,47 @@ const expectedCatalog = {
       ],
     },
     {
+      id: 'facility data-types set',
+      summary: 'Replace the data types associated with one facility.',
+      kind: 'api',
+      permission: 'Locations: Write',
+      args: [
+        {
+          name: 'id',
+          type: 'integer',
+          required: true,
+          summary: 'Integer facility identifier, substituted into the documented request path.',
+        },
+      ],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'data-type-id',
+          type: 'option',
+          required: false,
+          multiple: true,
+          summary:
+            'Integer data type identifier to associate. Repeat the flag to associate ' +
+            'more than one, for example --data-type-id 1 --data-type-id 2. Each value ' +
+            'becomes one element of the "dataTypeIds" array body field. Omit the flag ' +
+            'to clear every association.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
       id: 'interconnection list',
       summary: 'List the interconnections for the profile tenant.',
       kind: 'api',
@@ -898,6 +939,48 @@ const expectedCatalog = {
           type: 'option',
           required: true,
           summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'interconnection data-types set',
+      summary: 'Replace the data types associated with one interconnection.',
+      kind: 'api',
+      permission: 'Interconnections: Write',
+      args: [
+        {
+          name: 'id',
+          type: 'integer',
+          required: true,
+          summary:
+            'Integer interconnection identifier, substituted into the documented request path.',
+        },
+      ],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'data-type-id',
+          type: 'option',
+          required: false,
+          multiple: true,
+          summary:
+            'Integer data type identifier to associate. Repeat the flag to associate ' +
+            'more than one, for example --data-type-id 1 --data-type-id 2. Each value ' +
+            'becomes one element of the "dataTypeIds" array body field. Omit the flag ' +
+            'to clear every association.',
         },
         {
           name: 'output',

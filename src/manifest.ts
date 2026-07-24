@@ -17,6 +17,12 @@ export interface FlagSpec {
   required: boolean
   allowedValues?: string[]
   default?: string
+  /**
+   * True when the user may supply the flag more than once to build a list,
+   * for example `--data-type-id 1 --data-type-id 2`. Absent for a flag that
+   * takes at most one value.
+   */
+  multiple?: boolean
   summary: string
 }
 
@@ -56,10 +62,17 @@ export interface ParameterContract {
 export interface RequestBodyFieldContract {
   /** Documented JSON field name, for example "confidentialityId". */
   name: string
-  /** Documented schema type, for example "integer" or "string". */
+  /** Documented schema type, for example "integer", "string", or "array". */
   type: string
   /** Documented schema format, for example "int32". Absent when undocumented. */
   format?: string
+  /**
+   * For an array field (type "array"), the documented schema of one array
+   * item, for example integer/int32. Absent for a scalar field. The contract
+   * suite compares this against the documented `items` schema exactly as it
+   * compares a scalar field's own type and format.
+   */
+  items?: {type: string; format?: string}
   /** True when the DTO lists the field in its required set. */
   required: boolean
   /** True when the documented schema marks the field nullable. */
@@ -290,6 +303,27 @@ const yesFlag: FlagSpec = {
 }
 
 /**
+ * The repeatable data-type identifier flag shared by the facility and
+ * interconnection association commands. The user supplies it once per data
+ * type to associate; every value becomes one element of the documented
+ * `dataTypeIds` array body field. Omitting the flag sends an empty array,
+ * which the documented operations treat as "clear all associations". The CLI
+ * validates each value as an integer but never checks it against a lookup
+ * catalog.
+ */
+const dataTypeIdFlag: FlagSpec = {
+  name: 'data-type-id',
+  type: 'option',
+  required: false,
+  multiple: true,
+  summary:
+    'Integer data type identifier to associate. Repeat the flag to associate ' +
+    'more than one, for example --data-type-id 1 --data-type-id 2. Each value ' +
+    'becomes one element of the "dataTypeIds" array body field. Omit the flag ' +
+    'to clear every association.',
+}
+
+/**
  * Shared parameter contracts. One literal per documented parameter shape
  * keeps the documented facts identical across the command specs, exactly
  * like the shared flag literals above.
@@ -400,6 +434,24 @@ const dataTypeBodyFields: RequestBodyFieldContract[] = [
     format: 'int32',
     required: true,
     source: {kind: 'flag', name: 'availability-id'},
+  },
+]
+
+/**
+ * The documented FacilityDataTypesUpdateDTO and InterconnectionDataTypesUpdateDTO
+ * share this body field contract: one nullable array of int32 identifiers
+ * named `dataTypeIds`, supplied by the repeatable --data-type-id flag. The
+ * contract suite compares the array item type against the archived DTO
+ * exactly as it compares a scalar field.
+ */
+const dataTypeIdsBodyFields: RequestBodyFieldContract[] = [
+  {
+    name: 'dataTypeIds',
+    type: 'array',
+    items: {type: 'integer', format: 'int32'},
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'data-type-id'},
   },
 ]
 
@@ -730,6 +782,15 @@ export const commandSpecs: CommandSpec[] = [
     contract: get('/v1/Facilities/{id}/datatypes', [idPathParameter]),
   },
   {
+    id: 'facility data-types set',
+    summary: 'Replace the data types associated with one facility.',
+    kind: 'api',
+    permission: 'Locations: Write',
+    args: [facilityIdArg],
+    flags: [profileFlag, dataTypeIdFlag, apiOutputFlag],
+    contract: put('/v1/Facilities/{id}/datatypes', [idPathParameter], dataTypeIdsBodyFields),
+  },
+  {
     id: 'interconnection list',
     summary: 'List the interconnections for the profile tenant.',
     kind: 'api',
@@ -755,6 +816,15 @@ export const commandSpecs: CommandSpec[] = [
     args: [interconnectionIdArg],
     flags: [profileFlag, apiOutputFlag],
     contract: get('/v1/Interconnections/{id}/datatypes', [idPathParameter]),
+  },
+  {
+    id: 'interconnection data-types set',
+    summary: 'Replace the data types associated with one interconnection.',
+    kind: 'api',
+    permission: 'Interconnections: Write',
+    args: [interconnectionIdArg],
+    flags: [profileFlag, dataTypeIdFlag, apiOutputFlag],
+    contract: put('/v1/Interconnections/{id}/datatypes', [idPathParameter], dataTypeIdsBodyFields),
   },
   {
     id: 'personnel list',
@@ -1113,15 +1183,25 @@ export function oclifArgs(spec: CommandSpec): Interfaces.ArgInput {
 export function oclifFlags(spec: CommandSpec): Interfaces.FlagInput {
   const flags: Interfaces.FlagInput = {}
   for (const flag of spec.flags) {
-    flags[flag.name] =
-      flag.type === 'boolean'
-        ? Flags.boolean({summary: flag.summary, required: flag.required})
-        : Flags.string({
-            summary: flag.summary,
-            required: flag.required,
-            options: flag.allowedValues,
-            default: flag.default,
-          })
+    if (flag.type === 'boolean') {
+      flags[flag.name] = Flags.boolean({summary: flag.summary, required: flag.required})
+    } else if (flag.multiple) {
+      // A repeatable option collects every occurrence into a string array;
+      // it carries no scalar default, so it stays undefined when omitted.
+      flags[flag.name] = Flags.string({
+        summary: flag.summary,
+        required: flag.required,
+        options: flag.allowedValues,
+        multiple: true,
+      })
+    } else {
+      flags[flag.name] = Flags.string({
+        summary: flag.summary,
+        required: flag.required,
+        options: flag.allowedValues,
+        default: flag.default,
+      })
+    }
   }
 
   return flags
