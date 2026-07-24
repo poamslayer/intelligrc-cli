@@ -907,6 +907,230 @@ const cageCodeFlag: FlagSpec = {
 }
 
 /**
+ * Flag literals for the three Action Plan create commands (project, task,
+ * subtask). The three documented DTOs share many optional fields, so the shared
+ * literals below are reused across the command specs; the required-field
+ * literals differ per command (each status flag points to a different status
+ * lookup). Each optional flag omits its field from the body when not given;
+ * each `assigned*` flag is repeatable and contributes one array element per
+ * occurrence.
+ */
+const apNameFlag: FlagSpec = {
+  name: 'name',
+  type: 'option',
+  required: true,
+  summary: 'Name, sent as the required "name" body field.',
+}
+
+const apDescriptionFlag: FlagSpec = {
+  name: 'description',
+  type: 'option',
+  required: true,
+  summary: 'Description, sent as the required "description" body field.',
+}
+
+const apProjectStatusIdFlag: FlagSpec = {
+  name: 'status-id',
+  type: 'option',
+  required: true,
+  summary:
+    'Integer status identifier from `lookup action-plan project-statuses`, sent ' +
+    'as the required "statusId" body field.',
+}
+
+const apTaskStatusIdFlag: FlagSpec = {
+  name: 'status-id',
+  type: 'option',
+  required: true,
+  summary:
+    'Integer status identifier from `lookup action-plan task-statuses`, sent as ' +
+    'the required "statusId" body field.',
+}
+
+const apSubTaskStatusIdFlag: FlagSpec = {
+  name: 'status-id',
+  type: 'option',
+  required: true,
+  summary:
+    'Integer status identifier from `lookup action-plan subtask-statuses`, sent ' +
+    'as the required "statusId" body field.',
+}
+
+const taskTypeIdFlag: FlagSpec = {
+  name: 'task-type-id',
+  type: 'option',
+  required: true,
+  summary:
+    'Integer task type identifier from `lookup action-plan task-types`, sent as ' +
+    'the required "taskTypeId" body field.',
+}
+
+const subTaskTitleFlag: FlagSpec = {
+  name: 'title',
+  type: 'option',
+  required: true,
+  summary: 'Subtask title, sent as the required "title" body field.',
+}
+
+const subTaskTaskIdFlag: FlagSpec = {
+  name: 'task-id',
+  type: 'option',
+  required: true,
+  summary:
+    'Task identifier (UUID) from `action-plan-task list`, sent as the required ' +
+    '"taskId" body field.',
+}
+
+const costEstimateFlag: FlagSpec = {
+  name: 'cost-estimate',
+  type: 'option',
+  required: false,
+  summary:
+    'Optional cost estimate number (for example 50000 or 50000.50), sent as the ' +
+    '"costEstimate" body field. Omitted from the body when not given.',
+}
+
+const dueDateFlag: FlagSpec = {
+  name: 'due-date',
+  type: 'option',
+  required: false,
+  summary:
+    'Optional due date in YYYY-MM-DD form, sent as the "dueDate" date-time body ' +
+    'field at midnight UTC. Omitted from the body when not given.',
+}
+
+const budgetFlag: FlagSpec = {
+  name: 'budget',
+  type: 'option',
+  required: false,
+  summary:
+    'Optional budget number (for example 50000 or 50000.50), sent as the ' +
+    '"budget" body field. Omitted from the body when not given.',
+}
+
+const scheduledCompletionDateFlag: FlagSpec = {
+  name: 'scheduled-completion-date',
+  type: 'option',
+  required: false,
+  summary:
+    'Optional scheduled completion date in YYYY-MM-DD form, sent as the ' +
+    '"scheduledCompletionDate" date-time body field at midnight UTC. Omitted ' +
+    'from the body when not given.',
+}
+
+const projectIdFlag: FlagSpec = {
+  name: 'project-id',
+  type: 'option',
+  required: false,
+  summary:
+    'Optional project identifier (UUID) from `action-plan-project list`, sent as ' +
+    'the "projectId" body field. Omitted from the body when not given.',
+}
+
+const actionPlanEvaluationIdFlag: FlagSpec = {
+  name: 'evaluation-id',
+  type: 'option',
+  required: false,
+  summary:
+    'Optional integer evaluation identifier, sent as the "evaluationId" body ' +
+    'field. Omitted from the body when not given.',
+}
+
+const levelOfEffortIdFlag: FlagSpec = {
+  name: 'level-of-effort-id',
+  type: 'option',
+  required: false,
+  summary:
+    'Optional integer level of effort identifier from ' +
+    '`lookup action-plan levels-of-effort`, sent as the "levelOfEffortId" body ' +
+    'field. Omitted from the body when not given.',
+}
+
+const priorityLevelIdFlag: FlagSpec = {
+  name: 'priority-level-id',
+  type: 'option',
+  required: false,
+  summary:
+    'Optional integer priority level identifier from ' +
+    '`lookup action-plan priority-levels`, sent as the "priorityLevelId" body ' +
+    'field. Omitted from the body when not given.',
+}
+
+const subCategoryIdFlag: FlagSpec = {
+  name: 'sub-category-id',
+  type: 'option',
+  required: false,
+  summary:
+    'Optional integer subcategory identifier from ' +
+    '`lookup action-plan subcategories`, sent as the "subCategoryId" body field. ' +
+    'Omitted from the body when not given.',
+}
+
+const assignedDepartmentIdFlag: FlagSpec = {
+  name: 'assigned-department-id',
+  type: 'option',
+  required: false,
+  multiple: true,
+  summary:
+    'Integer department identifier to assign. Repeat the flag to assign more ' +
+    'than one. Each value becomes one element of the "assignedDepartmentIds" ' +
+    'array body field. Omitted from the body when not given.',
+}
+
+const assignedPersonnelIdFlag: FlagSpec = {
+  name: 'assigned-personnel-id',
+  type: 'option',
+  required: false,
+  multiple: true,
+  summary:
+    'Integer personnel identifier to assign. Repeat the flag to assign more than ' +
+    'one. Each value becomes one element of the "assignedPersonnelIds" array ' +
+    'body field. Omitted from the body when not given.',
+}
+
+const assignedWatcherIdFlag: FlagSpec = {
+  name: 'assigned-watcher-id',
+  type: 'option',
+  required: false,
+  multiple: true,
+  summary:
+    'Integer watcher personnel identifier to assign. Repeat the flag to assign ' +
+    'more than one. Each value becomes one element of the "assignedWatcherIds" ' +
+    'array body field. Omitted from the body when not given.',
+}
+
+const assignedAssessmentObjectiveIdFlag: FlagSpec = {
+  name: 'assigned-assessment-objective-id',
+  type: 'option',
+  required: false,
+  multiple: true,
+  summary:
+    'Assessment objective identifier (UUID) to assign. Repeat the flag to assign ' +
+    'more than one. Each value becomes one element of the ' +
+    '"assignedAssessmentObjectiveIds" array body field. Omitted from the body ' +
+    'when not given.',
+}
+
+const isAssignedToOrganizationFlag: FlagSpec = {
+  name: 'is-assigned-to-organization',
+  type: 'option',
+  required: false,
+  allowedValues: ['true', 'false'],
+  summary:
+    'Optional true or false, sent as the "isAssignedToOrganization" body field. ' +
+    'Omitted from the body when not given.',
+}
+
+const assignedExternalOrganizationFlag: FlagSpec = {
+  name: 'assigned-external-organization',
+  type: 'option',
+  required: false,
+  summary:
+    'Optional external organization name, sent as the ' +
+    '"assignedExternalOrganization" body field. Omitted from the body when not given.',
+}
+
+/**
  * Shared parameter contracts. One literal per documented parameter shape
  * keeps the documented facts identical across the command specs, exactly
  * like the shared flag literals above.
@@ -1468,6 +1692,157 @@ const boundaryCreateBodyFields: RequestBodyFieldContract[] = [
   },
 ]
 
+/** A documented required string body field. */
+function requiredStringField(name: string, flagName: string): RequestBodyFieldContract {
+  return {name, type: 'string', required: true, source: {kind: 'flag', name: flagName}}
+}
+
+/** A documented required int32 body field. */
+function requiredIntField(name: string, flagName: string): RequestBodyFieldContract {
+  return {name, type: 'integer', format: 'int32', required: true, source: {kind: 'flag', name: flagName}}
+}
+
+/** A documented optional, nullable int32 body field. */
+function optionalIntField(name: string, flagName: string): RequestBodyFieldContract {
+  return {
+    name,
+    type: 'integer',
+    format: 'int32',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: flagName},
+  }
+}
+
+/** A documented optional, nullable double number body field. */
+function optionalNumberField(name: string, flagName: string): RequestBodyFieldContract {
+  return {
+    name,
+    type: 'number',
+    format: 'double',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: flagName},
+  }
+}
+
+/** A documented optional, nullable date-time string body field. */
+function optionalDateField(name: string, flagName: string): RequestBodyFieldContract {
+  return {
+    name,
+    type: 'string',
+    format: 'date-time',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: flagName},
+  }
+}
+
+/**
+ * The three int32 assignment arrays shared by all three Action Plan create
+ * bodies, supplied by the repeatable --assigned-*-id flags.
+ */
+const actionPlanAssignmentFields: RequestBodyFieldContract[] = [
+  int32ArrayField('assignedDepartmentIds', 'assigned-department-id'),
+  int32ArrayField('assignedPersonnelIds', 'assigned-personnel-id'),
+  int32ArrayField('assignedWatcherIds', 'assigned-watcher-id'),
+]
+
+/** The three optional int32 classification fields shared by all three bodies. */
+const actionPlanClassificationFields: RequestBodyFieldContract[] = [
+  optionalIntField('levelOfEffortId', 'level-of-effort-id'),
+  optionalIntField('priorityLevelId', 'priority-level-id'),
+  optionalIntField('subCategoryId', 'sub-category-id'),
+]
+
+/** The optional organization fields shared by the task and subtask bodies. */
+const actionPlanOrganizationFields: RequestBodyFieldContract[] = [
+  {
+    name: 'isAssignedToOrganization',
+    type: 'boolean',
+    required: false,
+    source: {kind: 'flag', name: 'is-assigned-to-organization'},
+  },
+  {
+    name: 'assignedExternalOrganization',
+    type: 'string',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'assigned-external-organization'},
+  },
+]
+
+/**
+ * The documented ActionPlanProjectCreateDTO body field contract. Required:
+ * name, description, statusId. Field order follows the archived DTO.
+ */
+const actionPlanProjectCreateBodyFields: RequestBodyFieldContract[] = [
+  requiredStringField('name', 'name'),
+  requiredStringField('description', 'description'),
+  requiredIntField('statusId', 'status-id'),
+  optionalNumberField('costEstimate', 'cost-estimate'),
+  optionalDateField('dueDate', 'due-date'),
+  optionalIntField('evaluationId', 'evaluation-id'),
+  ...actionPlanAssignmentFields,
+  ...actionPlanClassificationFields,
+]
+
+/**
+ * The documented ActionPlanTaskCreateDTO body field contract. Required: name,
+ * description, statusId, taskTypeId. `assignedAssessmentObjectiveIds` is a UUID
+ * array; `isAssignedToOrganization` is a boolean. Field order follows the DTO.
+ */
+const actionPlanTaskCreateBodyFields: RequestBodyFieldContract[] = [
+  requiredStringField('name', 'name'),
+  requiredStringField('description', 'description'),
+  requiredIntField('statusId', 'status-id'),
+  requiredIntField('taskTypeId', 'task-type-id'),
+  optionalNumberField('budget', 'budget'),
+  optionalDateField('scheduledCompletionDate', 'scheduled-completion-date'),
+  {
+    name: 'projectId',
+    type: 'string',
+    format: 'uuid',
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'project-id'},
+  },
+  optionalIntField('evaluationId', 'evaluation-id'),
+  ...actionPlanAssignmentFields,
+  {
+    name: 'assignedAssessmentObjectiveIds',
+    type: 'array',
+    items: {type: 'string', format: 'uuid'},
+    required: false,
+    nullable: true,
+    source: {kind: 'flag', name: 'assigned-assessment-objective-id'},
+  },
+  ...actionPlanClassificationFields,
+  ...actionPlanOrganizationFields,
+]
+
+/**
+ * The documented ActionPlanSubTaskCreateDTO body field contract. Required:
+ * title, description, taskId (UUID), statusId. Field order follows the DTO.
+ */
+const actionPlanSubTaskCreateBodyFields: RequestBodyFieldContract[] = [
+  requiredStringField('title', 'title'),
+  requiredStringField('description', 'description'),
+  {
+    name: 'taskId',
+    type: 'string',
+    format: 'uuid',
+    required: true,
+    source: {kind: 'flag', name: 'task-id'},
+  },
+  requiredIntField('statusId', 'status-id'),
+  optionalNumberField('costEstimate', 'cost-estimate'),
+  optionalDateField('scheduledCompletionDate', 'scheduled-completion-date'),
+  ...actionPlanAssignmentFields,
+  ...actionPlanClassificationFields,
+  ...actionPlanOrganizationFields,
+]
+
 /** Contract for one documented GET operation. */
 function get(path: string, parameters: ParameterContract[] = []): OperationContract {
   return {method: 'get', path, parameters}
@@ -1737,6 +2112,30 @@ export const commandSpecs: CommandSpec[] = [
     contract: get('/v1/ActionPlanProjects', [evaluationIdParameter, includeTasksParameter, includeSubTasksParameter]),
   },
   {
+    id: 'action-plan-project create',
+    summary: 'Create one action-plan project for the profile tenant.',
+    kind: 'api',
+    permission: 'ActionPlan: Write',
+    args: [],
+    flags: [
+      profileFlag,
+      apNameFlag,
+      apDescriptionFlag,
+      apProjectStatusIdFlag,
+      costEstimateFlag,
+      dueDateFlag,
+      actionPlanEvaluationIdFlag,
+      assignedDepartmentIdFlag,
+      assignedPersonnelIdFlag,
+      assignedWatcherIdFlag,
+      levelOfEffortIdFlag,
+      priorityLevelIdFlag,
+      subCategoryIdFlag,
+      apiOutputFlag,
+    ],
+    contract: post('/v1/ActionPlanProjects', actionPlanProjectCreateBodyFields),
+  },
+  {
     id: 'action-plan-task list',
     summary: 'List action-plan tasks for an evaluation.',
     kind: 'api',
@@ -1746,6 +2145,35 @@ export const commandSpecs: CommandSpec[] = [
     contract: get('/v1/ActionPlanTasks', [evaluationIdParameter, includeSubTasksParameter]),
   },
   {
+    id: 'action-plan-task create',
+    summary: 'Create one action-plan task for the profile tenant.',
+    kind: 'api',
+    permission: 'ActionPlan: Write',
+    args: [],
+    flags: [
+      profileFlag,
+      apNameFlag,
+      apDescriptionFlag,
+      apTaskStatusIdFlag,
+      taskTypeIdFlag,
+      budgetFlag,
+      scheduledCompletionDateFlag,
+      projectIdFlag,
+      actionPlanEvaluationIdFlag,
+      assignedDepartmentIdFlag,
+      assignedPersonnelIdFlag,
+      assignedWatcherIdFlag,
+      assignedAssessmentObjectiveIdFlag,
+      levelOfEffortIdFlag,
+      priorityLevelIdFlag,
+      subCategoryIdFlag,
+      isAssignedToOrganizationFlag,
+      assignedExternalOrganizationFlag,
+      apiOutputFlag,
+    ],
+    contract: post('/v1/ActionPlanTasks', actionPlanTaskCreateBodyFields),
+  },
+  {
     id: 'action-plan-subtask list',
     summary: 'List action-plan subtasks for an evaluation.',
     kind: 'api',
@@ -1753,6 +2181,32 @@ export const commandSpecs: CommandSpec[] = [
     args: [],
     flags: [profileFlag, evaluationIdFlag, apiOutputFlag],
     contract: get('/v1/ActionPlanSubTasks', [evaluationIdParameter]),
+  },
+  {
+    id: 'action-plan-subtask create',
+    summary: 'Create one action-plan subtask for the profile tenant.',
+    kind: 'api',
+    permission: 'ActionPlan: Write',
+    args: [],
+    flags: [
+      profileFlag,
+      subTaskTitleFlag,
+      apDescriptionFlag,
+      subTaskTaskIdFlag,
+      apSubTaskStatusIdFlag,
+      costEstimateFlag,
+      scheduledCompletionDateFlag,
+      assignedDepartmentIdFlag,
+      assignedPersonnelIdFlag,
+      assignedWatcherIdFlag,
+      levelOfEffortIdFlag,
+      priorityLevelIdFlag,
+      subCategoryIdFlag,
+      isAssignedToOrganizationFlag,
+      assignedExternalOrganizationFlag,
+      apiOutputFlag,
+    ],
+    contract: post('/v1/ActionPlanSubTasks', actionPlanSubTaskCreateBodyFields),
   },
   {
     id: 'boundary list',

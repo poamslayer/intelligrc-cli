@@ -773,76 +773,333 @@ export function buildBoundaryCreateBody(flags: Record<string, unknown>): Boundar
   return body
 }
 
-/** Keys of BoundaryCreateBody whose value is an optional string. */
-type BoundaryStringKey =
-  | 'description'
-  | 'systemEnvironment'
-  | 'networkArchitectureDetails'
-  | 'operationalStatusDetails'
-  | 'informationSystemTypeDetails'
-
-/** Keys of BoundaryCreateBody whose value is an optional int32 number. */
-type BoundaryIntKey =
-  | 'informationSystemTypeId'
-  | 'confidentialityId'
-  | 'integrityId'
-  | 'availabilityId'
-  | 'securityCategoryId'
-  | 'networkDiagramId'
-  | 'dataFlowDiagramId'
-
-/** Keys of BoundaryCreateBody whose value is an optional int32 array. */
-type BoundaryIntListKey =
-  | 'deviceIds'
-  | 'locationIds'
-  | 'sensitiveInformationTypeIds'
-  | 'interconnectionIds'
-  | 'lawRegulationPolicyIds'
-  | 'personnelIds'
+/**
+ * The keys of T whose value type is assignable to V, ignoring the optional
+ * modifier (so `field?: number` counts as a number key). Each optional-field
+ * assigner constrains its `field` parameter with this, so pairing an assigner
+ * with a field of the wrong type — for example a string assigner with a numeric
+ * field — is a compile error, not just a wrong runtime write.
+ */
+type KeysMatching<T, V> = {
+  [K in keyof T]-?: Exclude<T[K], undefined> extends V ? K : never
+}[keyof T] &
+  string
 
 /**
- * Assign one optional string body field when its flag was supplied. An omitted
- * flag (oclif passes undefined) leaves the field out of the body.
+ * The optional-field assigners below build the many optional fields of the
+ * large create bodies (boundary and the three action-plan commands). Each
+ * assigns one field only when its flag was supplied, so an omitted flag (oclif
+ * passes undefined) leaves the field out of the body entirely. `field` is
+ * constrained to a key of the body whose declared type matches the assigner, so
+ * both a typo and a type mismatch are compile errors; the value is written
+ * through a Record view. Every validating assigner runs before profile
+ * resolution, so an invalid value exits 2 with the flag-specific code before
+ * any keyring or network access.
  */
-function assignOptionalString(body: BoundaryCreateBody, field: BoundaryStringKey, raw: unknown): void {
+
+/** Assign one optional string body field when its flag was supplied. */
+function assignOptionalString<T>(body: T, field: KeysMatching<T, string>, raw: unknown): void {
   if (raw !== undefined) {
-    body[field] = raw as string
+    ;(body as Record<string, unknown>)[field] = raw as string
+  }
+}
+
+/** Assign one optional int32 body field, validating it as a documented int32 integer. */
+function assignOptionalInt<T>(body: T, field: KeysMatching<T, number>, raw: unknown, flagName: string): void {
+  if (raw !== undefined) {
+    ;(body as Record<string, unknown>)[field] = parseIntegerFlag(raw as string, flagName, 'identifier')
+  }
+}
+
+/** Assign one optional number body field, validating it as a documented double. */
+function assignOptionalNumber<T>(body: T, field: KeysMatching<T, number>, raw: unknown, flagName: string): void {
+  if (raw !== undefined) {
+    ;(body as Record<string, unknown>)[field] = parseNumberFlag(raw as string, flagName, 'amount')
   }
 }
 
 /**
- * Assign one optional int32 body field when its flag was supplied, validating
- * it as a documented int32 integer. An omitted flag leaves the field out; a
- * non-integer value exits 2 with the flag-specific code before any network or
- * keyring access.
+ * Assign one optional date-time body field, validating a calendar date and
+ * sending it at midnight UTC (the shared date-flag rule). The documented field
+ * is a string, so this constrains to string keys like the string assigner.
  */
-function assignOptionalInt(
-  body: BoundaryCreateBody,
-  field: BoundaryIntKey,
-  raw: unknown,
-  flagName: string,
-): void {
+function assignOptionalDate<T>(body: T, field: KeysMatching<T, string>, raw: unknown, flagName: string): void {
   if (raw !== undefined) {
-    body[field] = parseIntegerFlag(raw as string, flagName, 'identifier')
+    ;(body as Record<string, unknown>)[field] = parseDateFlag(raw as string, flagName)
   }
 }
 
 /**
- * Assign one optional int32-array body field when its flag was supplied,
- * validating each element as a documented int32 integer. An omitted flag
- * leaves the field out; a non-integer element exits 2 with the flag-specific
- * code before any network or keyring access.
+ * Assign one optional boolean body field. The flag's allowed values constrain
+ * the input to "true" or "false", so the value maps directly to a JSON boolean.
  */
-function assignOptionalInt32List(
-  body: BoundaryCreateBody,
-  field: BoundaryIntListKey,
+function assignOptionalBoolean<T>(body: T, field: KeysMatching<T, boolean>, raw: unknown): void {
+  if (raw !== undefined) {
+    ;(body as Record<string, unknown>)[field] = raw === 'true'
+  }
+}
+
+/** Assign one optional int32-array body field, validating each element as an int32. */
+function assignOptionalInt32List<T>(
+  body: T,
+  field: KeysMatching<T, number[]>,
   raw: unknown,
   flagName: string,
   itemLabel: string,
 ): void {
   if (raw !== undefined) {
-    body[field] = parseInt32List(raw as string[], `invalid-${flagName}`, flagName, itemLabel, field)
+    ;(body as Record<string, unknown>)[field] = parseInt32List(
+      raw as string[],
+      `invalid-${flagName}`,
+      flagName,
+      itemLabel,
+      field,
+    )
   }
+}
+
+/** Assign one optional UUID-array body field, validating each element as a UUID. */
+function assignOptionalUuidList<T>(
+  body: T,
+  field: KeysMatching<T, string[]>,
+  raw: unknown,
+  flagName: string,
+  itemLabel: string,
+): void {
+  if (raw !== undefined) {
+    ;(body as Record<string, unknown>)[field] = parseUuidList(
+      raw as string[],
+      `invalid-${flagName}`,
+      flagName,
+      itemLabel,
+      field,
+    )
+  }
+}
+
+/**
+ * The validated body of an action-plan project create request. The documented
+ * ActionPlanProjectCreateDTO marks `name`, `description`, and `statusId`
+ * required; every other field is optional and (except the arrays' presence)
+ * nullable, so each optional field is present only when the user supplied its
+ * flag. `costEstimate` is a double number; `dueDate` is a date-time string;
+ * the three `assigned*Ids` fields are int32 arrays.
+ */
+export interface ActionPlanProjectCreateBody {
+  name: string
+  description: string
+  statusId: number
+  costEstimate?: number
+  dueDate?: string
+  evaluationId?: number
+  assignedDepartmentIds?: number[]
+  assignedPersonnelIds?: number[]
+  assignedWatcherIds?: number[]
+  levelOfEffortId?: number
+  priorityLevelId?: number
+  subCategoryId?: number
+}
+
+/**
+ * Build the validated action-plan project create body. Runs before profile
+ * resolution, so an invalid integer, number, or date exits 2 with a stable
+ * code and zero keyring or network access. The three required flags are
+ * enforced by oclif; each optional field is included only when its flag is
+ * supplied.
+ */
+export function buildActionPlanProjectCreateBody(
+  flags: Record<string, unknown>,
+): ActionPlanProjectCreateBody {
+  const body: ActionPlanProjectCreateBody = {
+    name: flags.name as string,
+    description: flags.description as string,
+    statusId: parseIntegerFlag(flags['status-id'] as string, 'status-id', 'identifier'),
+  }
+
+  assignOptionalNumber(body, 'costEstimate', flags['cost-estimate'], 'cost-estimate')
+  assignOptionalDate(body, 'dueDate', flags['due-date'], 'due-date')
+  assignOptionalInt(body, 'evaluationId', flags['evaluation-id'], 'evaluation-id')
+  assignActionPlanAssignments(body, flags)
+  assignActionPlanClassification(body, flags)
+
+  return body
+}
+
+/**
+ * The validated body of an action-plan task create request. The documented
+ * ActionPlanTaskCreateDTO marks `name`, `description`, `statusId`, and
+ * `taskTypeId` required; every other field is optional. `budget` is a double
+ * number; `scheduledCompletionDate` is a date-time string; `projectId` is a
+ * UUID; `assignedAssessmentObjectiveIds` is a UUID array; the other
+ * `assigned*Ids` are int32 arrays; `isAssignedToOrganization` is a boolean.
+ */
+export interface ActionPlanTaskCreateBody {
+  name: string
+  description: string
+  statusId: number
+  taskTypeId: number
+  budget?: number
+  scheduledCompletionDate?: string
+  projectId?: string
+  evaluationId?: number
+  assignedDepartmentIds?: number[]
+  assignedPersonnelIds?: number[]
+  assignedWatcherIds?: number[]
+  assignedAssessmentObjectiveIds?: string[]
+  levelOfEffortId?: number
+  priorityLevelId?: number
+  subCategoryId?: number
+  isAssignedToOrganization?: boolean
+  assignedExternalOrganization?: string
+}
+
+/**
+ * Build the validated action-plan task create body. Runs before profile
+ * resolution, so an invalid integer, number, date, or UUID exits 2 with a
+ * stable code and zero keyring or network access. The four required flags are
+ * enforced by oclif; each optional field is included only when its flag is
+ * supplied.
+ */
+export function buildActionPlanTaskCreateBody(
+  flags: Record<string, unknown>,
+): ActionPlanTaskCreateBody {
+  const body: ActionPlanTaskCreateBody = {
+    name: flags.name as string,
+    description: flags.description as string,
+    statusId: parseIntegerFlag(flags['status-id'] as string, 'status-id', 'identifier'),
+    taskTypeId: parseIntegerFlag(flags['task-type-id'] as string, 'task-type-id', 'identifier'),
+  }
+
+  assignOptionalNumber(body, 'budget', flags.budget, 'budget')
+  assignOptionalDate(body, 'scheduledCompletionDate', flags['scheduled-completion-date'], 'scheduled-completion-date')
+
+  const projectId = flags['project-id'] as string | undefined
+  if (projectId !== undefined) {
+    body.projectId = parseUuid(projectId, 'invalid-project-id', 'project', 'projectId field')
+  }
+
+  assignOptionalInt(body, 'evaluationId', flags['evaluation-id'], 'evaluation-id')
+  assignActionPlanAssignments(body, flags)
+  assignOptionalUuidList(
+    body,
+    'assignedAssessmentObjectiveIds',
+    flags['assigned-assessment-objective-id'],
+    'assigned-assessment-objective-id',
+    'assessment objective',
+  )
+  assignActionPlanClassification(body, flags)
+  assignActionPlanOrganization(body, flags)
+
+  return body
+}
+
+/**
+ * The validated body of an action-plan subtask create request. The documented
+ * ActionPlanSubTaskCreateDTO marks `title`, `description`, `taskId`, and
+ * `statusId` required; every other field is optional. `taskId` is a UUID;
+ * `costEstimate` is a double number; `scheduledCompletionDate` is a date-time
+ * string; the `assigned*Ids` are int32 arrays; `isAssignedToOrganization` is a
+ * boolean.
+ */
+export interface ActionPlanSubTaskCreateBody {
+  title: string
+  description: string
+  taskId: string
+  statusId: number
+  costEstimate?: number
+  scheduledCompletionDate?: string
+  assignedDepartmentIds?: number[]
+  assignedPersonnelIds?: number[]
+  assignedWatcherIds?: number[]
+  levelOfEffortId?: number
+  priorityLevelId?: number
+  subCategoryId?: number
+  isAssignedToOrganization?: boolean
+  assignedExternalOrganization?: string
+}
+
+/**
+ * Build the validated action-plan subtask create body. Runs before profile
+ * resolution, so an invalid integer, number, date, or UUID exits 2 with a
+ * stable code and zero keyring or network access. The four required flags are
+ * enforced by oclif; each optional field is included only when its flag is
+ * supplied.
+ */
+export function buildActionPlanSubTaskCreateBody(
+  flags: Record<string, unknown>,
+): ActionPlanSubTaskCreateBody {
+  const body: ActionPlanSubTaskCreateBody = {
+    title: flags.title as string,
+    description: flags.description as string,
+    taskId: parseUuid(flags['task-id'] as string, 'invalid-task-id', 'task', 'taskId field'),
+    statusId: parseIntegerFlag(flags['status-id'] as string, 'status-id', 'identifier'),
+  }
+
+  assignOptionalNumber(body, 'costEstimate', flags['cost-estimate'], 'cost-estimate')
+  assignOptionalDate(body, 'scheduledCompletionDate', flags['scheduled-completion-date'], 'scheduled-completion-date')
+  assignActionPlanAssignments(body, flags)
+  assignActionPlanClassification(body, flags)
+  assignActionPlanOrganization(body, flags)
+
+  return body
+}
+
+/**
+ * The three optional field groups shared across the action-plan create bodies.
+ * Each helper takes the minimal structural shape it assigns, so a full body
+ * type is structurally assignable and the KeysMatching constraint resolves to
+ * concrete keys. The parallel manifest field arrays
+ * (actionPlanAssignmentFields, actionPlanClassificationFields,
+ * actionPlanOrganizationFields) document the same groups.
+ */
+interface ActionPlanAssignmentFields {
+  assignedDepartmentIds?: number[]
+  assignedPersonnelIds?: number[]
+  assignedWatcherIds?: number[]
+}
+
+interface ActionPlanClassificationFields {
+  levelOfEffortId?: number
+  priorityLevelId?: number
+  subCategoryId?: number
+}
+
+interface ActionPlanOrganizationFields {
+  isAssignedToOrganization?: boolean
+  assignedExternalOrganization?: string
+}
+
+/**
+ * Assign the three int32 assignment arrays (`assignedDepartmentIds`,
+ * `assignedPersonnelIds`, `assignedWatcherIds`) shared by all three action-plan
+ * create bodies, from their repeatable flags. Each is included only when its
+ * flag is supplied.
+ */
+function assignActionPlanAssignments(body: ActionPlanAssignmentFields, flags: Record<string, unknown>): void {
+  assignOptionalInt32List(body, 'assignedDepartmentIds', flags['assigned-department-id'], 'assigned-department-id', 'department')
+  assignOptionalInt32List(body, 'assignedPersonnelIds', flags['assigned-personnel-id'], 'assigned-personnel-id', 'personnel')
+  assignOptionalInt32List(body, 'assignedWatcherIds', flags['assigned-watcher-id'], 'assigned-watcher-id', 'watcher')
+}
+
+/**
+ * Assign the three optional int32 classification fields (`levelOfEffortId`,
+ * `priorityLevelId`, `subCategoryId`) shared by all three action-plan create
+ * bodies. Each is included only when its flag is supplied.
+ */
+function assignActionPlanClassification(body: ActionPlanClassificationFields, flags: Record<string, unknown>): void {
+  assignOptionalInt(body, 'levelOfEffortId', flags['level-of-effort-id'], 'level-of-effort-id')
+  assignOptionalInt(body, 'priorityLevelId', flags['priority-level-id'], 'priority-level-id')
+  assignOptionalInt(body, 'subCategoryId', flags['sub-category-id'], 'sub-category-id')
+}
+
+/**
+ * Assign the optional organization fields (`isAssignedToOrganization`,
+ * `assignedExternalOrganization`) shared by the task and subtask create bodies.
+ * Each is included only when its flag is supplied.
+ */
+function assignActionPlanOrganization(body: ActionPlanOrganizationFields, flags: Record<string, unknown>): void {
+  assignOptionalBoolean(body, 'isAssignedToOrganization', flags['is-assigned-to-organization'])
+  assignOptionalString(body, 'assignedExternalOrganization', flags['assigned-external-organization'])
 }
 
 /**
