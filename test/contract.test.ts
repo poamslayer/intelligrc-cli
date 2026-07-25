@@ -242,7 +242,8 @@ test('every mapped write operation is a documented write and the mapped write se
   // data-type association writes (#42), the evidence assessment-objectives
   // association write (#46), the assessment-objective update (#47), the two
   // interconnection writes (#48), the evaluation create (#43), the boundary
-  // create (#44), and the three action-plan creates (#45), and no more.
+  // create (#44), the three action-plan creates (#45), and the control
+  // update (#41), and no more.
   assert.deepEqual([...manifestWritePairs].sort(), [
     'delete /v1/DataTypes/{id}',
     'post /v1/ActionPlanProjects',
@@ -253,6 +254,7 @@ test('every mapped write operation is a documented write and the mapped write se
     'post /v1/Evaluations',
     'post /v1/Interconnections',
     'put /v1/AssessmentObjectives/{id}',
+    'put /v1/Controls/{controlId}',
     'put /v1/DataTypes/{id}',
     'put /v1/Evidence/{id}/AssessmentObjectives',
     'put /v1/Facilities/{id}/datatypes',

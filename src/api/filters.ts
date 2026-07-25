@@ -400,6 +400,42 @@ export function buildAssessmentObjectiveUpdateBody(
 }
 
 /**
+ * The validated body of a control update request. The documented
+ * ControlUpdateDTO marks both fields optional and nullable, so this is a
+ * partial update: a field is present only when the user supplied its flag, and
+ * an omitted flag leaves the field out of the body. `evaluationId` is a JSON
+ * number, so it serializes as the documented int32 integer; `summaryStatement`
+ * passes through as a string.
+ */
+export interface ControlUpdateBody {
+  evaluationId?: number
+  summaryStatement?: string
+}
+
+/**
+ * Build the validated control update body from the update command's flags.
+ * Runs before profile resolution, so a non-integer evaluation identifier exits
+ * 2 with a stable code and zero keyring or network access. Each field is
+ * included only when the user supplied its flag, matching the documented
+ * partial-update contract.
+ */
+export function buildControlUpdateBody(flags: Record<string, unknown>): ControlUpdateBody {
+  const body: ControlUpdateBody = {}
+
+  const evaluationId = flags['evaluation-id'] as string | undefined
+  if (evaluationId !== undefined) {
+    body.evaluationId = parseIntegerFlag(evaluationId, 'evaluation-id', 'identifier')
+  }
+
+  const summaryStatement = flags['summary-statement'] as string | undefined
+  if (summaryStatement !== undefined) {
+    body.summaryStatement = summaryStatement
+  }
+
+  return body
+}
+
+/**
  * One validated element of the documented `authorizationTypes` array. The
  * documented InterconnectionAuthorizationTypeInputDTO has one required int32
  * field, `interconnectionAuthorizationTypeId`, and one optional nullable
@@ -1233,6 +1269,16 @@ export function parseAssessmentObjectiveId(raw: string): string {
  */
 export function parseEvidenceId(raw: string): string {
   return parseUuid(raw, 'invalid-evidence-id', 'evidence', 'id path parameter')
+}
+
+/**
+ * Validate one control identifier argument as a universally unique identifier.
+ * The documented {controlId} path parameter of the control update operation is
+ * a UUID, unlike the integer identifiers of the facility and interconnection
+ * association paths.
+ */
+export function parseControlId(raw: string): string {
+  return parseUuid(raw, 'invalid-control-id', 'control', 'controlId path parameter')
 }
 
 /** Validate one --parent-id value as a universally unique identifier. */
