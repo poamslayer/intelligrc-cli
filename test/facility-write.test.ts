@@ -194,6 +194,31 @@ test('facility update with a non-integer identifier exits 2 with a stable code a
   assert.equal(api.requests.length, requestsBefore)
 })
 
+test('facility update validates its input before it resolves the profile or the secret store', async () => {
+  const requestsBefore = api.requests.length
+
+  // The profile does not exist, so profile resolution — the step that reads
+  // the secret store — would exit 3 (local configuration). Exit 2 with the
+  // identifier code proves validation ran first and no secret was read.
+  const result = await run(['facility', 'update', 'main-office', '--profile', 'absent', '--name', 'X'])
+
+  assert.equal(result.code, 2)
+  assert.equal(JSON.parse(result.stderr).error.code, 'invalid-facility-id')
+  assert.equal(api.requests.length, requestsBefore)
+})
+
+test('facility create validates its input before it resolves the profile or the secret store', async () => {
+  const requestsBefore = api.requests.length
+
+  const result = await run([
+    'facility', 'create', '--profile', 'absent', '--name', 'X', '--employee-count', 'many',
+  ])
+
+  assert.equal(result.code, 2)
+  assert.equal(JSON.parse(result.stderr).error.code, 'invalid-employee-count')
+  assert.equal(api.requests.length, requestsBefore)
+})
+
 test('facility update without --name exits 2 before any network access', async () => {
   const requestsBefore = api.requests.length
 

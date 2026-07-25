@@ -588,16 +588,20 @@ const updateAuthorizationTypeFlag: FlagSpec = {
 
 /**
  * Flag list for the facility create and update commands. The documented
- * FacilityCreateDTO and FacilityUpdateDTO carry the identical fourteen scalar
- * fields and mark only `name` required, so both commands share one flag list.
- * Every field is scalar, so no flag is repeatable. `locationTypeId`,
- * `employeeCount`, and `primaryContactId` are documented int32 integers; every
- * other field is a documented string. An omitted optional flag leaves its
- * field out of the request body.
+ * FacilityCreateDTO and FacilityUpdateDTO carry the same fourteen scalar field
+ * names, types, and formats, and both mark only `name` required, so both
+ * commands share one flag list. Every field is scalar, so no flag is
+ * repeatable. `locationTypeId`, `employeeCount`, and `primaryContactId` are
+ * documented int32 integers; every other field is a documented string. An
+ * omitted optional flag leaves its field out of the request body.
  *
- * The CLI does not enforce the create DTO's documented string constraints (a
- * two-character `state`, a five-or-nine-digit `zipCode`, a URI-formatted
- * `website`). The IntelliGRC API is the authority that accepts or rejects a
+ * The two DTOs are not identical: the create DTO documents three string
+ * constraints that the update DTO does not — `state` has maxLength 2,
+ * `zipCode` has the pattern ^\d{5}(-\d{4})?$, and `website` has the `uri`
+ * format. Each summary below names the create DTO when it states one of those
+ * constraints, because the same flag also serves the update command, whose
+ * documented schema does not carry the constraint. The CLI enforces none of
+ * the three: the IntelliGRC API is the authority that accepts or rejects a
  * value, exactly as it is for the identifier flags.
  */
 const facilityWriteFlags: FlagSpec[] = [
@@ -2041,60 +2045,61 @@ const actionPlanSubTaskCreateBodyFields: RequestBodyFieldContract[] = [
 ]
 
 /**
- * The documented FacilityCreateDTO body field contract. The DTO marks only
- * `name` required; every other field is optional and nullable, so a create
- * sends just the fields whose flags were given. Field order follows the
- * archived DTO's property order. `website` is documented with the `uri`
- * format here; the update DTO documents the same field without a format, so
- * the two lists differ in that one entry and cannot be shared.
+ * The fourteen documented facility body fields, in the archived DTOs' property
+ * order. FacilityCreateDTO and FacilityUpdateDTO document the same field
+ * names, types, and required set (only `name` is required), and differ in one
+ * fact the contract suite compares: the create DTO gives `website` the `uri`
+ * format and the update DTO gives it no format. The caller supplies that one
+ * field, so the difference between the two contracts is stated once, at the
+ * two call sites below, instead of being buried in two near-identical lists.
+ *
+ * The create DTO also documents a maxLength on `state` and a pattern on
+ * `zipCode` that the update DTO omits. Neither appears here because the
+ * contract type records only the facts the contract suite compares — name,
+ * type, format, required, and nullable.
  */
-const facilityCreateBodyFields: RequestBodyFieldContract[] = [
-  requiredStringField('name', 'name'),
-  optionalStringField('description', 'description'),
-  optionalIntField('locationTypeId', 'location-type-id'),
-  optionalStringField('address', 'address'),
-  optionalStringField('addressLine2', 'address-line2'),
-  optionalStringField('city', 'city'),
-  optionalStringField('state', 'state'),
-  optionalStringField('zipCode', 'zip-code'),
-  optionalStringField('country', 'country'),
-  optionalStringField('phoneNumber', 'phone-number'),
-  {
-    name: 'website',
-    type: 'string',
-    format: 'uri',
-    required: false,
-    nullable: true,
-    source: {kind: 'flag', name: 'website'},
-  },
-  optionalStringField('faxNumber', 'fax-number'),
-  optionalIntField('employeeCount', 'employee-count'),
-  optionalIntField('primaryContactId', 'primary-contact-id'),
-]
+function facilityBodyFields(websiteField: RequestBodyFieldContract): RequestBodyFieldContract[] {
+  return [
+    requiredStringField('name', 'name'),
+    optionalStringField('description', 'description'),
+    optionalIntField('locationTypeId', 'location-type-id'),
+    optionalStringField('address', 'address'),
+    optionalStringField('addressLine2', 'address-line2'),
+    optionalStringField('city', 'city'),
+    optionalStringField('state', 'state'),
+    optionalStringField('zipCode', 'zip-code'),
+    optionalStringField('country', 'country'),
+    optionalStringField('phoneNumber', 'phone-number'),
+    websiteField,
+    optionalStringField('faxNumber', 'fax-number'),
+    optionalIntField('employeeCount', 'employee-count'),
+    optionalIntField('primaryContactId', 'primary-contact-id'),
+  ]
+}
 
 /**
- * The documented FacilityUpdateDTO body field contract. The DTO carries the
- * same fourteen fields as the create DTO and marks only `name` required, so an
- * update is partial: each optional flag supplies its field only when given.
- * The one documented difference from the create DTO is `website`, which the
- * update DTO documents as a plain string with no `uri` format.
+ * The documented FacilityCreateDTO body field contract. The DTO marks only
+ * `name` required; every other field is optional and nullable, so a create
+ * sends just the fields whose flags were given. `website` carries the
+ * documented `uri` format.
  */
-const facilityUpdateBodyFields: RequestBodyFieldContract[] = [
-  requiredStringField('name', 'name'),
-  optionalStringField('description', 'description'),
-  optionalIntField('locationTypeId', 'location-type-id'),
-  optionalStringField('address', 'address'),
-  optionalStringField('addressLine2', 'address-line2'),
-  optionalStringField('city', 'city'),
-  optionalStringField('state', 'state'),
-  optionalStringField('zipCode', 'zip-code'),
-  optionalStringField('country', 'country'),
-  optionalStringField('phoneNumber', 'phone-number'),
+const facilityCreateBodyFields: RequestBodyFieldContract[] = facilityBodyFields({
+  name: 'website',
+  type: 'string',
+  format: 'uri',
+  required: false,
+  nullable: true,
+  source: {kind: 'flag', name: 'website'},
+})
+
+/**
+ * The documented FacilityUpdateDTO body field contract. The DTO marks only
+ * `name` required, so an update sends just the fields whose flags were given.
+ * The update DTO documents `website` as a plain string with no format.
+ */
+const facilityUpdateBodyFields: RequestBodyFieldContract[] = facilityBodyFields(
   optionalStringField('website', 'website'),
-  optionalStringField('faxNumber', 'fax-number'),
-  optionalIntField('employeeCount', 'employee-count'),
-  optionalIntField('primaryContactId', 'primary-contact-id'),
-]
+)
 
 /** Contract for one documented GET operation. */
 function get(path: string, parameters: ParameterContract[] = []): OperationContract {

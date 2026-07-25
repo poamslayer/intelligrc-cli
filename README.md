@@ -144,8 +144,12 @@ authorization type on that interconnection.
 `facility create` and `facility update` send the documented `POST /v1/Facilities` and
 `PUT /v1/Facilities/{id}` requests and print the record the API returned. Both commands
 take the same flags, because the two documented request bodies carry the same fourteen
-fields. Only `--name` is required. Every other flag is optional and is left out of the
-request body when the flag is absent, so an update changes only the fields you name.
+fields. Only `--name` is required. Every other flag is optional, and the CLI leaves that
+field out of the request body when the flag is absent.
+
+The archived API document does not state how the update operation treats a field its
+request body leaves out. Send every field you want the facility to keep, and read the
+printed record to confirm what the API stored.
 
 ```sh
 # Create a facility. The --location-type-id value comes from `lookup facility types`
@@ -158,17 +162,26 @@ intelligrc facility create --profile prod \
   --phone-number "512-555-0100" --website "https://example.com" \
   --employee-count 250 --primary-contact-id 12
 
-# Change one facility field by its integer identifier. The command prints the
-# updated record.
-intelligrc facility update 7 --profile prod --name "Headquarters" --employee-count 275
+# Update a facility by its integer identifier. Repeat every field the facility
+# should keep. The command prints the updated record.
+intelligrc facility update 7 --profile prod \
+  --name "Headquarters" \
+  --location-type-id 3 \
+  --address "100 Congress Ave" --address-line2 "Suite 400" \
+  --city "Austin" --state TX --zip-code 78701 --country "United States" \
+  --phone-number "512-555-0100" --website "https://example.com" \
+  --employee-count 275 --primary-contact-id 12
 ```
 
 `--location-type-id`, `--employee-count`, and `--primary-contact-id` take integers. A
 missing `--name`, a non-integer value in any of those three flags, or a non-integer
-identifier argument stops the command before any network access. The IntelliGRC API is
-the authority on the remaining documented rules — a two-character `--state`, a
-five-digit or five-plus-four-digit `--zip-code`, and a URI-formatted `--website` — so it
-returns the authoritative message when a value is rejected.
+identifier argument stops the command before any network or secret-store access.
+
+The archived document also constrains three create fields that the CLI does not check:
+`--state` holds at most two characters, `--zip-code` holds five digits or five-plus-four
+digits, and `--website` holds a uniform resource identifier. The documented update body
+carries none of the three constraints. The IntelliGRC API is the authority in both cases,
+so it returns the authoritative message when it rejects a value.
 
 ## Creating an evaluation
 

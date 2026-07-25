@@ -5,9 +5,11 @@ import {runCli} from './helpers/run-cli.ts'
 
 // The fourteen body flags both facility write commands expose, written out by
 // hand from the archived FacilityCreateDTO and FacilityUpdateDTO. The two DTOs
-// document the identical field set and mark only `name` required, so one
-// literal states the expectation for both commands. Like the rest of this
-// file, it is hand-written and must not be derived from src/manifest.ts.
+// document the same field names and the same required set (only `name`), so
+// one literal states the flag expectation for both commands. The DTOs differ
+// in three create-only string constraints, which the summaries below attribute
+// to the create field. Like the rest of this file, this literal is
+// hand-written and must not be derived from src/manifest.ts.
 const facilityWriteFlags = [
   {
     name: 'name',
