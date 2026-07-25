@@ -3,6 +3,126 @@ import {test} from 'node:test'
 
 import {runCli} from './helpers/run-cli.ts'
 
+// The fourteen body flags both facility write commands expose, written out by
+// hand from the archived FacilityCreateDTO and FacilityUpdateDTO. The two DTOs
+// document the identical field set and mark only `name` required, so one
+// literal states the expectation for both commands. Like the rest of this
+// file, it is hand-written and must not be derived from src/manifest.ts.
+const facilityWriteFlags = [
+  {
+    name: 'name',
+    type: 'option',
+    required: true,
+    summary: 'Facility name, sent as the required "name" body field.',
+  },
+  {
+    name: 'description',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional facility description, sent as the "description" body field. ' +
+      'Omitted from the body when not given.',
+  },
+  {
+    name: 'location-type-id',
+    type: 'option',
+    required: false,
+    summary:
+      'Integer facility type identifier from `lookup facility types`, sent as ' +
+      'the "locationTypeId" body field. Omitted from the body when not given.',
+  },
+  {
+    name: 'address',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional street address, sent as the "address" body field. Omitted ' +
+      'from the body when not given.',
+  },
+  {
+    name: 'address-line2',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional second address line, sent as the "addressLine2" body field. ' +
+      'Omitted from the body when not given.',
+  },
+  {
+    name: 'city',
+    type: 'option',
+    required: false,
+    summary: 'Optional city, sent as the "city" body field. Omitted from the body when not given.',
+  },
+  {
+    name: 'state',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional state, sent as the "state" body field. The documented create ' +
+      'field holds at most two characters, for example TX. Omitted from the ' +
+      'body when not given.',
+  },
+  {
+    name: 'zip-code',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional postal code, sent as the "zipCode" body field. The documented ' +
+      'create field holds five digits or five-plus-four digits, for example ' +
+      '78701 or 78701-1234. Omitted from the body when not given.',
+  },
+  {
+    name: 'country',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional country, sent as the "country" body field. Omitted from the ' +
+      'body when not given.',
+  },
+  {
+    name: 'phone-number',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional telephone number, sent as the "phoneNumber" body field. ' +
+      'Omitted from the body when not given.',
+  },
+  {
+    name: 'website',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional website address, sent as the "website" body field. The ' +
+      'documented create field holds a uniform resource identifier (URI), for ' +
+      'example https://example.com. Omitted from the body when not given.',
+  },
+  {
+    name: 'fax-number',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional fax number, sent as the "faxNumber" body field. Omitted from ' +
+      'the body when not given.',
+  },
+  {
+    name: 'employee-count',
+    type: 'option',
+    required: false,
+    summary:
+      'Integer number of employees at the facility, sent as the ' +
+      '"employeeCount" body field. Omitted from the body when not given.',
+  },
+  {
+    name: 'primary-contact-id',
+    type: 'option',
+    required: false,
+    summary:
+      'Integer personnel identifier of the primary contact from ' +
+      '`personnel list`, sent as the "primaryContactId" body field. Omitted ' +
+      'from the body when not given.',
+  },
+]
+
 // Expected catalog, written out by hand from issues #2, #3, #4, #5, #6,
 // #7, #8, #9, and #10. This literal is the independent source of truth;
 // it must not be derived from src/manifest.ts.
@@ -1651,6 +1771,61 @@ const expectedCatalog = {
             'becomes one element of the "dataTypeIds" array body field. Omit the flag ' +
             'to clear every association.',
         },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'facility create',
+      summary: 'Create one facility for the profile tenant.',
+      kind: 'api',
+      permission: 'Locations: Write',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        ...facilityWriteFlags,
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'facility update',
+      summary: 'Update one facility by its integer identifier.',
+      kind: 'api',
+      permission: 'Locations: Write',
+      args: [
+        {
+          name: 'id',
+          type: 'integer',
+          required: true,
+          summary: 'Integer facility identifier, substituted into the documented request path.',
+        },
+      ],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        ...facilityWriteFlags,
         {
           name: 'output',
           type: 'option',

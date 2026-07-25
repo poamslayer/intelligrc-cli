@@ -840,10 +840,22 @@ function assignOptionalString<T>(body: T, field: KeysMatching<T, string>, raw: u
   }
 }
 
-/** Assign one optional int32 body field, validating it as a documented int32 integer. */
-function assignOptionalInt<T>(body: T, field: KeysMatching<T, number>, raw: unknown, flagName: string): void {
+/**
+ * Assign one optional int32 body field, validating it as a documented int32
+ * integer. `label` names the kind of value in the failure message; it defaults
+ * to "identifier" because most int32 body fields hold one, and a caller whose
+ * field holds a different kind of number (for example an employee count)
+ * passes its own label.
+ */
+function assignOptionalInt<T>(
+  body: T,
+  field: KeysMatching<T, number>,
+  raw: unknown,
+  flagName: string,
+  label = 'identifier',
+): void {
   if (raw !== undefined) {
-    ;(body as Record<string, unknown>)[field] = parseIntegerFlag(raw as string, flagName, 'identifier')
+    ;(body as Record<string, unknown>)[field] = parseIntegerFlag(raw as string, flagName, label)
   }
 }
 
@@ -911,6 +923,62 @@ function assignOptionalUuidList<T>(
       field,
     )
   }
+}
+
+/**
+ * The validated body of a facility create or update request. The documented
+ * FacilityCreateDTO and FacilityUpdateDTO carry the identical fourteen scalar
+ * fields and mark only `name` required, so both commands build this one shape.
+ * `locationTypeId`, `employeeCount`, and `primaryContactId` are JSON numbers,
+ * so they serialize as the documented int32 integers rather than strings.
+ * Every other field is a string. An optional field is present only when the
+ * user supplied its flag.
+ */
+export interface FacilityWriteBody {
+  name: string
+  description?: string
+  locationTypeId?: number
+  address?: string
+  addressLine2?: string
+  city?: string
+  state?: string
+  zipCode?: string
+  country?: string
+  phoneNumber?: string
+  website?: string
+  faxNumber?: string
+  employeeCount?: number
+  primaryContactId?: number
+}
+
+/**
+ * Build the validated facility body from the create or update command's flags.
+ * The two documented DTOs share one field set, so one builder serves both
+ * commands. It runs before profile resolution, so a non-integer value in any
+ * of the three integer flags exits 2 with a stable code and zero keyring or
+ * network access. The required --name flag is enforced by oclif; each optional
+ * field is included only when its flag is supplied. The CLI does not check the
+ * documented string constraints on `state`, `zipCode`, and `website` — the
+ * IntelliGRC API is the authority that accepts or rejects a value.
+ */
+export function buildFacilityWriteBody(flags: Record<string, unknown>): FacilityWriteBody {
+  const body: FacilityWriteBody = {name: flags.name as string}
+
+  assignOptionalString(body, 'description', flags.description)
+  assignOptionalInt(body, 'locationTypeId', flags['location-type-id'], 'location-type-id')
+  assignOptionalString(body, 'address', flags.address)
+  assignOptionalString(body, 'addressLine2', flags['address-line2'])
+  assignOptionalString(body, 'city', flags.city)
+  assignOptionalString(body, 'state', flags.state)
+  assignOptionalString(body, 'zipCode', flags['zip-code'])
+  assignOptionalString(body, 'country', flags.country)
+  assignOptionalString(body, 'phoneNumber', flags['phone-number'])
+  assignOptionalString(body, 'website', flags.website)
+  assignOptionalString(body, 'faxNumber', flags['fax-number'])
+  assignOptionalInt(body, 'employeeCount', flags['employee-count'], 'employee-count', 'employee count')
+  assignOptionalInt(body, 'primaryContactId', flags['primary-contact-id'], 'primary-contact-id')
+
+  return body
 }
 
 /**

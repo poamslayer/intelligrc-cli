@@ -139,6 +139,37 @@ field). A missing `id`, an unknown key, or a non-integer `id` stops the command 
 network access. Providing `--authorization-type` on an update replaces every existing
 authorization type on that interconnection.
 
+## Writing facilities
+
+`facility create` and `facility update` send the documented `POST /v1/Facilities` and
+`PUT /v1/Facilities/{id}` requests and print the record the API returned. Both commands
+take the same flags, because the two documented request bodies carry the same fourteen
+fields. Only `--name` is required. Every other flag is optional and is left out of the
+request body when the flag is absent, so an update changes only the fields you name.
+
+```sh
+# Create a facility. The --location-type-id value comes from `lookup facility types`
+# and the --primary-contact-id value comes from `personnel list`.
+intelligrc facility create --profile prod \
+  --name "Headquarters" \
+  --location-type-id 3 \
+  --address "100 Congress Ave" --address-line2 "Suite 400" \
+  --city "Austin" --state TX --zip-code 78701 --country "United States" \
+  --phone-number "512-555-0100" --website "https://example.com" \
+  --employee-count 250 --primary-contact-id 12
+
+# Change one facility field by its integer identifier. The command prints the
+# updated record.
+intelligrc facility update 7 --profile prod --name "Headquarters" --employee-count 275
+```
+
+`--location-type-id`, `--employee-count`, and `--primary-contact-id` take integers. A
+missing `--name`, a non-integer value in any of those three flags, or a non-integer
+identifier argument stops the command before any network access. The IntelliGRC API is
+the authority on the remaining documented rules — a two-character `--state`, a
+five-digit or five-plus-four-digit `--zip-code`, and a URI-formatted `--website` — so it
+returns the authoritative message when a value is rejected.
+
 ## Creating an evaluation
 
 `evaluation create` sends the documented `POST /v1/Evaluations` request and prints the
