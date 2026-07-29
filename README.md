@@ -183,6 +183,57 @@ digits, and `--website` holds a uniform resource identifier. The documented upda
 carries none of the three constraints. The IntelliGRC API is the authority in both cases,
 so it returns the authoritative message when it rejects a value.
 
+## Writing personnel
+
+`personnel create`, `personnel update`, and `personnel delete` send the documented
+`POST /v1/Personnel`, `PUT /v1/Personnel/{id}`, and `DELETE /v1/Personnel/{id}` requests.
+`create` and `update` print the record the API returned; `delete` prints a short deletion
+confirmation. The create and update commands take the same flags, because the two
+documented request bodies carry the same twelve fields. Only `--first-name` and
+`--last-name` are required. Every other flag is optional, and the CLI leaves that field
+out of the request body when the flag is absent.
+
+The archived API document does not state how the update operation treats a field its
+request body leaves out. Send every field you want the person to keep, and read the
+printed record to confirm what the API stored.
+
+```sh
+# Create a person. The command prints the created record.
+intelligrc personnel create --profile prod \
+  --first-name "Ada" --last-name "Lovelace" --middle-name "Byron" \
+  --title "Security Lead" --description "Owns the security program" \
+  --email-address "ada@example.com" \
+  --phone-number "512-555-0100" --office-number "512-555-0101" \
+  --network-user-name "alovelace" --department-cd "SEC" \
+  --ad-domain "example.local" --user-type-id 2
+
+# Update a person by their integer identifier. Repeat every field the record
+# should keep. The command prints the updated record.
+intelligrc personnel update 12 --profile prod \
+  --first-name "Ada" --last-name "Lovelace" --title "Chief Security Officer"
+
+# Delete a person by their integer identifier. The command pauses for a
+# confirmation that defaults to "no"; add --yes to delete without pausing.
+intelligrc personnel delete 12 --profile prod
+```
+
+`--department-cd` supplies the documented `department_CD` body field; the flag name follows
+the CLI's lowercase, hyphenated convention. `--user-type-id` takes an integer, and the
+archived contract documents no lookup operation that lists the user type options, so the
+IntelliGRC API is the authority on which values it accepts.
+
+A missing `--first-name` or `--last-name`, a non-integer `--user-type-id`, or a
+non-integer identifier argument stops the command before any network or secret-store
+access.
+
+The three write safety rules from [Writing data types](#writing-data-types) apply here
+too: a `create` is never retried after an unconfirmed network failure, an `update` and a
+`delete` retry after a temporary failure, and a `delete` pauses for confirmation. The
+documented delete operation also replies `409 Conflict` when another record references the
+person, for example as the authorizing official of an interconnection. The CLI passes that
+reply through with the message the API returned, so nothing is deleted and the message
+names the reason.
+
 ## Creating an evaluation
 
 `evaluation create` sends the documented `POST /v1/Evaluations` request and prints the
