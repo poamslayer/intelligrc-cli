@@ -139,6 +139,50 @@ field). A missing `id`, an unknown key, or a non-integer `id` stops the command 
 network access. Providing `--authorization-type` on an update replaces every existing
 authorization type on that interconnection.
 
+## Writing facilities
+
+`facility create` and `facility update` send the documented `POST /v1/Facilities` and
+`PUT /v1/Facilities/{id}` requests and print the record the API returned. Both commands
+take the same flags, because the two documented request bodies carry the same fourteen
+fields. Only `--name` is required. Every other flag is optional, and the CLI leaves that
+field out of the request body when the flag is absent.
+
+The archived API document does not state how the update operation treats a field its
+request body leaves out. Send every field you want the facility to keep, and read the
+printed record to confirm what the API stored.
+
+```sh
+# Create a facility. The --location-type-id value comes from `lookup facility types`
+# and the --primary-contact-id value comes from `personnel list`.
+intelligrc facility create --profile prod \
+  --name "Headquarters" \
+  --location-type-id 3 \
+  --address "100 Congress Ave" --address-line2 "Suite 400" \
+  --city "Austin" --state TX --zip-code 78701 --country "United States" \
+  --phone-number "512-555-0100" --website "https://example.com" \
+  --employee-count 250 --primary-contact-id 12
+
+# Update a facility by its integer identifier. Repeat every field the facility
+# should keep. The command prints the updated record.
+intelligrc facility update 7 --profile prod \
+  --name "Headquarters" \
+  --location-type-id 3 \
+  --address "100 Congress Ave" --address-line2 "Suite 400" \
+  --city "Austin" --state TX --zip-code 78701 --country "United States" \
+  --phone-number "512-555-0100" --website "https://example.com" \
+  --employee-count 275 --primary-contact-id 12
+```
+
+`--location-type-id`, `--employee-count`, and `--primary-contact-id` take integers. A
+missing `--name`, a non-integer value in any of those three flags, or a non-integer
+identifier argument stops the command before any network or secret-store access.
+
+The archived document also constrains three create fields that the CLI does not check:
+`--state` holds at most two characters, `--zip-code` holds five digits or five-plus-four
+digits, and `--website` holds a uniform resource identifier. The documented update body
+carries none of the three constraints. The IntelliGRC API is the authority in both cases,
+so it returns the authoritative message when it rejects a value.
+
 ## Creating an evaluation
 
 `evaluation create` sends the documented `POST /v1/Evaluations` request and prints the

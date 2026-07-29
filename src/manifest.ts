@@ -587,6 +587,139 @@ const updateAuthorizationTypeFlag: FlagSpec = {
 }
 
 /**
+ * Flag list for the facility create and update commands. The documented
+ * FacilityCreateDTO and FacilityUpdateDTO carry the same fourteen scalar field
+ * names, types, and formats, and both mark only `name` required, so both
+ * commands share one flag list. Every field is scalar, so no flag is
+ * repeatable. `locationTypeId`, `employeeCount`, and `primaryContactId` are
+ * documented int32 integers; every other field is a documented string. An
+ * omitted optional flag leaves its field out of the request body.
+ *
+ * The two DTOs are not identical: the create DTO documents three string
+ * constraints that the update DTO does not — `state` has maxLength 2,
+ * `zipCode` has the pattern ^\d{5}(-\d{4})?$, and `website` has the `uri`
+ * format. Each summary below names the create DTO when it states one of those
+ * constraints, because the same flag also serves the update command, whose
+ * documented schema does not carry the constraint. The CLI enforces none of
+ * the three: the IntelliGRC API is the authority that accepts or rejects a
+ * value, exactly as it is for the identifier flags.
+ */
+const facilityWriteFlags: FlagSpec[] = [
+  {
+    name: 'name',
+    type: 'option',
+    required: true,
+    summary: 'Facility name, sent as the required "name" body field.',
+  },
+  {
+    name: 'description',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional facility description, sent as the "description" body field. ' +
+      'Omitted from the body when not given.',
+  },
+  {
+    name: 'location-type-id',
+    type: 'option',
+    required: false,
+    summary:
+      'Integer facility type identifier from `lookup facility types`, sent as ' +
+      'the "locationTypeId" body field. Omitted from the body when not given.',
+  },
+  {
+    name: 'address',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional street address, sent as the "address" body field. Omitted ' +
+      'from the body when not given.',
+  },
+  {
+    name: 'address-line2',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional second address line, sent as the "addressLine2" body field. ' +
+      'Omitted from the body when not given.',
+  },
+  {
+    name: 'city',
+    type: 'option',
+    required: false,
+    summary: 'Optional city, sent as the "city" body field. Omitted from the body when not given.',
+  },
+  {
+    name: 'state',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional state, sent as the "state" body field. The documented create ' +
+      'field holds at most two characters, for example TX. Omitted from the ' +
+      'body when not given.',
+  },
+  {
+    name: 'zip-code',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional postal code, sent as the "zipCode" body field. The documented ' +
+      'create field holds five digits or five-plus-four digits, for example ' +
+      '78701 or 78701-1234. Omitted from the body when not given.',
+  },
+  {
+    name: 'country',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional country, sent as the "country" body field. Omitted from the ' +
+      'body when not given.',
+  },
+  {
+    name: 'phone-number',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional telephone number, sent as the "phoneNumber" body field. ' +
+      'Omitted from the body when not given.',
+  },
+  {
+    name: 'website',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional website address, sent as the "website" body field. The ' +
+      'documented create field holds a uniform resource identifier (URI), for ' +
+      'example https://example.com. Omitted from the body when not given.',
+  },
+  {
+    name: 'fax-number',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional fax number, sent as the "faxNumber" body field. Omitted from ' +
+      'the body when not given.',
+  },
+  {
+    name: 'employee-count',
+    type: 'option',
+    required: false,
+    summary:
+      'Integer number of employees at the facility, sent as the ' +
+      '"employeeCount" body field. Omitted from the body when not given.',
+  },
+  {
+    name: 'primary-contact-id',
+    type: 'option',
+    required: false,
+    summary:
+      'Integer personnel identifier of the primary contact from ' +
+      '`personnel list`, sent as the "primaryContactId" body field. Omitted ' +
+      'from the body when not given.',
+  },
+]
+
+/**
  * Flag literals for the evaluation create command. The documented
  * EvaluationCreateDTO marks `name`, `reason`, `boundaryId`, `startDate`,
  * `endDate`, `iclVersionId`, and `frameworkIds` required; `totalBudget`,
@@ -1760,6 +1893,11 @@ function requiredStringField(name: string, flagName: string): RequestBodyFieldCo
   return {name, type: 'string', required: true, source: {kind: 'flag', name: flagName}}
 }
 
+/** A documented optional, nullable string body field. */
+function optionalStringField(name: string, flagName: string): RequestBodyFieldContract {
+  return {name, type: 'string', required: false, nullable: true, source: {kind: 'flag', name: flagName}}
+}
+
 /** A documented required int32 body field. */
 function requiredIntField(name: string, flagName: string): RequestBodyFieldContract {
   return {name, type: 'integer', format: 'int32', required: true, source: {kind: 'flag', name: flagName}}
@@ -1905,6 +2043,63 @@ const actionPlanSubTaskCreateBodyFields: RequestBodyFieldContract[] = [
   ...actionPlanClassificationFields,
   ...actionPlanOrganizationFields,
 ]
+
+/**
+ * The fourteen documented facility body fields, in the archived DTOs' property
+ * order. FacilityCreateDTO and FacilityUpdateDTO document the same field
+ * names, types, and required set (only `name` is required), and differ in one
+ * fact the contract suite compares: the create DTO gives `website` the `uri`
+ * format and the update DTO gives it no format. The caller supplies that one
+ * field, so the difference between the two contracts is stated once, at the
+ * two call sites below, instead of being buried in two near-identical lists.
+ *
+ * The create DTO also documents a maxLength on `state` and a pattern on
+ * `zipCode` that the update DTO omits. Neither appears here because the
+ * contract type records only the facts the contract suite compares — name,
+ * type, format, required, and nullable.
+ */
+function facilityBodyFields(websiteField: RequestBodyFieldContract): RequestBodyFieldContract[] {
+  return [
+    requiredStringField('name', 'name'),
+    optionalStringField('description', 'description'),
+    optionalIntField('locationTypeId', 'location-type-id'),
+    optionalStringField('address', 'address'),
+    optionalStringField('addressLine2', 'address-line2'),
+    optionalStringField('city', 'city'),
+    optionalStringField('state', 'state'),
+    optionalStringField('zipCode', 'zip-code'),
+    optionalStringField('country', 'country'),
+    optionalStringField('phoneNumber', 'phone-number'),
+    websiteField,
+    optionalStringField('faxNumber', 'fax-number'),
+    optionalIntField('employeeCount', 'employee-count'),
+    optionalIntField('primaryContactId', 'primary-contact-id'),
+  ]
+}
+
+/**
+ * The documented FacilityCreateDTO body field contract. The DTO marks only
+ * `name` required; every other field is optional and nullable, so a create
+ * sends just the fields whose flags were given. `website` carries the
+ * documented `uri` format.
+ */
+const facilityCreateBodyFields: RequestBodyFieldContract[] = facilityBodyFields({
+  name: 'website',
+  type: 'string',
+  format: 'uri',
+  required: false,
+  nullable: true,
+  source: {kind: 'flag', name: 'website'},
+})
+
+/**
+ * The documented FacilityUpdateDTO body field contract. The DTO marks only
+ * `name` required, so an update sends just the fields whose flags were given.
+ * The update DTO documents `website` as a plain string with no format.
+ */
+const facilityUpdateBodyFields: RequestBodyFieldContract[] = facilityBodyFields(
+  optionalStringField('website', 'website'),
+)
 
 /** Contract for one documented GET operation. */
 function get(path: string, parameters: ParameterContract[] = []): OperationContract {
@@ -2421,6 +2616,24 @@ export const commandSpecs: CommandSpec[] = [
     args: [facilityIdArg],
     flags: [profileFlag, dataTypeIdFlag, apiOutputFlag],
     contract: put('/v1/Facilities/{id}/datatypes', [idPathParameter], dataTypeIdsBodyFields),
+  },
+  {
+    id: 'facility create',
+    summary: 'Create one facility for the profile tenant.',
+    kind: 'api',
+    permission: 'Locations: Write',
+    args: [],
+    flags: [profileFlag, ...facilityWriteFlags, apiOutputFlag],
+    contract: post('/v1/Facilities', facilityCreateBodyFields),
+  },
+  {
+    id: 'facility update',
+    summary: 'Update one facility by its integer identifier.',
+    kind: 'api',
+    permission: 'Locations: Write',
+    args: [facilityIdArg],
+    flags: [profileFlag, ...facilityWriteFlags, apiOutputFlag],
+    contract: put('/v1/Facilities/{id}', [idPathParameter], facilityUpdateBodyFields),
   },
   {
     id: 'interconnection list',
