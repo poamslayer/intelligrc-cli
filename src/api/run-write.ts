@@ -33,20 +33,6 @@ export function apiWriteDescription(spec: ApiCommandSpec, method: HttpMethod): s
   )
 }
 
-/**
- * Shared help description for one documented delete operation. It states the
- * write facts and then the confirmation rule every delete command follows, so
- * the two readings never drift apart.
- */
-export function apiDeleteDescription(spec: ApiCommandSpec): string {
-  return (
-    `${apiWriteDescription(spec, 'DELETE')} Because a delete cannot be undone, ` +
-    'the command pauses and asks for confirmation, defaulting to "no" on an ' +
-    'empty answer. Add --yes to skip the pause. When no terminal is attached ' +
-    'and --yes is absent, the command declines rather than deleting.'
-  )
-}
-
 export interface ApiWriteOptions {
   spec: ApiCommandSpec
   method: HttpMethod

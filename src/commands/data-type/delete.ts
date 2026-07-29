@@ -1,8 +1,7 @@
 import {Command} from '@oclif/core'
 
-import {confirmDelete, deletedRecord} from '../../api/confirm-delete.js'
 import {parseDataTypeId} from '../../api/filters.js'
-import {apiDeleteDescription, runApiWrite} from '../../api/run-write.js'
+import {apiDeleteDescription, runApiDelete} from '../../api/run-delete.js'
 import {apiCommandSpec, oclifArgs, oclifFlags} from '../../manifest.js'
 import {type OutputFormat} from '../../output.js'
 
@@ -22,25 +21,14 @@ export default class DataTypeDelete extends Command {
   async run(): Promise<void> {
     const {args, flags} = await this.parse(DataTypeDelete)
 
-    await runApiWrite(this, {
+    await runApiDelete(this, {
       spec,
-      method: 'DELETE',
+      resource: 'data type',
+      id: args.id as string,
+      parseId: parseDataTypeId,
       profile: flags.profile as string,
       output: flags.output as OutputFormat,
-      sendTenantHeader: true,
-      // Validate the identifier once. buildPath runs before the confirmation,
-      // so a bad identifier exits 2 and never reaches the prompt; confirm and
-      // onNoContent reuse the same validated value.
-      buildPath: () => {
-        const id = parseDataTypeId(args.id as string)
-        this.dataTypeId = id
-        return spec.contract.path.replace('{id}', id)
-      },
-      confirm: () => confirmDelete('data type', this.dataTypeId, flags.yes === true),
-      onNoContent: () => deletedRecord('data type', this.dataTypeId),
+      yes: flags.yes === true,
     })
   }
-
-  /** The validated data-type identifier, set by buildPath before confirm runs. */
-  private dataTypeId = ''
 }
