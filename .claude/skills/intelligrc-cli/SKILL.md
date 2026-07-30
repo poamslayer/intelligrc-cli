@@ -90,6 +90,12 @@ intelligrc evidence-folder create --profile prod --name "Policies"
 intelligrc facility data-types set 3 --profile prod --data-type-id 1 --data-type-id 2
 ```
 
+The two `data-types set` commands spell their flag the same way but take identifiers from
+different documented sources. `facility data-types set` takes them from
+`lookup facility data-types`. `interconnection data-types set` takes them from
+`data-type list`. Fetch the matching source before you set either association, and do not
+reuse one command's identifiers on the other.
+
 Four rules govern a write. State them to the user before running one on their behalf:
 
 - A `create` is **never retried** after a network failure whose result cannot be confirmed. It
