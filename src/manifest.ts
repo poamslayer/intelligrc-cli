@@ -237,7 +237,7 @@ const assessmentObjectiveIdFlag: FlagSpec = {
     'assessmentObjectiveId query parameter.',
 }
 
-const parentIdFlag: FlagSpec = {
+const parentIdQueryFlag: FlagSpec = {
   name: 'parent-id',
   type: 'option',
   required: false,
@@ -245,6 +245,59 @@ const parentIdFlag: FlagSpec = {
     'Parent folder identifier (UUID), sent as the documented parentId ' +
     'query parameter. Omitted from the request when not given, which ' +
     'lists all folders.',
+}
+
+/**
+ * Flag literals for the two evidence create commands. The documented
+ * EvidenceLinkCreateDTO marks `fileName` and `url` required, and the documented
+ * EvidenceFolderCreateDTO marks `name` required. Both bodies carry the same
+ * optional `parentId` field, so both commands share `parentIdBodyFlag` below.
+ * That one flag drops the `evidence` prefix the others carry, because its name
+ * pairs with `parentIdQueryFlag`, the query-parameter variant the
+ * evidence-folder list command sends.
+ */
+const evidenceFileNameFlag: FlagSpec = {
+  name: 'file-name',
+  type: 'option',
+  required: true,
+  summary: 'Display name for the evidence, sent as the required "fileName" body field.',
+}
+
+const evidenceUrlFlag: FlagSpec = {
+  name: 'url',
+  type: 'option',
+  required: true,
+  summary:
+    'Web address the evidence links to, sent as the required "url" body ' +
+    'field. The documented field holds a uniform resource identifier (URI), ' +
+    'for example https://example.com/policy.pdf.',
+}
+
+const evidenceDescriptionFlag: FlagSpec = {
+  name: 'description',
+  type: 'option',
+  required: false,
+  summary:
+    'Optional description of the evidence, sent as the "description" body ' +
+    'field. Omitted from the body when not given.',
+}
+
+const evidenceFolderNameFlag: FlagSpec = {
+  name: 'name',
+  type: 'option',
+  required: true,
+  summary: 'Folder name, sent as the required "name" body field.',
+}
+
+const parentIdBodyFlag: FlagSpec = {
+  name: 'parent-id',
+  type: 'option',
+  required: false,
+  summary:
+    'Parent folder identifier (UUID) from `evidence-folder list`, sent as the ' +
+    '"parentId" body field. Omitted from the body when not given. The ' +
+    'documented folder operation treats a null parent as the root; the ' +
+    'documented evidence operation states no rule for a null parent.',
 }
 
 const dataTypeIdArg: ArgSpec = {
@@ -2239,6 +2292,42 @@ const personnelWriteBodyFields: RequestBodyFieldContract[] = [
   optionalIntField('userTypeId', 'user-type-id'),
 ]
 
+/**
+ * The documented optional `parentId` body field, shared by the two evidence
+ * create bodies. Both DTOs document it as a nullable UUID string.
+ */
+const parentIdBodyField: RequestBodyFieldContract = {
+  name: 'parentId',
+  type: 'string',
+  format: 'uuid',
+  required: false,
+  nullable: true,
+  source: {kind: 'flag', name: 'parent-id'},
+}
+
+/**
+ * The documented EvidenceLinkCreateDTO body field contract, in the archived
+ * DTO's property order. Required: `fileName` and `url`. The DTO gives `url` the
+ * `uri` format and gives both required fields a minLength of 1; the minLength
+ * does not appear here because the contract type records only the facts the
+ * contract suite compares — name, type, format, required, and nullable.
+ */
+const evidenceLinkCreateBodyFields: RequestBodyFieldContract[] = [
+  requiredStringField('fileName', 'file-name'),
+  {name: 'url', type: 'string', format: 'uri', required: true, source: {kind: 'flag', name: 'url'}},
+  optionalStringField('description', 'description'),
+  parentIdBodyField,
+]
+
+/**
+ * The documented EvidenceFolderCreateDTO body field contract, in the archived
+ * DTO's property order. Required: `name`.
+ */
+const evidenceFolderCreateBodyFields: RequestBodyFieldContract[] = [
+  requiredStringField('name', 'name'),
+  parentIdBodyField,
+]
+
 /** Contract for one documented GET operation. */
 function get(path: string, parameters: ParameterContract[] = []): OperationContract {
   return {method: 'get', path, parameters}
@@ -2499,13 +2588,38 @@ export const commandSpecs: CommandSpec[] = [
     ),
   },
   {
+    id: 'evidence create',
+    summary: 'Create one piece of link-based evidence for the profile tenant.',
+    kind: 'api',
+    permission: 'Evidence: Write',
+    args: [],
+    flags: [
+      profileFlag,
+      evidenceFileNameFlag,
+      evidenceUrlFlag,
+      evidenceDescriptionFlag,
+      parentIdBodyFlag,
+      apiOutputFlag,
+    ],
+    contract: post('/v1/Evidence', evidenceLinkCreateBodyFields),
+  },
+  {
     id: 'evidence-folder list',
     summary: 'List evidence folders, optionally under one parent folder.',
     kind: 'api',
     permission: 'Evidence: Read',
     args: [],
-    flags: [profileFlag, parentIdFlag, apiOutputFlag],
+    flags: [profileFlag, parentIdQueryFlag, apiOutputFlag],
     contract: get('/v1/Evidence/Folders', [parentIdParameter]),
+  },
+  {
+    id: 'evidence-folder create',
+    summary: 'Create one evidence folder for the profile tenant.',
+    kind: 'api',
+    permission: 'Evidence: Write',
+    args: [],
+    flags: [profileFlag, evidenceFolderNameFlag, parentIdBodyFlag, apiOutputFlag],
+    contract: post('/v1/Evidence/Folders', evidenceFolderCreateBodyFields),
   },
   {
     id: 'action-plan-project list',

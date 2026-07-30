@@ -906,6 +906,29 @@ function assignOptionalInt32List<T>(
   }
 }
 
+/**
+ * Assign one optional UUID body field, validating it as a documented UUID.
+ * `label` names the kind of record the identifier points at, for example
+ * "project" or "parent folder". The failure code follows the flag name and the
+ * message names the body field, so one flag always produces one code.
+ */
+function assignOptionalUuid<T>(
+  body: T,
+  field: KeysMatching<T, string>,
+  raw: unknown,
+  flagName: string,
+  label: string,
+): void {
+  if (raw !== undefined) {
+    ;(body as Record<string, unknown>)[field] = parseUuid(
+      raw as string,
+      `invalid-${flagName}`,
+      label,
+      `${field} field`,
+    )
+  }
+}
+
 /** Assign one optional UUID-array body field, validating each element as a UUID. */
 function assignOptionalUuidList<T>(
   body: T,
@@ -977,6 +1000,68 @@ export function buildFacilityWriteBody(flags: Record<string, unknown>): Facility
   assignOptionalString(body, 'faxNumber', flags['fax-number'])
   assignOptionalInt(body, 'employeeCount', flags['employee-count'], 'employee-count', 'employee count')
   assignOptionalInt(body, 'primaryContactId', flags['primary-contact-id'], 'primary-contact-id')
+
+  return body
+}
+
+/**
+ * The validated body of an evidence link create request. The documented
+ * EvidenceLinkCreateDTO marks `fileName` and `url` required; `description` and
+ * `parentId` are optional and nullable, so each is present only when the user
+ * supplied its flag. `parentId` is a documented UUID, and `url` is a documented
+ * uri-formatted string. The CLI sends `url` as typed; the archived document does
+ * not state what the operation does with a value that is not a URI.
+ */
+export interface EvidenceLinkCreateBody {
+  fileName: string
+  url: string
+  description?: string
+  parentId?: string
+}
+
+/**
+ * Build the validated evidence link create body. Runs before profile
+ * resolution, so a --parent-id that is not a UUID exits 2 with a stable code
+ * and zero keyring or network access. The required --file-name and --url flags
+ * are enforced by oclif. The CLI does not check that --url is a well-formed
+ * uniform resource identifier — the IntelliGRC API is the authority that
+ * accepts or rejects a value, as it is for every other documented string
+ * constraint.
+ */
+export function buildEvidenceLinkCreateBody(flags: Record<string, unknown>): EvidenceLinkCreateBody {
+  const body: EvidenceLinkCreateBody = {
+    fileName: flags['file-name'] as string,
+    url: flags.url as string,
+  }
+
+  assignOptionalString(body, 'description', flags.description)
+  assignOptionalUuid(body, 'parentId', flags['parent-id'], 'parent-id', 'parent folder')
+
+  return body
+}
+
+/**
+ * The validated body of an evidence folder create request. The documented
+ * EvidenceFolderCreateDTO marks `name` required; `parentId` is optional and
+ * nullable. Leaving `parentId` out creates the folder at the root, which is the
+ * documented meaning of a null parent.
+ */
+export interface EvidenceFolderCreateBody {
+  name: string
+  parentId?: string
+}
+
+/**
+ * Build the validated evidence folder create body. Runs before profile
+ * resolution, so a --parent-id that is not a UUID exits 2 with a stable code
+ * and zero keyring or network access. The required --name flag is enforced by
+ * oclif. The CLI does not check the documented rule that a folder name must be
+ * unique within its parent — the API enforces it and replies 409 Conflict.
+ */
+export function buildEvidenceFolderCreateBody(flags: Record<string, unknown>): EvidenceFolderCreateBody {
+  const body: EvidenceFolderCreateBody = {name: flags.name as string}
+
+  assignOptionalUuid(body, 'parentId', flags['parent-id'], 'parent-id', 'parent folder')
 
   return body
 }
@@ -1133,11 +1218,7 @@ export function buildActionPlanTaskCreateBody(
   assignOptionalNumber(body, 'budget', flags.budget, 'budget')
   assignOptionalDate(body, 'scheduledCompletionDate', flags['scheduled-completion-date'], 'scheduled-completion-date')
 
-  const projectId = flags['project-id'] as string | undefined
-  if (projectId !== undefined) {
-    body.projectId = parseUuid(projectId, 'invalid-project-id', 'project', 'projectId field')
-  }
-
+  assignOptionalUuid(body, 'projectId', flags['project-id'], 'project-id', 'project')
   assignOptionalInt(body, 'evaluationId', flags['evaluation-id'], 'evaluation-id')
   assignActionPlanAssignments(body, flags)
   assignOptionalUuidList(
