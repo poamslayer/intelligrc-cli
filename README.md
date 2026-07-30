@@ -503,6 +503,9 @@ in the source repository):
   each one to one command. An automated contract suite compares every path, parameter,
   documented permission, and write request-body field against the archived OpenAPI
   document on every test run.
+- The archived OpenAPI document defines exactly 23 operations that are not `GET`, and the
+  CLI maps 22 of them to one command each. The one operation the CLI does not implement is
+  `POST /v1/Evidence/Upload`, which the document describes as a multipart file upload.
 - Tenant-scoped operations document the `x-client-id`, `x-client-secret`, and
   `x-tenant-id` headers. The tenant-list operation documents no `x-tenant-id` header.
 - The archived OpenAPI document defines no pagination, rate-limit, or complete error
