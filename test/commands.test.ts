@@ -125,6 +125,108 @@ const facilityWriteFlags = [
   },
 ]
 
+// The twelve body flags both personnel write commands expose, written out by
+// hand from the archived PersonnelCreateDTO and PersonnelUpdateDTO. The two
+// DTOs document the identical field names, types, and required set
+// (`firstName` and `lastName`), so one literal states the flag expectation for
+// both commands. Like the rest of this file, this literal is hand-written and
+// must not be derived from src/manifest.ts.
+const personnelWriteFlags = [
+  {
+    name: 'first-name',
+    type: 'option',
+    required: true,
+    summary: 'Given name, sent as the required "firstName" body field.',
+  },
+  {
+    name: 'last-name',
+    type: 'option',
+    required: true,
+    summary: 'Family name, sent as the required "lastName" body field.',
+  },
+  {
+    name: 'middle-name',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional middle name, sent as the "middleName" body field. Omitted ' +
+      'from the body when not given.',
+  },
+  {
+    name: 'title',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional job title, sent as the "title" body field. Omitted from the ' +
+      'body when not given.',
+  },
+  {
+    name: 'description',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional description of the person, sent as the "description" body ' +
+      'field. Omitted from the body when not given.',
+  },
+  {
+    name: 'email-address',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional email address, sent as the "emailAddress" body field. Omitted ' +
+      'from the body when not given.',
+  },
+  {
+    name: 'phone-number',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional telephone number, sent as the "phoneNumber" body field. ' +
+      'Omitted from the body when not given.',
+  },
+  {
+    name: 'office-number',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional office number, sent as the "officeNumber" body field. Omitted ' +
+      'from the body when not given.',
+  },
+  {
+    name: 'network-user-name',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional network user name, sent as the "networkUserName" body field. ' +
+      'Omitted from the body when not given.',
+  },
+  {
+    name: 'department-cd',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional department code, sent as the documented "department_CD" body ' +
+      'field. Omitted from the body when not given.',
+  },
+  {
+    name: 'ad-domain',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional directory domain, sent as the "adDomain" body field. Omitted ' +
+      'from the body when not given.',
+  },
+  {
+    name: 'user-type-id',
+    type: 'option',
+    required: false,
+    summary:
+      'Integer user type identifier, sent as the "userTypeId" body field. The ' +
+      'archived contract documents no lookup operation for the user type ' +
+      'options. Omitted from the body when not given.',
+  },
+]
+
 // Expected catalog, written out by hand from issues #2, #3, #4, #5, #6,
 // #7, #8, #9, and #10. This literal is the independent source of truth;
 // it must not be derived from src/manifest.ts.
@@ -2151,6 +2253,97 @@ const expectedCatalog = {
           type: 'option',
           required: true,
           summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'personnel create',
+      summary: 'Create one person for the profile tenant.',
+      kind: 'api',
+      permission: 'Personnel: Write',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        ...personnelWriteFlags,
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'personnel update',
+      summary: 'Update one person by their integer identifier.',
+      kind: 'api',
+      permission: 'Personnel: Write',
+      args: [
+        {
+          name: 'id',
+          type: 'integer',
+          required: true,
+          summary: 'Integer personnel identifier, substituted into the documented request path.',
+        },
+      ],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        ...personnelWriteFlags,
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'personnel delete',
+      summary: 'Delete one person by their integer identifier, after a confirmation pause.',
+      kind: 'api',
+      permission: 'Personnel: Write',
+      args: [
+        {
+          name: 'id',
+          type: 'integer',
+          required: true,
+          summary: 'Integer personnel identifier, substituted into the documented request path.',
+        },
+      ],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'yes',
+          type: 'boolean',
+          required: false,
+          summary: 'Skip the delete confirmation prompt and delete without pausing.',
         },
         {
           name: 'output',

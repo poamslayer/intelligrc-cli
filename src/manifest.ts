@@ -720,6 +720,115 @@ const facilityWriteFlags: FlagSpec[] = [
 ]
 
 /**
+ * Flag list for the personnel create and update commands. The documented
+ * PersonnelCreateDTO and PersonnelUpdateDTO carry the same twelve scalar field
+ * names, types, and formats, and both mark `firstName` and `lastName`
+ * required, so both commands share one flag list. Every field is scalar, so no
+ * flag is repeatable. `userTypeId` is a documented int32 integer; every other
+ * field is a documented string. An omitted optional flag leaves its field out
+ * of the request body.
+ *
+ * `--department-cd` supplies the documented `department_CD` body field. The
+ * flag name follows the CLI's lowercase, hyphenated convention; the body field
+ * keeps the documented name, underscore and capitals included.
+ */
+const personnelWriteFlags: FlagSpec[] = [
+  {
+    name: 'first-name',
+    type: 'option',
+    required: true,
+    summary: 'Given name, sent as the required "firstName" body field.',
+  },
+  {
+    name: 'last-name',
+    type: 'option',
+    required: true,
+    summary: 'Family name, sent as the required "lastName" body field.',
+  },
+  {
+    name: 'middle-name',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional middle name, sent as the "middleName" body field. Omitted ' +
+      'from the body when not given.',
+  },
+  {
+    name: 'title',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional job title, sent as the "title" body field. Omitted from the ' +
+      'body when not given.',
+  },
+  {
+    name: 'description',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional description of the person, sent as the "description" body ' +
+      'field. Omitted from the body when not given.',
+  },
+  {
+    name: 'email-address',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional email address, sent as the "emailAddress" body field. Omitted ' +
+      'from the body when not given.',
+  },
+  {
+    name: 'phone-number',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional telephone number, sent as the "phoneNumber" body field. ' +
+      'Omitted from the body when not given.',
+  },
+  {
+    name: 'office-number',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional office number, sent as the "officeNumber" body field. Omitted ' +
+      'from the body when not given.',
+  },
+  {
+    name: 'network-user-name',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional network user name, sent as the "networkUserName" body field. ' +
+      'Omitted from the body when not given.',
+  },
+  {
+    name: 'department-cd',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional department code, sent as the documented "department_CD" body ' +
+      'field. Omitted from the body when not given.',
+  },
+  {
+    name: 'ad-domain',
+    type: 'option',
+    required: false,
+    summary:
+      'Optional directory domain, sent as the "adDomain" body field. Omitted ' +
+      'from the body when not given.',
+  },
+  {
+    name: 'user-type-id',
+    type: 'option',
+    required: false,
+    summary:
+      'Integer user type identifier, sent as the "userTypeId" body field. The ' +
+      'archived contract documents no lookup operation for the user type ' +
+      'options. Omitted from the body when not given.',
+  },
+]
+
+/**
  * Flag literals for the evaluation create command. The documented
  * EvaluationCreateDTO marks `name`, `reason`, `boundaryId`, `startDate`,
  * `endDate`, `iclVersionId`, and `frameworkIds` required; `totalBudget`,
@@ -2101,6 +2210,33 @@ const facilityUpdateBodyFields: RequestBodyFieldContract[] = facilityBodyFields(
   optionalStringField('website', 'website'),
 )
 
+/**
+ * The twelve documented personnel body fields, in the archived DTOs' property
+ * order. PersonnelCreateDTO and PersonnelUpdateDTO document the identical field
+ * names, types, formats, required set (`firstName` and `lastName`), and
+ * nullable set, so one list states the contract for both the create and the
+ * update operation. `department_CD` keeps the documented field name.
+ *
+ * The create and update DTOs both give `firstName` and `lastName` a minLength
+ * of 1. That constraint does not appear here because the contract type records
+ * only the facts the contract suite compares — name, type, format, required,
+ * and nullable.
+ */
+const personnelWriteBodyFields: RequestBodyFieldContract[] = [
+  requiredStringField('firstName', 'first-name'),
+  requiredStringField('lastName', 'last-name'),
+  optionalStringField('middleName', 'middle-name'),
+  optionalStringField('title', 'title'),
+  optionalStringField('description', 'description'),
+  optionalStringField('emailAddress', 'email-address'),
+  optionalStringField('phoneNumber', 'phone-number'),
+  optionalStringField('officeNumber', 'office-number'),
+  optionalStringField('networkUserName', 'network-user-name'),
+  optionalStringField('department_CD', 'department-cd'),
+  optionalStringField('adDomain', 'ad-domain'),
+  optionalIntField('userTypeId', 'user-type-id'),
+]
+
 /** Contract for one documented GET operation. */
 function get(path: string, parameters: ParameterContract[] = []): OperationContract {
   return {method: 'get', path, parameters}
@@ -2722,6 +2858,33 @@ export const commandSpecs: CommandSpec[] = [
     args: [personnelIdArg],
     flags: [profileFlag, apiOutputFlag],
     contract: get('/v1/Personnel/{id}', [idPathParameter]),
+  },
+  {
+    id: 'personnel create',
+    summary: 'Create one person for the profile tenant.',
+    kind: 'api',
+    permission: 'Personnel: Write',
+    args: [],
+    flags: [profileFlag, ...personnelWriteFlags, apiOutputFlag],
+    contract: post('/v1/Personnel', personnelWriteBodyFields),
+  },
+  {
+    id: 'personnel update',
+    summary: 'Update one person by their integer identifier.',
+    kind: 'api',
+    permission: 'Personnel: Write',
+    args: [personnelIdArg],
+    flags: [profileFlag, ...personnelWriteFlags, apiOutputFlag],
+    contract: put('/v1/Personnel/{id}', [idPathParameter], personnelWriteBodyFields),
+  },
+  {
+    id: 'personnel delete',
+    summary: 'Delete one person by their integer identifier, after a confirmation pause.',
+    kind: 'api',
+    permission: 'Personnel: Write',
+    args: [personnelIdArg],
+    flags: [profileFlag, yesFlag, apiOutputFlag],
+    contract: del('/v1/Personnel/{id}', [idPathParameter]),
   },
   {
     id: 'lookup action-plan project-statuses',

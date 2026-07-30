@@ -982,6 +982,62 @@ export function buildFacilityWriteBody(flags: Record<string, unknown>): Facility
 }
 
 /**
+ * The validated body of a personnel create or update request. The documented
+ * PersonnelCreateDTO and PersonnelUpdateDTO carry the identical twelve scalar
+ * fields and mark `firstName` and `lastName` required, so both commands build
+ * this one shape. `userTypeId` is a JSON number, so it serializes as the
+ * documented int32 integer rather than a string. Every other field is a
+ * string. An optional field is present only when the user supplied its flag.
+ *
+ * `department_CD` keeps the documented field name, including its underscore
+ * and capitals, because output and input preserve upstream field names.
+ */
+export interface PersonnelWriteBody {
+  firstName: string
+  lastName: string
+  middleName?: string
+  title?: string
+  description?: string
+  emailAddress?: string
+  phoneNumber?: string
+  officeNumber?: string
+  networkUserName?: string
+  department_CD?: string
+  adDomain?: string
+  userTypeId?: number
+}
+
+/**
+ * Build the validated personnel body from the create or update command's
+ * flags. The two documented DTOs share one field set, so one builder serves
+ * both commands. It runs before profile resolution, so a non-integer
+ * --user-type-id exits 2 with a stable code and zero keyring or network
+ * access. The required --first-name and --last-name flags are enforced by
+ * oclif; each optional field is included only when its flag is supplied. The
+ * CLI does not check --user-type-id against any catalog — the IntelliGRC API
+ * is the authority that accepts or rejects a value.
+ */
+export function buildPersonnelWriteBody(flags: Record<string, unknown>): PersonnelWriteBody {
+  const body: PersonnelWriteBody = {
+    firstName: flags['first-name'] as string,
+    lastName: flags['last-name'] as string,
+  }
+
+  assignOptionalString(body, 'middleName', flags['middle-name'])
+  assignOptionalString(body, 'title', flags.title)
+  assignOptionalString(body, 'description', flags.description)
+  assignOptionalString(body, 'emailAddress', flags['email-address'])
+  assignOptionalString(body, 'phoneNumber', flags['phone-number'])
+  assignOptionalString(body, 'officeNumber', flags['office-number'])
+  assignOptionalString(body, 'networkUserName', flags['network-user-name'])
+  assignOptionalString(body, 'department_CD', flags['department-cd'])
+  assignOptionalString(body, 'adDomain', flags['ad-domain'])
+  assignOptionalInt(body, 'userTypeId', flags['user-type-id'], 'user-type-id')
+
+  return body
+}
+
+/**
  * The validated body of an action-plan project create request. The documented
  * ActionPlanProjectCreateDTO marks `name`, `description`, and `statusId`
  * required; every other field is optional and (except the arrays' presence)
