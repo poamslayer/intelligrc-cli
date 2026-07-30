@@ -1,11 +1,11 @@
 ---
 name: intelligrc-cli
-description: Query and edit IntelliGRC governance, risk, and compliance data (evaluations, assessment objectives, controls, evidence, action plans, boundaries, facilities, personnel, interconnections, data types, lookups) from the command line using the intelligrc CLI. Use whenever the user asks to pull, check, list, count, or export anything from IntelliGRC, or to create, update, or delete a data type, mentions `intelligrc`, or needs GRC or compliance data from their IntelliGRC tenant — even if they do not name the CLI. The CLI reads every documented GET operation and writes data types (`data-type create`, `data-type update`, `data-type delete`); other resources remain read-only for now. Skip for a create, update, or delete of any resource other than data types, and skip for conceptual questions about the IntelliGRC web app.
+description: Query and edit IntelliGRC governance, risk, and compliance data (evaluations, assessment objectives, controls, evidence, action plans, boundaries, facilities, personnel, interconnections, data types, lookups) from the command line using the intelligrc CLI. Use whenever the user asks to pull, check, list, count, or export anything from IntelliGRC, or to create, update, delete, or associate any of those records, mentions `intelligrc`, or needs GRC or compliance data from their IntelliGRC tenant — even if they do not name the CLI. The CLI reads every documented GET operation and writes every documented write operation except multipart file upload: it creates evaluations, boundaries, data types, facilities, interconnections, personnel, evidence, evidence folders, and action-plan projects, tasks, and subtasks; updates assessment objectives, controls, data types, facilities, interconnections, and personnel; deletes data types and personnel; and sets data-type and assessment-objective associations. Skip for uploading an evidence file (`POST /v1/Evidence/Upload`, multipart, not implemented) and for conceptual questions about the IntelliGRC web app.
 ---
 
 # IntelliGRC CLI
 
-Use the `intelligrc` CLI to read and edit data in the IntelliGRC API. The CLI maps every documented GET operation to one read command. It also writes data types: `data-type create`, `data-type update`, and `data-type delete` send the documented POST, PUT, and DELETE requests for `/v1/DataTypes`. Every other resource is still read-only; write commands for the remaining resources are being added incrementally.
+Use the `intelligrc` CLI to read and edit data in the IntelliGRC API. The CLI maps all 50 documented GET operations to one read command each, and 22 of the 23 documented write operations to one write command each. The only unimplemented write is `POST /v1/Evidence/Upload`, the multipart evidence-file upload: for that one, direct the user to the IntelliGRC web app.
 
 ## Command reference
 
@@ -40,8 +40,8 @@ intelligrc <topic> <subcommand> [ID] [--flags]
 - Topics are space-separated: `intelligrc evaluation current`, `intelligrc lookup facility types`.
 - Every API command requires `--profile <name>`.
 - `--output json|jsonl|table` on every API command; default is `json` (pretty-printed, upstream field names preserved). `jsonl` emits one JSON line per array element.
-- `get` and `data-types` commands take a positional integer `ID` (for example `intelligrc facility get 3`).
-- ID flags are validated before any network call: `--evaluation-id` is an int32; `--framework-id`, `--assessment-objective-id`, `--parent-id`, and `--icl-version-id` are UUIDs.
+- `get`, `data-types`, `update`, and `delete` commands take a positional `ID` (for example `intelligrc facility get 3`, `intelligrc personnel update 12 ...`). It is an integer for data types, facilities, interconnections, and personnel, and a UUID for assessment objectives, controls, and evidence.
+- ID flags and arguments are validated before any network call or keychain read: `--evaluation-id` is an int32; `--framework-id`, `--assessment-objective-id`, `--parent-id`, and `--icl-version-id` are UUIDs. An invalid value exits 2 and sends nothing.
 
 ## Common patterns
 
@@ -60,6 +60,56 @@ intelligrc commands | jq -r '.commands[].id'                    # Discover every
 ```
 
 Lookup commands (`intelligrc lookup ...`) return the ID-to-name tables for statuses, levels, types, and categories — fetch the matching lookup when you need to present raw IDs as human-readable values.
+
+## Writing data
+
+Every write command requires `--profile` and prints the record the API returned. Run
+`intelligrc <command> --help` for the exact flags: each flag summary names the body field it
+supplies and says whether the field is required.
+
+| Resource | Create | Update | Delete | Associate |
+|---|---|---|---|---|
+| Data type | `data-type create` | `data-type update <id>` | `data-type delete <id>` | — |
+| Personnel | `personnel create` | `personnel update <id>` | `personnel delete <id>` | — |
+| Facility | `facility create` | `facility update <id>` | — | `facility data-types set <id>` |
+| Interconnection | `interconnection create` | `interconnection update <id>` | — | `interconnection data-types set <id>` |
+| Evidence | `evidence create` | — | — | `evidence assessment-objectives set <id>` |
+| Evidence folder | `evidence-folder create` | — | — | — |
+| Evaluation | `evaluation create` | — | — | — |
+| Boundary | `boundary create` | — | — | — |
+| Action plan | `action-plan-project create`, `action-plan-task create`, `action-plan-subtask create` | — | — | — |
+| Assessment objective | — | `assessment-objective update <id>` | — | — |
+| Control | — | `control update <id>` | — | — |
+
+```bash
+intelligrc data-type create --profile prod --name "CUI" \
+  --confidentiality-id 3 --integrity-id 2 --availability-id 1
+intelligrc personnel create --profile prod --first-name Ada --last-name Lovelace
+intelligrc personnel delete 12 --profile prod --yes    # --yes skips the confirmation pause
+intelligrc evidence-folder create --profile prod --name "Policies"
+intelligrc facility data-types set 3 --profile prod --data-type-id 1 --data-type-id 2
+```
+
+Four rules govern a write. State them to the user before running one on their behalf:
+
+- A `create` is **never retried** after a network failure whose result cannot be confirmed. It
+  stops and reports that the user should check IntelliGRC before retrying, so a broken
+  connection never produces a duplicate record.
+- An `update`, a `delete`, and an association `set` retry after a temporary failure, because
+  repeating them lands on the same result.
+- A `delete` pauses for a confirmation that defaults to "no". `--yes` skips the pause. With no
+  terminal attached and no `--yes`, the command declines rather than deleting — so a scripted
+  delete needs `--yes` explicitly.
+- An association `set` **replaces** the whole association list, so send every identifier the
+  record should keep. The two `data-types set` commands take an optional repeatable
+  `--data-type-id`; omitting it entirely sends an empty list, which clears every association.
+  `evidence assessment-objectives set` requires at least one `--assessment-objective-id`, so it
+  cannot clear a list, and its `--preserve-existing true` adds to the existing mappings instead
+  of replacing them.
+
+The archived API document does not state how an `update` treats a body field the request
+leaves out, and the CLI omits any field whose flag is absent. Send every field the record
+should keep, then read the printed record to confirm what the API stored.
 
 ## Output and errors
 
