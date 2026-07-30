@@ -887,8 +887,9 @@ const expectedCatalog = {
           required: false,
           summary:
             'Parent folder identifier (UUID) from `evidence-folder list`, sent as the ' +
-            '"parentId" body field. Omitted from the body when not given, which ' +
-            'creates the record at the root.',
+            '"parentId" body field. Omitted from the body when not given. The ' +
+            'documented folder operation treats a null parent as the root; the ' +
+            'documented evidence operation states no rule for a null parent.',
         },
         {
           name: 'output',
@@ -957,8 +958,9 @@ const expectedCatalog = {
           required: false,
           summary:
             'Parent folder identifier (UUID) from `evidence-folder list`, sent as the ' +
-            '"parentId" body field. Omitted from the body when not given, which ' +
-            'creates the record at the root.',
+            '"parentId" body field. Omitted from the body when not given. The ' +
+            'documented folder operation treats a null parent as the root; the ' +
+            'documented evidence operation states no rule for a null parent.',
         },
         {
           name: 'output',

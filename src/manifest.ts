@@ -237,7 +237,7 @@ const assessmentObjectiveIdFlag: FlagSpec = {
     'assessmentObjectiveId query parameter.',
 }
 
-const parentIdFlag: FlagSpec = {
+const parentIdQueryFlag: FlagSpec = {
   name: 'parent-id',
   type: 'option',
   required: false,
@@ -251,7 +251,10 @@ const parentIdFlag: FlagSpec = {
  * Flag literals for the two evidence create commands. The documented
  * EvidenceLinkCreateDTO marks `fileName` and `url` required, and the documented
  * EvidenceFolderCreateDTO marks `name` required. Both bodies carry the same
- * optional `parentId` field, so both commands share one flag for it.
+ * optional `parentId` field, so both commands share `parentIdBodyFlag` below.
+ * That one flag drops the `evidence` prefix the others carry, because its name
+ * pairs with `parentIdQueryFlag`, the query-parameter variant the
+ * evidence-folder list command sends.
  */
 const evidenceFileNameFlag: FlagSpec = {
   name: 'file-name',
@@ -292,8 +295,9 @@ const parentIdBodyFlag: FlagSpec = {
   required: false,
   summary:
     'Parent folder identifier (UUID) from `evidence-folder list`, sent as the ' +
-    '"parentId" body field. Omitted from the body when not given, which ' +
-    'creates the record at the root.',
+    '"parentId" body field. Omitted from the body when not given. The ' +
+    'documented folder operation treats a null parent as the root; the ' +
+    'documented evidence operation states no rule for a null parent.',
 }
 
 const dataTypeIdArg: ArgSpec = {
@@ -2605,7 +2609,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Evidence: Read',
     args: [],
-    flags: [profileFlag, parentIdFlag, apiOutputFlag],
+    flags: [profileFlag, parentIdQueryFlag, apiOutputFlag],
     contract: get('/v1/Evidence/Folders', [parentIdParameter]),
   },
   {

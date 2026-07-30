@@ -265,15 +265,19 @@ intelligrc evidence-folder create --profile prod --name "2026" \
   --parent-id 3fa85f64-5717-4562-b3fc-2c963f66afa6
 ```
 
-`--parent-id` takes a folder identifier from `evidence-folder list`. Omitting it creates the
-record at the root, which is the documented meaning of a null parent. A missing required
-flag, or a `--parent-id` that is not a universally unique identifier (UUID), stops the
-command before any network or secret-store access.
+`--parent-id` takes a folder identifier from `evidence-folder list`. The CLI leaves the
+field out of the request body when the flag is absent. For a folder, the archived document
+states what that means: a null parent creates the folder at the root. For a piece of
+evidence, the archived document states no rule for a null parent, so read the printed
+record to confirm where the API filed it.
 
-Two documented rules belong to the API, not the CLI. A folder name must be unique within
-its parent, and the operation replies `409 Conflict` when the name is already taken. The
-`--url` value must be a uniform resource identifier. In both cases the CLI sends the value
-and passes the reply through with the message the API returned.
+A missing required flag, or a `--parent-id` that is not a universally unique identifier
+(UUID), stops the command before any network or secret-store access.
+
+Three documented rules belong to the API, not the CLI: folder names must be unique within
+their parent, the folder operation documents a `409 Conflict` reply, and the `--url` value
+must be a uniform resource identifier. The CLI sends the value either way and passes the
+reply through with the message the API returned.
 
 New evidence carries no assessment objective mappings. Use
 `evidence assessment-objectives set` to map assessment objectives after the evidence

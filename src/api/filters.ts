@@ -906,6 +906,29 @@ function assignOptionalInt32List<T>(
   }
 }
 
+/**
+ * Assign one optional UUID body field, validating it as a documented UUID.
+ * `label` names the kind of record the identifier points at, for example
+ * "project" or "parent folder". The failure code follows the flag name and the
+ * message names the body field, so one flag always produces one code.
+ */
+function assignOptionalUuid<T>(
+  body: T,
+  field: KeysMatching<T, string>,
+  raw: unknown,
+  flagName: string,
+  label: string,
+): void {
+  if (raw !== undefined) {
+    ;(body as Record<string, unknown>)[field] = parseUuid(
+      raw as string,
+      `invalid-${flagName}`,
+      label,
+      `${field} field`,
+    )
+  }
+}
+
 /** Assign one optional UUID-array body field, validating each element as a UUID. */
 function assignOptionalUuidList<T>(
   body: T,
@@ -986,7 +1009,8 @@ export function buildFacilityWriteBody(flags: Record<string, unknown>): Facility
  * EvidenceLinkCreateDTO marks `fileName` and `url` required; `description` and
  * `parentId` are optional and nullable, so each is present only when the user
  * supplied its flag. `parentId` is a documented UUID, and `url` is a documented
- * uri-formatted string that the API validates.
+ * uri-formatted string. The CLI sends `url` as typed; the archived document does
+ * not state what the operation does with a value that is not a URI.
  */
 export interface EvidenceLinkCreateBody {
   fileName: string
@@ -1011,7 +1035,7 @@ export function buildEvidenceLinkCreateBody(flags: Record<string, unknown>): Evi
   }
 
   assignOptionalString(body, 'description', flags.description)
-  assignOptionalParentId(body, flags['parent-id'])
+  assignOptionalUuid(body, 'parentId', flags['parent-id'], 'parent-id', 'parent folder')
 
   return body
 }
@@ -1037,20 +1061,9 @@ export interface EvidenceFolderCreateBody {
 export function buildEvidenceFolderCreateBody(flags: Record<string, unknown>): EvidenceFolderCreateBody {
   const body: EvidenceFolderCreateBody = {name: flags.name as string}
 
-  assignOptionalParentId(body, flags['parent-id'])
+  assignOptionalUuid(body, 'parentId', flags['parent-id'], 'parent-id', 'parent folder')
 
   return body
-}
-
-/**
- * Assign the documented optional `parentId` body field, shared by the two
- * evidence create bodies. The failure code matches the one the folder-list
- * query parameter already uses, so one flag name always produces one code.
- */
-function assignOptionalParentId(body: {parentId?: string}, raw: unknown): void {
-  if (raw !== undefined) {
-    body.parentId = parseUuid(raw as string, 'invalid-parent-id', 'parent folder', 'parentId field')
-  }
 }
 
 /**
@@ -1205,11 +1218,7 @@ export function buildActionPlanTaskCreateBody(
   assignOptionalNumber(body, 'budget', flags.budget, 'budget')
   assignOptionalDate(body, 'scheduledCompletionDate', flags['scheduled-completion-date'], 'scheduled-completion-date')
 
-  const projectId = flags['project-id'] as string | undefined
-  if (projectId !== undefined) {
-    body.projectId = parseUuid(projectId, 'invalid-project-id', 'project', 'projectId field')
-  }
-
+  assignOptionalUuid(body, 'projectId', flags['project-id'], 'project-id', 'project')
   assignOptionalInt(body, 'evaluationId', flags['evaluation-id'], 'evaluation-id')
   assignActionPlanAssignments(body, flags)
   assignOptionalUuidList(

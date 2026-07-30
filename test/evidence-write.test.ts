@@ -158,6 +158,20 @@ test('an evidence create 400 is passed through with its message and secrets neve
   assert.ok(!result.stderr.includes(TEST_SECRET))
 })
 
+test('an evidence create is not retried on a transient status, because retrying could duplicate the record', async () => {
+  api.enqueue({status: 503, body: {message: 'down'}})
+  const requestsBefore = api.requests.length
+
+  const result = await run([
+    'evidence', 'create', '--profile', 'main', '--file-name', 'Policy', '--url', 'https://example.com/policy',
+  ])
+
+  assert.equal(result.code, 8)
+  assert.equal(result.stdout, '')
+  assert.equal(api.requests.length, requestsBefore + 1)
+  assert.equal(JSON.parse(result.stderr).error.attempts, 1)
+})
+
 test('evidence create --help lists every flag and the documented permission', async () => {
   const help = await run(['evidence', 'create', '--help'])
 

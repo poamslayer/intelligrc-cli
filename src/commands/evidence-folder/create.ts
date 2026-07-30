@@ -11,11 +11,11 @@ export default class EvidenceFolderCreate extends Command {
   static override summary = spec.summary
 
   static override description =
-    `${apiWriteDescription(spec, 'POST')} Omit --parent-id to create the folder ` +
-    'at the root. The documented operation requires a folder name that is ' +
-    'unique within its parent and replies 409 Conflict when the name is ' +
-    'already taken. The command passes that reply through with the message the ' +
-    'API returned.'
+    `${apiWriteDescription(spec, 'POST')} The documented operation treats a null ` +
+    'parent as the root, so omit --parent-id to create the folder there. It also ' +
+    'states that folder names must be unique within their parent, and it ' +
+    'documents a 409 Conflict reply. The command passes that reply through with ' +
+    'the message the API returned.'
 
   static override enableJsonFlag = false
 
