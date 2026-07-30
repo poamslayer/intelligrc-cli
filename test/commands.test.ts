@@ -846,6 +846,61 @@ const expectedCatalog = {
       ],
     },
     {
+      id: 'evidence create',
+      summary: 'Create one piece of link-based evidence for the profile tenant.',
+      kind: 'api',
+      permission: 'Evidence: Write',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'file-name',
+          type: 'option',
+          required: true,
+          summary: 'Display name for the evidence, sent as the required "fileName" body field.',
+        },
+        {
+          name: 'url',
+          type: 'option',
+          required: true,
+          summary:
+            'Web address the evidence links to, sent as the required "url" body ' +
+            'field. The documented field holds a uniform resource identifier (URI), ' +
+            'for example https://example.com/policy.pdf.',
+        },
+        {
+          name: 'description',
+          type: 'option',
+          required: false,
+          summary:
+            'Optional description of the evidence, sent as the "description" body ' +
+            'field. Omitted from the body when not given.',
+        },
+        {
+          name: 'parent-id',
+          type: 'option',
+          required: false,
+          summary:
+            'Parent folder identifier (UUID) from `evidence-folder list`, sent as the ' +
+            '"parentId" body field. Omitted from the body when not given, which ' +
+            'creates the record at the root.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
       id: 'evidence-folder list',
       summary: 'List evidence folders, optionally under one parent folder.',
       kind: 'api',
@@ -866,6 +921,44 @@ const expectedCatalog = {
             'Parent folder identifier (UUID), sent as the documented parentId ' +
             'query parameter. Omitted from the request when not given, which ' +
             'lists all folders.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+      ],
+    },
+    {
+      id: 'evidence-folder create',
+      summary: 'Create one evidence folder for the profile tenant.',
+      kind: 'api',
+      permission: 'Evidence: Write',
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: true,
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
+        },
+        {
+          name: 'name',
+          type: 'option',
+          required: true,
+          summary: 'Folder name, sent as the required "name" body field.',
+        },
+        {
+          name: 'parent-id',
+          type: 'option',
+          required: false,
+          summary:
+            'Parent folder identifier (UUID) from `evidence-folder list`, sent as the ' +
+            '"parentId" body field. Omitted from the body when not given, which ' +
+            'creates the record at the root.',
         },
         {
           name: 'output',

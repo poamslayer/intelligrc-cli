@@ -234,6 +234,43 @@ person, for example as the authorizing official of an interconnection. The CLI p
 reply through with the message the API returned, so nothing is deleted and the message
 names the reason.
 
+## Creating evidence and evidence folders
+
+`evidence create` sends the documented `POST /v1/Evidence` request and creates one piece of
+link-based evidence: a name and a web address that points at the real document.
+`evidence-folder create` sends the documented `POST /v1/Evidence/Folders` request and
+creates one folder. Both commands print the record the API returned.
+
+```sh
+# Create a folder at the root, then create evidence inside it. Both commands print
+# the created record, and each record carries the identifier the other command needs.
+intelligrc evidence-folder create --profile prod --name "Policies"
+
+intelligrc evidence create --profile prod \
+  --file-name "Access Control Policy" \
+  --url "https://example.com/policies/access-control.pdf" \
+  --description "Signed 2026 revision" \
+  --parent-id 3fa85f64-5717-4562-b3fc-2c963f66afa6
+
+# Nest a folder under another folder. Omit --parent-id to create it at the root.
+intelligrc evidence-folder create --profile prod --name "2026" \
+  --parent-id 3fa85f64-5717-4562-b3fc-2c963f66afa6
+```
+
+`--parent-id` takes a folder identifier from `evidence-folder list`. Omitting it creates the
+record at the root, which is the documented meaning of a null parent. A missing required
+flag, or a `--parent-id` that is not a universally unique identifier (UUID), stops the
+command before any network or secret-store access.
+
+Two documented rules belong to the API, not the CLI. A folder name must be unique within
+its parent, and the operation replies `409 Conflict` when the name is already taken. The
+`--url` value must be a uniform resource identifier. In both cases the CLI sends the value
+and passes the reply through with the message the API returned.
+
+New evidence carries no assessment objective mappings. Use
+`evidence assessment-objectives set` to map assessment objectives after the evidence
+exists — that is the documented order of operations.
+
 ## Creating an evaluation
 
 `evaluation create` sends the documented `POST /v1/Evaluations` request and prints the

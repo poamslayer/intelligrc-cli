@@ -982,6 +982,78 @@ export function buildFacilityWriteBody(flags: Record<string, unknown>): Facility
 }
 
 /**
+ * The validated body of an evidence link create request. The documented
+ * EvidenceLinkCreateDTO marks `fileName` and `url` required; `description` and
+ * `parentId` are optional and nullable, so each is present only when the user
+ * supplied its flag. `parentId` is a documented UUID, and `url` is a documented
+ * uri-formatted string that the API validates.
+ */
+export interface EvidenceLinkCreateBody {
+  fileName: string
+  url: string
+  description?: string
+  parentId?: string
+}
+
+/**
+ * Build the validated evidence link create body. Runs before profile
+ * resolution, so a --parent-id that is not a UUID exits 2 with a stable code
+ * and zero keyring or network access. The required --file-name and --url flags
+ * are enforced by oclif. The CLI does not check that --url is a well-formed
+ * uniform resource identifier — the IntelliGRC API is the authority that
+ * accepts or rejects a value, as it is for every other documented string
+ * constraint.
+ */
+export function buildEvidenceLinkCreateBody(flags: Record<string, unknown>): EvidenceLinkCreateBody {
+  const body: EvidenceLinkCreateBody = {
+    fileName: flags['file-name'] as string,
+    url: flags.url as string,
+  }
+
+  assignOptionalString(body, 'description', flags.description)
+  assignOptionalParentId(body, flags['parent-id'])
+
+  return body
+}
+
+/**
+ * The validated body of an evidence folder create request. The documented
+ * EvidenceFolderCreateDTO marks `name` required; `parentId` is optional and
+ * nullable. Leaving `parentId` out creates the folder at the root, which is the
+ * documented meaning of a null parent.
+ */
+export interface EvidenceFolderCreateBody {
+  name: string
+  parentId?: string
+}
+
+/**
+ * Build the validated evidence folder create body. Runs before profile
+ * resolution, so a --parent-id that is not a UUID exits 2 with a stable code
+ * and zero keyring or network access. The required --name flag is enforced by
+ * oclif. The CLI does not check the documented rule that a folder name must be
+ * unique within its parent — the API enforces it and replies 409 Conflict.
+ */
+export function buildEvidenceFolderCreateBody(flags: Record<string, unknown>): EvidenceFolderCreateBody {
+  const body: EvidenceFolderCreateBody = {name: flags.name as string}
+
+  assignOptionalParentId(body, flags['parent-id'])
+
+  return body
+}
+
+/**
+ * Assign the documented optional `parentId` body field, shared by the two
+ * evidence create bodies. The failure code matches the one the folder-list
+ * query parameter already uses, so one flag name always produces one code.
+ */
+function assignOptionalParentId(body: {parentId?: string}, raw: unknown): void {
+  if (raw !== undefined) {
+    body.parentId = parseUuid(raw as string, 'invalid-parent-id', 'parent folder', 'parentId field')
+  }
+}
+
+/**
  * The validated body of a personnel create or update request. The documented
  * PersonnelCreateDTO and PersonnelUpdateDTO carry the identical twelve scalar
  * fields and mark `firstName` and `lastName` required, so both commands build
