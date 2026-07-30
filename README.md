@@ -7,8 +7,8 @@ runtime. The one unimplemented write is `POST /v1/Evidence/Upload`, the multipar
 evidence-file upload: use the IntelliGRC web app to upload an evidence file.
 
 Run `intelligrc commands` for the complete command catalog and `intelligrc <command>
---help` for the flags of one command. The "Writing ..." and "Creating ..." sections below
-walk through the most common write commands with worked examples.
+--help` for the flags of one command. The "Writing ...", "Creating ...", and "Setting
+associations" sections below cover all 22 write commands with worked examples.
 
 The CLI serves an IntelliGRC administrator or security engineer who supervises an AI
 agent on the same workstation. The agent discovers commands through the offline catalog
@@ -245,6 +245,46 @@ person, for example as the authorizing official of an interconnection. The CLI p
 reply through with the message the API returned, so nothing is deleted and the message
 names the reason.
 
+## Writing assessment objectives and controls
+
+`assessment-objective update` and `control update` send the documented
+`PUT /v1/AssessmentObjectives/{id}` and `PUT /v1/Controls/{controlId}` requests and print
+the record the API returned. Both take a universally unique identifier (UUID) argument, not
+an integer. Every field flag is optional, and the CLI leaves that field out of the request
+body when the flag is absent.
+
+The archived API document does not state how either update operation treats a field its
+request body leaves out. Send every field you want the record to keep, and read the printed
+record to confirm what the API stored.
+
+```sh
+# Record a gap analysis result against one assessment objective. The --status-id value
+# comes from `lookup assessment-objective statuses`. The command prints the updated record.
+intelligrc assessment-objective update 3fa85f64-5717-4562-b3fc-2c963f66afa6 --profile prod \
+  --status-id 2 \
+  --implementation-detail "Enforced by the conditional access policy." \
+  --finding-detail "No exceptions observed in the January sample." \
+  --recommendation-detail "Re-sample after the second-quarter policy change." \
+  --validation-methods "Interview, configuration review"
+
+# Update the summary statement of one control. The command prints the updated record.
+intelligrc control update 7c9e6679-7425-40de-944b-e07fc1f90ae7 --profile prod \
+  --summary-statement "The organization enforces least privilege through role assignment."
+```
+
+`--validation-methods` supplies a single string, not a list. The documented body field is
+one string, so write the methods as one value.
+
+Both commands accept `--evaluation-id` to name the evaluation the update belongs to. The
+two operations differ in what the archived document says about leaving it out. For
+`control update`, the document states the rule: when the request body carries no evaluation
+identifier, the API uses the current evaluation. For `assessment-objective update`, the
+document states no rule for an absent evaluation identifier, so pass `--evaluation-id` when
+the update must land on a specific evaluation.
+
+A non-UUID identifier argument, or a non-integer `--status-id` or `--evaluation-id`, stops
+the command before any network or secret-store access.
+
 ## Creating evidence and evidence folders
 
 `evidence create` sends the documented `POST /v1/Evidence` request and creates one piece of
@@ -376,6 +416,63 @@ intelligrc action-plan-subtask create --profile prod \
 
 A missing required flag, or an invalid integer, number, date, or UUID in any field, stops
 the command before any network access.
+
+## Setting associations
+
+Three commands replace the list of records associated with one record.
+
+| Command | Documented request | Identifier argument | Associated identifiers come from |
+|---|---|---|---|
+| `facility data-types set` | `PUT /v1/Facilities/{id}/datatypes` | integer | `lookup facility data-types` |
+| `interconnection data-types set` | `PUT /v1/Interconnections/{id}/datatypes` | integer | `data-type list` |
+| `evidence assessment-objectives set` | `PUT /v1/Evidence/{id}/AssessmentObjectives` | UUID | `assessment-objective list` |
+
+The two `data-types set` commands read their values from different places, which is a
+documented difference rather than a CLI choice: the facility operation documents
+`GET /v1/lookups/facilities/datatypes` as the source of valid identifiers, and the
+interconnection operation documents the Data Types API.
+
+Each command sends the whole list, so the identifiers you pass become the complete set.
+Send every identifier the record should keep, not only the ones you are adding.
+
+```sh
+# Associate two data types with facility 7. A data type already associated with the
+# facility and absent from this command is removed. The command prints the updated record.
+intelligrc facility data-types set 7 --profile prod \
+  --data-type-id 1 --data-type-id 2
+
+# Clear every data type from interconnection 42 by sending no identifier.
+intelligrc interconnection data-types set 42 --profile prod
+
+# Replace the assessment objectives mapped to one piece of evidence.
+intelligrc evidence assessment-objectives set 3fa85f64-5717-4562-b3fc-2c963f66afa6 \
+  --profile prod \
+  --assessment-objective-id 7c9e6679-7425-40de-944b-e07fc1f90ae7 \
+  --assessment-objective-id 9d2b1c44-1f0e-4a3b-8c55-2b1d3e4f5a6b
+
+# Add one assessment objective and keep the existing mappings.
+intelligrc evidence assessment-objectives set 3fa85f64-5717-4562-b3fc-2c963f66afa6 \
+  --profile prod --preserve-existing true \
+  --assessment-objective-id 9d2b1c44-1f0e-4a3b-8c55-2b1d3e4f5a6b
+```
+
+The evidence command differs from the two `data-types set` commands in three ways:
+
+- `--data-type-id` is optional on both `data-types set` commands. Leaving it out sends an
+  empty list, and the archived document states that an empty list clears every association.
+  A `data-types set` with no `--data-type-id` is a deliberate way to clear associations, so
+  an accidental one removes associations without a warning.
+- `--assessment-objective-id` is required on `evidence assessment-objectives set`, which
+  needs at least one value. That command cannot clear a mapping list.
+- `--preserve-existing true` belongs to `evidence assessment-objectives set` alone. It adds
+  the given objectives to the existing mappings instead of replacing them. The documented
+  default is `false`, which replaces them. Neither `data-types set` command has an
+  equivalent flag.
+
+An association `set` retries after a temporary failure, because repeating it lands on the
+same result. A non-integer `--data-type-id`, an `--assessment-objective-id` that is not a
+UUID, or an identifier argument of the wrong type stops the command before any network or
+secret-store access.
 
 ## Output and exit codes
 
