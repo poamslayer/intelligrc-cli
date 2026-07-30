@@ -114,7 +114,11 @@ Three safety rules protect a write:
 `POST /v1/Interconnections` and `PUT /v1/Interconnections/{id}` requests and print the
 record the API returned. `create` requires `--name`, `--authorizing-official-id`, and at
 least one `--authorization-type`. `update` requires only `--name`; every other flag is
-optional, and an omitted flag leaves that field unchanged.
+optional, and the CLI leaves that field out of the request body when the flag is absent.
+
+The archived API document does not state how the update operation treats a field its
+request body leaves out. Send every field you want the interconnection to keep, and read
+the printed record to confirm what the API stored.
 
 An interconnection carries a list of authorization types, so `--authorization-type` is the
 CLI convention for supplying a list of structured objects: repeat the flag once per object
@@ -128,16 +132,20 @@ intelligrc interconnection create --profile prod \
   --authorization-type id=5 \
   --authorization-type id=7,other="Site-to-site VPN"
 
-# Rename an interconnection. Omitting --authorization-type leaves its authorization
-# types unchanged. The command prints the updated record.
-intelligrc interconnection update 42 --profile prod --name "Vendor VPN (retired)"
+# Rename an interconnection. Repeat every field the interconnection should keep.
+# The command prints the updated record.
+intelligrc interconnection update 42 --profile prod \
+  --name "Vendor VPN (retired)" --authorizing-official-id 12 \
+  --authorization-type id=5 \
+  --authorization-type id=7,other="Site-to-site VPN"
 ```
 
 The `--authorization-type` keys are `id` (required, the integer
 `interconnectionAuthorizationTypeId`) and `other` (optional free text for the `otherValue`
 field). A missing `id`, an unknown key, or a non-integer `id` stops the command before any
 network access. Providing `--authorization-type` on an update replaces every existing
-authorization type on that interconnection.
+authorization type on that interconnection — that rule is documented. What the operation
+does when the flag is absent is not documented, so send the full list you want to keep.
 
 ## Writing facilities
 

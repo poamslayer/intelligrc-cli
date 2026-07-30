@@ -583,7 +583,9 @@ const updateAuthorizationTypeFlag: FlagSpec = {
     '`lookup interconnection authorization-types`), and an optional ' +
     'other=<text> for the otherValue field. Repeat the flag to associate ' +
     'more than one. Providing this flag replaces all existing authorization ' +
-    'type associations; omit it to leave them unchanged.',
+    'type associations. The archived contract does not state what the update ' +
+    'operation does when the flag is absent, so send the full list you want ' +
+    'to keep.',
 }
 
 /**
