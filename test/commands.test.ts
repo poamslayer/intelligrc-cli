@@ -231,7 +231,7 @@ const personnelWriteFlags = [
 // #7, #8, #9, and #10. This literal is the independent source of truth;
 // it must not be derived from src/manifest.ts.
 const expectedCatalog = {
-  catalogVersion: 1,
+  catalogVersion: 2,
   commands: [
     {
       id: 'auth login',
@@ -3713,7 +3713,29 @@ test('commands --output json emits the full catalog as valid JSON', async () => 
 
   assert.equal(result.code, 0)
   assert.equal(result.stderr, '')
-  assert.deepEqual(JSON.parse(result.stdout), expectedCatalog)
+
+  // This suite owns every command's identity, summary, kind, permission,
+  // arguments, and flags. Three catalog fields are owned elsewhere and are
+  // removed before the comparison, so their expectations live in one place
+  // each: `writes` in test/catalog-completeness.test.ts, `operation` in
+  // test/contract.test.ts against the archived OpenAPI document, and the
+  // exit-code and error tables in test/catalog-completeness.test.ts.
+  const parsed = JSON.parse(result.stdout) as {
+    catalogVersion: number
+    exitCodes: unknown
+    errors: unknown
+    commands: Array<Record<string, unknown>>
+  }
+  assert.ok(parsed.exitCodes, 'the catalog must publish the exit codes')
+  assert.ok(parsed.errors, 'the catalog must publish the error vocabulary')
+
+  assert.deepEqual(
+    {
+      catalogVersion: parsed.catalogVersion,
+      commands: parsed.commands.map(({writes, operation, ...command}) => command),
+    },
+    expectedCatalog,
+  )
 })
 
 test('commands defaults to JSON output when --output is omitted', async () => {

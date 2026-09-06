@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs'
 import {join} from 'node:path'
 import {test} from 'node:test'
 
-import {commandSpecs as builtCommandSpecs} from '../dist/manifest.js'
+import {buildCatalog, commandSpecs as builtCommandSpecs} from '../dist/manifest.js'
 import type {
   CommandSpec,
   OperationContract,
@@ -426,6 +426,35 @@ test('every mapped API command reports its documented permission, and tenant lis
       spec.permission !== null && permissions.includes(spec.permission),
       `Command "${spec.id}" must report a documented permission for ${contract.path}; ` +
         `reported "${spec.permission}", documented ${JSON.stringify(permissions)}`,
+    )
+  }
+})
+
+test('every catalog operation is a documented operation, and only API commands carry one', () => {
+  const documented = new Set(documentedOperations().map(({method, path}) => `${method.toUpperCase()} ${path}`))
+
+  for (const command of buildCatalog().commands) {
+    if (command.kind !== 'api') {
+      assert.equal(command.operation, null, `${command.id} must not publish an operation`)
+      continue
+    }
+
+    assert.ok(command.operation, `${command.id} must publish its documented operation`)
+    const named = `${command.operation.method} ${command.operation.path}`
+    assert.ok(documented.has(named), `${command.id} publishes undocumented operation ${named}`)
+  }
+})
+
+test('a catalog write target agrees with the documented method', () => {
+  for (const command of buildCatalog().commands) {
+    if (command.kind !== 'api' || !command.operation) {
+      continue
+    }
+
+    assert.equal(
+      command.writes,
+      command.operation.method === 'GET' ? null : 'remote',
+      `${command.id} reports the wrong write target for ${command.operation.method}`,
     )
   }
 })

@@ -75,7 +75,11 @@ intelligrc version
    ```
 
 4. Let an agent discover the surface. The catalog describes every command, argument,
-   flag, and documented permission. It runs locally: no profile, no network.
+   flag, and documented permission. Each command also states whether it writes
+   (`"writes"` is `"remote"`, `"local"`, or `null`) and which documented operation it
+   sends (`"operation"`). The catalog also publishes the exit codes and the failure-code
+   vocabulary, so an agent needs neither this file nor the source. It runs locally: no
+   profile, no network.
 
    ```sh
    intelligrc commands
@@ -475,6 +479,9 @@ UUID, or an identifier argument of the wrong type stops the command before any n
 secret-store access.
 
 ## Output and exit codes
+
+`intelligrc commands` prints the exit codes as `exitCodes` and the failure codes as
+`errors`, so the tables below are a convenience, not the only copy.
 
 JSON is the default format. `--json` states that default explicitly and is accepted on
 every command that has `--output`. `--output jsonl` prints one array element per line.

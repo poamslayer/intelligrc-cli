@@ -11,6 +11,24 @@ Use the `intelligrc` CLI to read and edit data in the IntelliGRC API. The CLI ma
 
 Run `intelligrc commands` for the full command catalog as JSON. This works offline, needs no profile, and is always up to date. Run `intelligrc <command> --help` for per-command flags.
 
+The catalog (`catalogVersion: 2`) carries four things:
+
+- `commands[]` — each with `id`, `summary`, `kind`, `permission`, `args`, `flags`, plus:
+  - `writes`: `"remote"` changes tenant data in IntelliGRC, `"local"` changes local state on this machine, `null` changes nothing. **Check this before running a command on someone's behalf.**
+  - `operation`: the documented `method` and `path` the command sends, or `null`. Use the path to find the response shape in the IntelliGRC OpenAPI document.
+- `exitCodes[]` — every exit code with its meaning.
+- `errors` — `codes[]` (exact failure codes with their exit code and meaning), `families[]` (the `invalid-` prefix, whose remainder names the input that failed), and `diagnostics[]` (written to stderr while the command still succeeds).
+
+Useful queries:
+
+```bash
+intelligrc commands | jq -r '.commands[] | select(.writes=="remote") | .id'   # the 22 write commands
+intelligrc commands | jq -r '.commands[] | select(.writes==null) | .id'       # read-only commands
+intelligrc commands | jq '.errors.codes[] | select(.code=="create-unconfirmed")'
+```
+
+Retryability is not in the catalog, because it is not a property of the code: an `api-failure` is retryable for HTTP 502 and not for HTTP 400. Read the `retryable` field on the failure object itself.
+
 ## Prerequisites
 
 - Node.js 24 or newer. On this machine, nvm's Node 22 shadows Homebrew's Node 24 — prefix commands with `PATH="/opt/homebrew/bin:$PATH"` or run `nvm use 24` first.
