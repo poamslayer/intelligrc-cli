@@ -3,7 +3,6 @@ import {Command} from '@oclif/core'
 import {parseIclVersionId} from '../../../api/filters.js'
 import {apiGetDescription, runApiGet} from '../../../api/run-get.js'
 import {apiCommandSpec, oclifFlags} from '../../../manifest.js'
-import {type OutputFormat} from '../../../output.js'
 
 const spec = apiCommandSpec('lookup icl-version frameworks')
 
@@ -22,7 +21,7 @@ export default class LookupIclVersionFrameworks extends Command {
     await runApiGet(this, {
       spec,
       profile: flags.profile as string,
-      output: flags.output as OutputFormat,
+      flags,
       buildPath: () =>
         spec.contract.path.replace(
           '{iclVersionId}',

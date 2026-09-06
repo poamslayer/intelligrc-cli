@@ -188,6 +188,22 @@ const apiOutputFlag: FlagSpec = {
   summary: 'Output format.',
 }
 
+/**
+ * Agent-facing shorthand for `--output json`. JSON is already the default
+ * format, so this flag states the default rather than changing it. It exists
+ * because `--json` is the spelling agents expect. `--output` remains the only
+ * way to ask for `jsonl` or `table`, so the two flags coexist; giving both
+ * with different formats is an input error.
+ */
+const jsonFlag: FlagSpec = {
+  name: 'json',
+  type: 'boolean',
+  required: false,
+  summary:
+    'Print JSON, the default format. Equivalent to `--output json`. ' +
+    'Cannot be combined with `--output jsonl` or `--output table`.',
+}
+
 const evaluationIdFlag: FlagSpec = {
   name: 'evaluation-id',
   type: 'option',
@@ -410,8 +426,8 @@ const availabilityIdFlag: FlagSpec = {
     '"availabilityId" body field.',
 }
 
-const yesFlag: FlagSpec = {
-  name: 'yes',
+const forceFlag: FlagSpec = {
+  name: 'force',
   type: 'boolean',
   required: false,
   summary: 'Skip the delete confirmation prompt and delete without pausing.',
@@ -2409,6 +2425,7 @@ export const commandSpecs: CommandSpec[] = [
         default: 'json',
         summary: 'Output format.',
       },
+      jsonFlag,
     ],
   },
   {
@@ -2441,6 +2458,7 @@ export const commandSpecs: CommandSpec[] = [
         default: 'json',
         summary: 'Output format.',
       },
+      jsonFlag,
     ],
   },
   {
@@ -2464,7 +2482,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Evaluations: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/Evaluations/Current'),
   },
   {
@@ -2473,7 +2491,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Evaluations: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/Evaluations'),
   },
   {
@@ -2495,6 +2513,7 @@ export const commandSpecs: CommandSpec[] = [
       targetTypeFlag,
       previousEvaluationIdFlag,
       apiOutputFlag,
+      jsonFlag,
     ],
     contract: post('/v1/Evaluations', evaluationCreateBodyFields),
   },
@@ -2504,7 +2523,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'GapAnalysis: Read',
     args: [],
-    flags: [profileFlag, evaluationIdFlag, frameworkIdFlag, apiOutputFlag],
+    flags: [profileFlag, evaluationIdFlag, frameworkIdFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/AssessmentObjectives', [evaluationIdParameter, frameworkIdParameter]),
   },
   {
@@ -2513,7 +2532,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'GapAnalysis: Read',
     args: [],
-    flags: [profileFlag, assessmentObjectiveIdFlag, evaluationIdFlag, apiOutputFlag],
+    flags: [profileFlag, assessmentObjectiveIdFlag, evaluationIdFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/AssessmentObjectives/History', [assessmentObjectiveIdParameter, evaluationIdParameter]),
   },
   {
@@ -2531,6 +2550,7 @@ export const commandSpecs: CommandSpec[] = [
       recommendationDetailFlag,
       validationMethodsFlag,
       apiOutputFlag,
+      jsonFlag,
     ],
     contract: put(
       '/v1/AssessmentObjectives/{id}',
@@ -2544,7 +2564,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'GapAnalysis: Read',
     args: [],
-    flags: [profileFlag, evaluationIdFlag, frameworkIdFlag, apiOutputFlag],
+    flags: [profileFlag, evaluationIdFlag, frameworkIdFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/Controls', [evaluationIdParameter, frameworkIdParameter]),
   },
   {
@@ -2553,7 +2573,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'GapAnalysis: Write',
     args: [controlIdArg],
-    flags: [profileFlag, updateEvaluationIdFlag, summaryStatementFlag, apiOutputFlag],
+    flags: [profileFlag, updateEvaluationIdFlag, summaryStatementFlag, apiOutputFlag, jsonFlag],
     contract: put('/v1/Controls/{controlId}', [controlIdPathParameter], controlUpdateBodyFields),
   },
   {
@@ -2562,7 +2582,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Evidence: Read',
     args: [],
-    flags: [profileFlag, evaluationIdFlag, frameworkIdFlag, apiOutputFlag],
+    flags: [profileFlag, evaluationIdFlag, frameworkIdFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/Evidence/Evaluation', [evaluationIdParameter, frameworkIdParameter]),
   },
   {
@@ -2571,7 +2591,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Evidence: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/Evidence'),
   },
   {
@@ -2580,7 +2600,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Evidence: Write',
     args: [evidenceIdArg],
-    flags: [profileFlag, assessmentObjectiveIdSetFlag, preserveExistingFlag, apiOutputFlag],
+    flags: [profileFlag, assessmentObjectiveIdSetFlag, preserveExistingFlag, apiOutputFlag, jsonFlag],
     contract: put(
       '/v1/Evidence/{id}/AssessmentObjectives',
       [evidenceIdPathParameter, preserveExistingParameter],
@@ -2600,6 +2620,7 @@ export const commandSpecs: CommandSpec[] = [
       evidenceDescriptionFlag,
       parentIdBodyFlag,
       apiOutputFlag,
+      jsonFlag,
     ],
     contract: post('/v1/Evidence', evidenceLinkCreateBodyFields),
   },
@@ -2609,7 +2630,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Evidence: Read',
     args: [],
-    flags: [profileFlag, parentIdQueryFlag, apiOutputFlag],
+    flags: [profileFlag, parentIdQueryFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/Evidence/Folders', [parentIdParameter]),
   },
   {
@@ -2618,7 +2639,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Evidence: Write',
     args: [],
-    flags: [profileFlag, evidenceFolderNameFlag, parentIdBodyFlag, apiOutputFlag],
+    flags: [profileFlag, evidenceFolderNameFlag, parentIdBodyFlag, apiOutputFlag, jsonFlag],
     contract: post('/v1/Evidence/Folders', evidenceFolderCreateBodyFields),
   },
   {
@@ -2627,7 +2648,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'ActionPlan: Read',
     args: [],
-    flags: [profileFlag, evaluationIdFlag, includeTasksFlag, includeSubTasksFlag, apiOutputFlag],
+    flags: [profileFlag, evaluationIdFlag, includeTasksFlag, includeSubTasksFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/ActionPlanProjects', [evaluationIdParameter, includeTasksParameter, includeSubTasksParameter]),
   },
   {
@@ -2651,6 +2672,7 @@ export const commandSpecs: CommandSpec[] = [
       priorityLevelIdFlag,
       subCategoryIdFlag,
       apiOutputFlag,
+      jsonFlag,
     ],
     contract: post('/v1/ActionPlanProjects', actionPlanProjectCreateBodyFields),
   },
@@ -2660,7 +2682,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'ActionPlan: Read',
     args: [],
-    flags: [profileFlag, evaluationIdFlag, includeSubTasksFlag, apiOutputFlag],
+    flags: [profileFlag, evaluationIdFlag, includeSubTasksFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/ActionPlanTasks', [evaluationIdParameter, includeSubTasksParameter]),
   },
   {
@@ -2689,6 +2711,7 @@ export const commandSpecs: CommandSpec[] = [
       isAssignedToOrganizationFlag,
       assignedExternalOrganizationFlag,
       apiOutputFlag,
+      jsonFlag,
     ],
     contract: post('/v1/ActionPlanTasks', actionPlanTaskCreateBodyFields),
   },
@@ -2698,7 +2721,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'ActionPlan: Read',
     args: [],
-    flags: [profileFlag, evaluationIdFlag, apiOutputFlag],
+    flags: [profileFlag, evaluationIdFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/ActionPlanSubTasks', [evaluationIdParameter]),
   },
   {
@@ -2724,6 +2747,7 @@ export const commandSpecs: CommandSpec[] = [
       isAssignedToOrganizationFlag,
       assignedExternalOrganizationFlag,
       apiOutputFlag,
+      jsonFlag,
     ],
     contract: post('/v1/ActionPlanSubTasks', actionPlanSubTaskCreateBodyFields),
   },
@@ -2733,7 +2757,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Boundaries: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/Boundaries'),
   },
   {
@@ -2769,6 +2793,7 @@ export const commandSpecs: CommandSpec[] = [
       boundaryFrameworkIdFlag,
       cageCodeFlag,
       apiOutputFlag,
+      jsonFlag,
     ],
     contract: post('/v1/Boundaries', boundaryCreateBodyFields),
   },
@@ -2778,7 +2803,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'DataTypes: Read',
     args: [dataTypeIdArg],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/DataTypes/{id}', [idPathParameter]),
   },
   {
@@ -2787,7 +2812,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'DataTypes: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/DataTypes'),
   },
   {
@@ -2804,6 +2829,7 @@ export const commandSpecs: CommandSpec[] = [
       integrityIdFlag,
       availabilityIdFlag,
       apiOutputFlag,
+      jsonFlag,
     ],
     contract: post('/v1/DataTypes', dataTypeBodyFields),
   },
@@ -2821,6 +2847,7 @@ export const commandSpecs: CommandSpec[] = [
       integrityIdFlag,
       availabilityIdFlag,
       apiOutputFlag,
+      jsonFlag,
     ],
     contract: put('/v1/DataTypes/{id}', [idPathParameter], dataTypeBodyFields),
   },
@@ -2830,7 +2857,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'DataTypes: Write',
     args: [dataTypeIdArg],
-    flags: [profileFlag, yesFlag, apiOutputFlag],
+    flags: [profileFlag, forceFlag, apiOutputFlag, jsonFlag],
     contract: del('/v1/DataTypes/{id}', [idPathParameter]),
   },
   {
@@ -2839,7 +2866,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Locations: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/Facilities'),
   },
   {
@@ -2848,7 +2875,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Locations: Read',
     args: [facilityIdArg],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/Facilities/{id}', [idPathParameter]),
   },
   {
@@ -2857,7 +2884,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Locations: Read',
     args: [facilityIdArg],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/Facilities/{id}/datatypes', [idPathParameter]),
   },
   {
@@ -2866,7 +2893,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Locations: Write',
     args: [facilityIdArg],
-    flags: [profileFlag, dataTypeIdFlag, apiOutputFlag],
+    flags: [profileFlag, dataTypeIdFlag, apiOutputFlag, jsonFlag],
     contract: put('/v1/Facilities/{id}/datatypes', [idPathParameter], dataTypeIdsBodyFields),
   },
   {
@@ -2875,7 +2902,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Locations: Write',
     args: [],
-    flags: [profileFlag, ...facilityWriteFlags, apiOutputFlag],
+    flags: [profileFlag, ...facilityWriteFlags, apiOutputFlag, jsonFlag],
     contract: post('/v1/Facilities', facilityCreateBodyFields),
   },
   {
@@ -2884,7 +2911,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Locations: Write',
     args: [facilityIdArg],
-    flags: [profileFlag, ...facilityWriteFlags, apiOutputFlag],
+    flags: [profileFlag, ...facilityWriteFlags, apiOutputFlag, jsonFlag],
     contract: put('/v1/Facilities/{id}', [idPathParameter], facilityUpdateBodyFields),
   },
   {
@@ -2893,7 +2920,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Interconnections: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/Interconnections'),
   },
   {
@@ -2902,7 +2929,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Interconnections: Read',
     args: [interconnectionIdArg],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/Interconnections/{id}', [idPathParameter]),
   },
   {
@@ -2911,7 +2938,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Interconnections: Read',
     args: [interconnectionIdArg],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/Interconnections/{id}/datatypes', [idPathParameter]),
   },
   {
@@ -2920,7 +2947,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Interconnections: Write',
     args: [interconnectionIdArg],
-    flags: [profileFlag, dataTypeIdFlag, apiOutputFlag],
+    flags: [profileFlag, dataTypeIdFlag, apiOutputFlag, jsonFlag],
     contract: put('/v1/Interconnections/{id}/datatypes', [idPathParameter], dataTypeIdsBodyFields),
   },
   {
@@ -2937,6 +2964,7 @@ export const commandSpecs: CommandSpec[] = [
       createAuthorizingOfficialIdFlag,
       createAuthorizationTypeFlag,
       apiOutputFlag,
+      jsonFlag,
     ],
     contract: post('/v1/Interconnections', interconnectionCreateBodyFields),
   },
@@ -2954,6 +2982,7 @@ export const commandSpecs: CommandSpec[] = [
       updateAuthorizingOfficialIdFlag,
       updateAuthorizationTypeFlag,
       apiOutputFlag,
+      jsonFlag,
     ],
     contract: put('/v1/Interconnections/{id}', [idPathParameter], interconnectionUpdateBodyFields),
   },
@@ -2963,7 +2992,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Personnel: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/Personnel'),
   },
   {
@@ -2972,7 +3001,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Personnel: Read',
     args: [personnelIdArg],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/Personnel/{id}', [idPathParameter]),
   },
   {
@@ -2981,7 +3010,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Personnel: Write',
     args: [],
-    flags: [profileFlag, ...personnelWriteFlags, apiOutputFlag],
+    flags: [profileFlag, ...personnelWriteFlags, apiOutputFlag, jsonFlag],
     contract: post('/v1/Personnel', personnelWriteBodyFields),
   },
   {
@@ -2990,7 +3019,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Personnel: Write',
     args: [personnelIdArg],
-    flags: [profileFlag, ...personnelWriteFlags, apiOutputFlag],
+    flags: [profileFlag, ...personnelWriteFlags, apiOutputFlag, jsonFlag],
     contract: put('/v1/Personnel/{id}', [idPathParameter], personnelWriteBodyFields),
   },
   {
@@ -2999,7 +3028,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Personnel: Write',
     args: [personnelIdArg],
-    flags: [profileFlag, yesFlag, apiOutputFlag],
+    flags: [profileFlag, forceFlag, apiOutputFlag, jsonFlag],
     contract: del('/v1/Personnel/{id}', [idPathParameter]),
   },
   {
@@ -3008,7 +3037,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'ActionPlan: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/lookups/actionplan/projectstatuses'),
   },
   {
@@ -3017,7 +3046,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'ActionPlan: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/lookups/actionplan/taskstatuses'),
   },
   {
@@ -3026,7 +3055,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'ActionPlan: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/lookups/actionplan/subtaskstatuses'),
   },
   {
@@ -3035,7 +3064,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'ActionPlan: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/lookups/actionplan/tasktypes'),
   },
   {
@@ -3044,7 +3073,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'ActionPlan: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/lookups/actionplan/levelsofeffort'),
   },
   {
@@ -3053,7 +3082,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'ActionPlan: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/lookups/actionplan/prioritylevels'),
   },
   {
@@ -3062,7 +3091,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'ActionPlan: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/lookups/actionplan/categories'),
   },
   {
@@ -3071,7 +3100,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'ActionPlan: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/lookups/actionplan/subcategories'),
   },
   {
@@ -3080,7 +3109,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'GapAnalysis: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/lookups/assessmentobjectives/statuses'),
   },
   {
@@ -3089,7 +3118,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Boundaries: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/lookups/boundaries/operationalstatuses'),
   },
   {
@@ -3098,7 +3127,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Boundaries: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/lookups/boundaries/informationsystemtypes'),
   },
   {
@@ -3107,7 +3136,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Boundaries: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/lookups/boundaries/confidentialitylevels'),
   },
   {
@@ -3116,7 +3145,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Boundaries: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/lookups/boundaries/integritylevels'),
   },
   {
@@ -3125,7 +3154,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Boundaries: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/lookups/boundaries/availabilitylevels'),
   },
   {
@@ -3134,7 +3163,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'DataTypes: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/lookups/datatypes/confidentialitylevels'),
   },
   {
@@ -3143,7 +3172,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'DataTypes: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/lookups/datatypes/integritylevels'),
   },
   {
@@ -3152,7 +3181,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'DataTypes: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/lookups/datatypes/availabilitylevels'),
   },
   {
@@ -3161,7 +3190,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Locations: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/lookups/facilities/types'),
   },
   {
@@ -3170,7 +3199,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Locations: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/lookups/facilities/states'),
   },
   {
@@ -3179,7 +3208,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Locations: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/lookups/facilities/datatypes'),
   },
   {
@@ -3188,7 +3217,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Locations: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/lookups/facilities/assetcategories'),
   },
   {
@@ -3197,7 +3226,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Interconnections: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/lookups/interconnections/types'),
   },
   {
@@ -3206,7 +3235,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Interconnections: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/lookups/interconnections/authorizationtypes'),
   },
   {
@@ -3215,7 +3244,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Interconnections: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/lookups/interconnections/assetcategories'),
   },
   {
@@ -3224,7 +3253,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Evaluations: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/lookups/iclversions'),
   },
   {
@@ -3233,7 +3262,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Evaluations: Read',
     args: [],
-    flags: [profileFlag, apiOutputFlag],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/lookups/iclversions/frameworks'),
   },
   {
@@ -3242,7 +3271,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: 'Evaluations: Read',
     args: [],
-    flags: [profileFlag, iclVersionIdFlag, apiOutputFlag],
+    flags: [profileFlag, iclVersionIdFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/lookups/iclversions/{iclVersionId}/frameworks', [iclVersionIdParameter]),
   },
   {
@@ -3259,6 +3288,7 @@ export const commandSpecs: CommandSpec[] = [
         summary: 'Profile that supplies the credential and base URL.',
       },
       apiOutputFlag,
+      jsonFlag,
     ],
     contract: get('/v1/Tenants'),
   },

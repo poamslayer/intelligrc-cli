@@ -15,8 +15,9 @@ import {type Command} from '@oclif/core'
 
 import {emitFailure} from '../errors.js'
 import {type ApiCommandSpec} from '../manifest.js'
-import {formatOutput, type OutputFormat} from '../output.js'
+import {formatOutput} from '../output.js'
 import {apiRequest, emitRetryDiagnostic, type HttpMethod, type QueryPairs} from './client.js'
+import {resolveOutputFormat} from './filters.js'
 import {resolveApiContext} from './resolve.js'
 
 /**
@@ -37,7 +38,8 @@ export interface ApiWriteOptions {
   spec: ApiCommandSpec
   method: HttpMethod
   profile: string
-  output: OutputFormat
+  /** The command's parsed flags. See the note in ApiGetOptions. */
+  flags: Record<string, unknown>
   sendTenantHeader: boolean
   /**
    * Builds the validated JSON request body. Runs before profile resolution,
@@ -105,7 +107,7 @@ export async function runApiWrite(command: Command, options: ApiWriteOptions): P
 
     emitRetryDiagnostic(result.attempts)
     const printable = result.body === undefined ? options.onNoContent?.() ?? null : result.body
-    const text = formatOutput(printable, options.output)
+    const text = formatOutput(printable, resolveOutputFormat(options.flags))
     if (text !== '') {
       command.log(text)
     }

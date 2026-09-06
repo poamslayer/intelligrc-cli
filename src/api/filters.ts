@@ -9,6 +9,7 @@
  * name; a body value goes into the JSON body under the documented field name.
  */
 import {CliFailure, EXIT} from '../errors.js'
+import {type OutputFormat} from '../output.js'
 import {type QueryPairs} from './client.js'
 
 /** int32 bounds from the documented "integer, format: int32" schema. */
@@ -1518,4 +1519,26 @@ function parseUuid(raw: string, code: string, label: string, documentedName: str
   }
 
   return raw
+}
+
+/**
+ * Resolve the output format from the two flags that can select it. `--json`
+ * is a shorthand for `--output json`, so the two agree unless the caller asks
+ * for `jsonl` or `table` and passes `--json` at the same time. That
+ * combination is contradictory, so it exits 2 rather than silently picking
+ * one. Runs before profile resolution, like every other parser here.
+ */
+export function resolveOutputFormat(flags: Record<string, unknown>): OutputFormat {
+  const output = (flags.output as OutputFormat | undefined) ?? 'json'
+  if (flags.json === true && output !== 'json') {
+    throw new CliFailure({
+      code: 'conflicting-output-flags',
+      message:
+        `--json asks for JSON but --output asks for ${output}. Pass one of ` +
+        'them, not both.',
+      exitCode: EXIT.invalidInput,
+    })
+  }
+
+  return output
 }

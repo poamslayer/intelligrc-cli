@@ -3,7 +3,6 @@ import {Command} from '@oclif/core'
 import {actionPlanQueryFromFlags} from '../../api/filters.js'
 import {apiGetDescription, runApiGet} from '../../api/run-get.js'
 import {apiCommandSpec, oclifFlags} from '../../manifest.js'
-import {type OutputFormat} from '../../output.js'
 
 const spec = apiCommandSpec('action-plan-subtask list')
 
@@ -22,7 +21,7 @@ export default class ActionPlanSubtaskList extends Command {
     await runApiGet(this, {
       spec,
       profile: flags.profile as string,
-      output: flags.output as OutputFormat,
+      flags,
       buildQuery: () => actionPlanQueryFromFlags(flags),
       sendTenantHeader: true,
     })

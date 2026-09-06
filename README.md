@@ -97,7 +97,7 @@ intelligrc data-type update 42 --profile prod --name "CUI" \
   --confidentiality-id 3 --integrity-id 2 --availability-id 1
 
 # Delete a data type by its integer identifier. The command pauses for a
-# confirmation that defaults to "no"; add --yes to delete without pausing.
+# confirmation that defaults to "no"; add --force to delete without pausing.
 intelligrc data-type delete 42 --profile prod
 ```
 
@@ -109,7 +109,7 @@ Three safety rules protect a write:
 - An `update` and a `delete` retry after a temporary failure, because repeating them lands
   on the same result.
 - A `delete` pauses and asks for confirmation. A bare Enter declines. When no terminal is
-  attached and `--yes` is absent, the command declines rather than deleting.
+  attached and `--force` is absent, the command declines rather than deleting.
 
 ## Writing interconnections
 
@@ -224,7 +224,7 @@ intelligrc personnel update 12 --profile prod \
   --first-name "Ada" --last-name "Lovelace" --title "Chief Security Officer"
 
 # Delete a person by their integer identifier. The command pauses for a
-# confirmation that defaults to "no"; add --yes to delete without pausing.
+# confirmation that defaults to "no"; add --force to delete without pausing.
 intelligrc personnel delete 12 --profile prod
 ```
 
@@ -476,8 +476,10 @@ secret-store access.
 
 ## Output and exit codes
 
-`--output json` is the default. `--output jsonl` prints one array element per line.
-`--output table` renders scalar fields as columns. Requested data goes to standard
+JSON is the default format. `--json` states that default explicitly and is accepted on
+every command that has `--output`. `--output jsonl` prints one array element per line.
+`--output table` renders scalar fields as columns. Passing `--json` together with
+`--output jsonl` or `--output table` is contradictory and exits 2. Requested data goes to standard
 output only; failures and retry diagnostics go to standard error as one JSON object.
 
 | Exit code | Meaning |

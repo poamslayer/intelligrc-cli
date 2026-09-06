@@ -311,10 +311,10 @@ test('a 404 on update is passed through with exit 7', async () => {
 // data-type delete (#35)
 // ---------------------------------------------------------------------------
 
-test('data-type delete --yes sends DELETE /v1/DataTypes/{id} with no body and prints the deletion confirmation', async () => {
+test('data-type delete --force sends DELETE /v1/DataTypes/{id} with no body and prints the deletion confirmation', async () => {
   api.enqueue({status: 204})
 
-  const result = await run(['data-type', 'delete', '42', '--profile', 'main', '--yes'])
+  const result = await run(['data-type', 'delete', '42', '--profile', 'main', '--force'])
 
   assert.equal(result.code, 0, result.stderr)
   assert.equal(result.stderr, '')
@@ -328,15 +328,15 @@ test('data-type delete --yes sends DELETE /v1/DataTypes/{id} with no body and pr
   assertCredentialHeaders(request)
 })
 
-test('data-type delete --yes sends the identifier in canonical integer form', async () => {
+test('data-type delete --force sends the identifier in canonical integer form', async () => {
   api.enqueue({status: 204})
 
-  await run(['data-type', 'delete', '007', '--profile', 'main', '--yes'])
+  await run(['data-type', 'delete', '007', '--profile', 'main', '--force'])
 
   assert.equal(api.requests.at(-1)!.path, '/v1/DataTypes/7')
 })
 
-test('a non-interactive delete without --yes declines and sends no request', async () => {
+test('a non-interactive delete without --force declines and sends no request', async () => {
   const requestsBefore = api.requests.length
 
   const result = await run(['data-type', 'delete', '42', '--profile', 'main'])
@@ -350,7 +350,7 @@ test('a non-interactive delete without --yes declines and sends no request', asy
 test('data-type delete with a non-integer identifier exits 2 before any prompt or network access', async () => {
   const requestsBefore = api.requests.length
 
-  const result = await run(['data-type', 'delete', 'seven', '--profile', 'main', '--yes'])
+  const result = await run(['data-type', 'delete', 'seven', '--profile', 'main', '--force'])
 
   assert.equal(result.code, 2)
   assert.equal(result.stdout, '')
@@ -361,7 +361,7 @@ test('data-type delete with a non-integer identifier exits 2 before any prompt o
 test('a 404 on delete is passed through with exit 7', async () => {
   api.enqueue({status: 404, body: {title: 'Not Found', status: 404}})
 
-  const result = await run(['data-type', 'delete', '42', '--profile', 'main', '--yes'])
+  const result = await run(['data-type', 'delete', '42', '--profile', 'main', '--force'])
 
   assert.equal(result.code, 7)
   assert.equal(result.stdout, '')
@@ -373,7 +373,7 @@ test('a transient failure on delete retries and reports the attempt count', asyn
   api.enqueue({status: 204})
   const requestsBefore = api.requests.length
 
-  const result = await run(['data-type', 'delete', '42', '--profile', 'main', '--yes'])
+  const result = await run(['data-type', 'delete', '42', '--profile', 'main', '--force'])
 
   assert.equal(result.code, 0, result.stderr)
   assert.deepEqual(JSON.parse(result.stdout), {deleted: {resource: 'data type', id: 42}})
@@ -387,6 +387,6 @@ test('data-type delete --help shows the documented permission and describes the 
   const help = await run(['data-type', 'delete', '--help'])
   assert.equal(help.code, 0, help.stderr)
   assert.match(help.stdout, /DataTypes:\s+Write/)
-  assert.match(help.stdout, /--yes/)
+  assert.match(help.stdout, /--force/)
   assert.match(help.stdout, /confirm/i)
 })

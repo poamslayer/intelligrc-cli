@@ -315,10 +315,10 @@ test('personnel update --help names the id argument and the documented permissio
 // personnel delete
 // ---------------------------------------------------------------------------
 
-test('personnel delete --yes sends DELETE /v1/Personnel/{id} with no body and prints the deletion confirmation', async () => {
+test('personnel delete --force sends DELETE /v1/Personnel/{id} with no body and prints the deletion confirmation', async () => {
   api.enqueue({status: 204})
 
-  const result = await run(['personnel', 'delete', '12', '--profile', 'main', '--yes'])
+  const result = await run(['personnel', 'delete', '12', '--profile', 'main', '--force'])
 
   assert.equal(result.code, 0, result.stderr)
   assert.equal(result.stderr, '')
@@ -332,15 +332,15 @@ test('personnel delete --yes sends DELETE /v1/Personnel/{id} with no body and pr
   assertCredentialHeaders(request)
 })
 
-test('personnel delete --yes sends the identifier in canonical integer form', async () => {
+test('personnel delete --force sends the identifier in canonical integer form', async () => {
   api.enqueue({status: 204})
 
-  await run(['personnel', 'delete', '012', '--profile', 'main', '--yes'])
+  await run(['personnel', 'delete', '012', '--profile', 'main', '--force'])
 
   assert.equal(api.requests.at(-1)!.path, '/v1/Personnel/12')
 })
 
-test('a non-interactive personnel delete without --yes declines and sends no request', async () => {
+test('a non-interactive personnel delete without --force declines and sends no request', async () => {
   const requestsBefore = api.requests.length
 
   const result = await run(['personnel', 'delete', '12', '--profile', 'main'])
@@ -354,7 +354,7 @@ test('a non-interactive personnel delete without --yes declines and sends no req
 test('personnel delete with a non-integer identifier exits 2 before any prompt or network access', async () => {
   const requestsBefore = api.requests.length
 
-  const result = await run(['personnel', 'delete', 'ada', '--profile', 'main', '--yes'])
+  const result = await run(['personnel', 'delete', 'ada', '--profile', 'main', '--force'])
 
   assert.equal(result.code, 2)
   assert.equal(result.stdout, '')
@@ -372,7 +372,7 @@ test('the documented 409 conflict on delete is passed through with its message a
     },
   })
 
-  const result = await run(['personnel', 'delete', '12', '--profile', 'main', '--yes'])
+  const result = await run(['personnel', 'delete', '12', '--profile', 'main', '--force'])
 
   assert.equal(result.code, 8)
   assert.equal(result.stdout, '')
@@ -388,7 +388,7 @@ test('a transient failure on a personnel delete retries and reports the attempt 
   api.enqueue({status: 204})
   const requestsBefore = api.requests.length
 
-  const result = await run(['personnel', 'delete', '12', '--profile', 'main', '--yes'])
+  const result = await run(['personnel', 'delete', '12', '--profile', 'main', '--force'])
 
   assert.equal(result.code, 0, result.stderr)
   assert.deepEqual(JSON.parse(result.stdout), {deleted: {resource: 'person', id: 12}})
@@ -417,6 +417,6 @@ test('personnel delete --help shows the documented permission and describes the 
 
   assert.equal(help.code, 0, help.stderr)
   assert.match(help.stdout, /Personnel:\s+Write/)
-  assert.match(help.stdout, /--yes/)
+  assert.match(help.stdout, /--force/)
   assert.match(help.stdout, /confirm/i)
 })

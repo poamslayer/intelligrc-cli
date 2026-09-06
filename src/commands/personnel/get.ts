@@ -3,7 +3,6 @@ import {Command} from '@oclif/core'
 import {parsePersonnelId} from '../../api/filters.js'
 import {apiGetDescription, runApiGet} from '../../api/run-get.js'
 import {apiCommandSpec, oclifArgs, oclifFlags} from '../../manifest.js'
-import {type OutputFormat} from '../../output.js'
 
 const spec = apiCommandSpec('personnel get')
 
@@ -24,7 +23,7 @@ export default class PersonnelGet extends Command {
     await runApiGet(this, {
       spec,
       profile: flags.profile as string,
-      output: flags.output as OutputFormat,
+      flags,
       buildPath: () => spec.contract.path.replace('{id}', parsePersonnelId(args.id as string)),
       sendTenantHeader: true,
     })

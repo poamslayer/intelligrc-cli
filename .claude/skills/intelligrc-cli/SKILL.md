@@ -40,6 +40,7 @@ intelligrc <topic> <subcommand> [ID] [--flags]
 - Topics are space-separated: `intelligrc evaluation current`, `intelligrc lookup facility types`.
 - Every API command requires `--profile <name>`.
 - `--output json|jsonl|table` on every API command; default is `json` (pretty-printed, upstream field names preserved). `jsonl` emits one JSON line per array element.
+- `--json` is accepted everywhere `--output` is, and means `--output json`. It states the default rather than changing it. Passing `--json` with `--output jsonl` or `--output table` exits 2.
 - `get`, `data-types`, `update`, and `delete` commands take a positional `ID` (for example `intelligrc facility get 3`, `intelligrc personnel update 12 ...`). It is an integer for data types, facilities, interconnections, and personnel, and a UUID for assessment objectives, controls, and evidence.
 - ID flags and arguments are validated before any network call or keychain read: `--evaluation-id` is an int32; `--framework-id`, `--assessment-objective-id`, `--parent-id`, and `--icl-version-id` are UUIDs. An invalid value exits 2 and sends nothing.
 
@@ -85,7 +86,7 @@ supplies and says whether the field is required.
 intelligrc data-type create --profile prod --name "CUI" \
   --confidentiality-id 3 --integrity-id 2 --availability-id 1
 intelligrc personnel create --profile prod --first-name Ada --last-name Lovelace
-intelligrc personnel delete 12 --profile prod --yes    # --yes skips the confirmation pause
+intelligrc personnel delete 12 --profile prod --force    # --force skips the confirmation pause
 intelligrc evidence-folder create --profile prod --name "Policies"
 intelligrc facility data-types set 3 --profile prod --data-type-id 1 --data-type-id 2
 ```
@@ -103,9 +104,9 @@ Four rules govern a write. State them to the user before running one on their be
   connection never produces a duplicate record.
 - An `update`, a `delete`, and an association `set` retry after a temporary failure, because
   repeating them lands on the same result.
-- A `delete` pauses for a confirmation that defaults to "no". `--yes` skips the pause. With no
-  terminal attached and no `--yes`, the command declines rather than deleting — so a scripted
-  delete needs `--yes` explicitly.
+- A `delete` pauses for a confirmation that defaults to "no". `--force` skips the pause. With no
+  terminal attached and no `--force`, the command declines rather than deleting — so a scripted
+  delete needs `--force` explicitly.
 - An association `set` **replaces** the whole association list, so send every identifier the
   record should keep. The two `data-types set` commands take an optional repeatable
   `--data-type-id`; omitting it entirely sends an empty list, which clears every association.

@@ -2,7 +2,6 @@ import {Command} from '@oclif/core'
 
 import {apiGetDescription, runApiGet} from '../../../api/run-get.js'
 import {apiCommandSpec, oclifFlags} from '../../../manifest.js'
-import {type OutputFormat} from '../../../output.js'
 
 const spec = apiCommandSpec('lookup icl-version latest-frameworks')
 
@@ -21,7 +20,7 @@ export default class LookupIclVersionLatestFrameworks extends Command {
     await runApiGet(this, {
       spec,
       profile: flags.profile as string,
-      output: flags.output as OutputFormat,
+      flags,
       sendTenantHeader: true,
     })
   }

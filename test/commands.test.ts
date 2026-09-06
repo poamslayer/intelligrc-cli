@@ -289,6 +289,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -320,6 +328,14 @@ const expectedCatalog = {
           allowedValues: ['json'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -359,6 +375,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -381,6 +405,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -485,6 +517,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -524,6 +564,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -562,6 +610,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -644,6 +700,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -682,6 +746,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -729,6 +801,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -768,6 +848,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -790,6 +878,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -842,6 +938,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -899,6 +1003,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -930,6 +1042,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -969,6 +1089,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -1020,6 +1148,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -1119,6 +1255,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -1159,6 +1303,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -1290,6 +1442,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -1320,6 +1480,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -1432,6 +1600,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -1454,6 +1630,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -1630,6 +1814,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -1660,6 +1852,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -1682,6 +1882,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -1746,6 +1954,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -1818,6 +2034,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -1841,7 +2065,7 @@ const expectedCatalog = {
           summary: 'Profile that supplies the credential, tenant, and base URL.',
         },
         {
-          name: 'yes',
+          name: 'force',
           type: 'boolean',
           required: false,
           summary: 'Skip the delete confirmation prompt and delete without pausing.',
@@ -1853,6 +2077,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -1876,6 +2108,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -1907,6 +2147,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -1936,6 +2184,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -1978,6 +2234,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -2001,6 +2265,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -2033,6 +2305,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -2055,6 +2335,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -2087,6 +2375,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -2117,6 +2413,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -2159,6 +2463,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -2227,6 +2539,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -2306,6 +2626,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -2328,6 +2656,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -2359,6 +2695,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -2382,6 +2726,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -2414,6 +2766,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -2437,7 +2797,7 @@ const expectedCatalog = {
           summary: 'Profile that supplies the credential, tenant, and base URL.',
         },
         {
-          name: 'yes',
+          name: 'force',
           type: 'boolean',
           required: false,
           summary: 'Skip the delete confirmation prompt and delete without pausing.',
@@ -2449,6 +2809,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -2473,6 +2841,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -2495,6 +2871,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -2519,6 +2903,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -2541,6 +2933,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -2565,6 +2965,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -2587,6 +2995,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -2611,6 +3027,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -2633,6 +3057,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -2657,6 +3089,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -2679,6 +3119,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -2703,6 +3151,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -2725,6 +3181,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -2749,6 +3213,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -2771,6 +3243,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -2795,6 +3275,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -2817,6 +3305,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -2841,6 +3337,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -2863,6 +3367,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -2887,6 +3399,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -2909,6 +3429,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -2933,6 +3461,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -2956,6 +3492,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -2978,6 +3522,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -3003,6 +3555,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -3026,6 +3586,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -3048,6 +3616,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -3080,6 +3656,14 @@ const expectedCatalog = {
           default: 'json',
           summary: 'Output format.',
         },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
+        },
       ],
     },
     {
@@ -3102,6 +3686,14 @@ const expectedCatalog = {
           allowedValues: ['json', 'jsonl', 'table'],
           default: 'json',
           summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },

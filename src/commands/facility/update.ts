@@ -3,7 +3,6 @@ import {Command} from '@oclif/core'
 import {buildFacilityWriteBody, parseFacilityId} from '../../api/filters.js'
 import {apiWriteDescription, runApiWrite} from '../../api/run-write.js'
 import {apiCommandSpec, oclifArgs, oclifFlags} from '../../manifest.js'
-import {type OutputFormat} from '../../output.js'
 
 const spec = apiCommandSpec('facility update')
 
@@ -25,7 +24,7 @@ export default class FacilityUpdate extends Command {
       spec,
       method: 'PUT',
       profile: flags.profile as string,
-      output: flags.output as OutputFormat,
+      flags,
       sendTenantHeader: true,
       buildBody: () => buildFacilityWriteBody(flags),
       buildPath: () => spec.contract.path.replace('{id}', parseFacilityId(args.id as string)),
