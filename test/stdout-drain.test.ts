@@ -2,8 +2,9 @@ import assert from 'node:assert/strict'
 import {spawn} from 'node:child_process'
 import {join} from 'node:path'
 import {test} from 'node:test'
+import {pathToFileURL} from 'node:url'
 
-import {isolatedEnv, makeIsolatedHome, projectRoot} from './helpers/run-cli.ts'
+import {isolatedEnv, makeIsolatedHome, projectRoot, runCli} from './helpers/run-cli.ts'
 
 /**
  * An agent commonly pipes a command into another program that stops reading
@@ -33,11 +34,24 @@ test('a reader that stops early leaves nothing on stderr', async () => {
     child.stdout.destroy()
   })
 
-  await new Promise<void>((resolve) => {
-    child.on('close', () => {
-      resolve()
+  const exitCode = await new Promise<number | null>((resolve) => {
+    child.on('close', (code) => {
+      resolve(code)
     })
   })
 
-  assert.equal(stderr, '')
+  assert.equal(stderr, '', 'a vanished reader must leave standard error empty')
+  assert.equal(exitCode, 0, 'a vanished reader must not crash the command')
+})
+
+test('a standard-output error from a vanished reader ends the command quietly', async () => {
+  const preload = pathToFileURL(
+    join(projectRoot, 'test', 'helpers', 'emit-stdout-enotconn.mjs'),
+  ).href
+  const result = await runCli(['commands'], {env: {NODE_OPTIONS: `--import ${preload}`}})
+
+  // Without the guard this exits 1 with an oclif stack trace on standard
+  // error, because oclif rethrows every standard-output error except EPIPE.
+  assert.equal(result.stderr, '')
+  assert.equal(result.code, 0)
 })
