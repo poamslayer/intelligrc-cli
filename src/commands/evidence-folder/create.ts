@@ -3,7 +3,6 @@ import {Command} from '@oclif/core'
 import {buildEvidenceFolderCreateBody} from '../../api/filters.js'
 import {apiWriteDescription, runApiWrite} from '../../api/run-write.js'
 import {apiCommandSpec, oclifFlags} from '../../manifest.js'
-import {type OutputFormat} from '../../output.js'
 
 const spec = apiCommandSpec('evidence-folder create')
 
@@ -28,7 +27,7 @@ export default class EvidenceFolderCreate extends Command {
       spec,
       method: 'POST',
       profile: flags.profile as string,
-      output: flags.output as OutputFormat,
+      flags,
       sendTenantHeader: true,
       buildBody: () => buildEvidenceFolderCreateBody(flags),
     })

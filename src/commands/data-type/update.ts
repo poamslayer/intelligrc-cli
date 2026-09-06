@@ -3,7 +3,6 @@ import {Command} from '@oclif/core'
 import {buildDataTypeBody, parseDataTypeId} from '../../api/filters.js'
 import {apiWriteDescription, runApiWrite} from '../../api/run-write.js'
 import {apiCommandSpec, oclifArgs, oclifFlags} from '../../manifest.js'
-import {type OutputFormat} from '../../output.js'
 
 const spec = apiCommandSpec('data-type update')
 
@@ -25,7 +24,7 @@ export default class DataTypeUpdate extends Command {
       spec,
       method: 'PUT',
       profile: flags.profile as string,
-      output: flags.output as OutputFormat,
+      flags,
       sendTenantHeader: true,
       buildBody: () => buildDataTypeBody(flags),
       buildPath: () => spec.contract.path.replace('{id}', parseDataTypeId(args.id as string)),

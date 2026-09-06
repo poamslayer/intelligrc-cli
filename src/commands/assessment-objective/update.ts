@@ -3,7 +3,6 @@ import {Command} from '@oclif/core'
 import {buildAssessmentObjectiveUpdateBody, parseAssessmentObjectiveId} from '../../api/filters.js'
 import {apiWriteDescription, runApiWrite} from '../../api/run-write.js'
 import {apiCommandSpec, oclifArgs, oclifFlags} from '../../manifest.js'
-import {type OutputFormat} from '../../output.js'
 
 const spec = apiCommandSpec('assessment-objective update')
 
@@ -28,7 +27,7 @@ export default class AssessmentObjectiveUpdate extends Command {
       spec,
       method: 'PUT',
       profile: flags.profile as string,
-      output: flags.output as OutputFormat,
+      flags,
       sendTenantHeader: true,
       buildBody: () => buildAssessmentObjectiveUpdateBody(flags),
       buildPath: () =>

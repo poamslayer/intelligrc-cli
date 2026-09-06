@@ -4,7 +4,6 @@ import {type QueryPairs} from '../../api/client.js'
 import {parseParentId} from '../../api/filters.js'
 import {apiGetDescription, runApiGet} from '../../api/run-get.js'
 import {apiCommandSpec, oclifFlags} from '../../manifest.js'
-import {type OutputFormat} from '../../output.js'
 
 const spec = apiCommandSpec('evidence-folder list')
 
@@ -23,7 +22,7 @@ export default class EvidenceFolderList extends Command {
     await runApiGet(this, {
       spec,
       profile: flags.profile as string,
-      output: flags.output as OutputFormat,
+      flags,
       buildQuery: (): QueryPairs => {
         const parentId = flags['parent-id'] as string | undefined
         return parentId === undefined ? [] : [['parentId', parseParentId(parentId)]]

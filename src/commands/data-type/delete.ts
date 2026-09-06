@@ -3,7 +3,6 @@ import {Command} from '@oclif/core'
 import {parseDataTypeId} from '../../api/filters.js'
 import {apiDeleteDescription, runApiDelete} from '../../api/run-delete.js'
 import {apiCommandSpec, oclifArgs, oclifFlags} from '../../manifest.js'
-import {type OutputFormat} from '../../output.js'
 
 const spec = apiCommandSpec('data-type delete')
 
@@ -27,8 +26,8 @@ export default class DataTypeDelete extends Command {
       id: args.id as string,
       parseId: parseDataTypeId,
       profile: flags.profile as string,
-      output: flags.output as OutputFormat,
-      yes: flags.yes === true,
+      flags,
+      force: flags.force === true,
     })
   }
 }

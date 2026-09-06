@@ -7,7 +7,6 @@ import {
 } from '../../../api/filters.js'
 import {apiWriteDescription, runApiWrite} from '../../../api/run-write.js'
 import {apiCommandSpec, oclifArgs, oclifFlags} from '../../../manifest.js'
-import {type OutputFormat} from '../../../output.js'
 
 const spec = apiCommandSpec('evidence assessment-objectives set')
 
@@ -33,7 +32,7 @@ export default class EvidenceAssessmentObjectivesSet extends Command {
       spec,
       method: 'PUT',
       profile: flags.profile as string,
-      output: flags.output as OutputFormat,
+      flags,
       sendTenantHeader: true,
       buildBody: () => buildAssessmentObjectiveIdsBody(flags),
       buildQuery: () => evidenceAssessmentObjectivesQueryFromFlags(flags),

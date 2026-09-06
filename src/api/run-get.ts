@@ -10,8 +10,9 @@ import {type Command} from '@oclif/core'
 
 import {emitFailure} from '../errors.js'
 import {type ApiCommandSpec} from '../manifest.js'
-import {formatOutput, type OutputFormat} from '../output.js'
+import {formatOutput} from '../output.js'
 import {apiRequest, emitRetryDiagnostic, type QueryPairs} from './client.js'
+import {resolveOutputFormat} from './filters.js'
 import {resolveApiContext} from './resolve.js'
 
 /**
@@ -32,7 +33,12 @@ export function apiGetDescription(spec: ApiCommandSpec): string {
 export interface ApiGetOptions {
   spec: ApiCommandSpec
   profile: string
-  output: OutputFormat
+  /**
+   * The command's parsed flags. The runner resolves the output format from
+   * them inside its own error handling, so a contradictory pair of format
+   * flags exits 2 through the failure contract like any other bad input.
+   */
+  flags: Record<string, unknown>
   /**
    * Builds the validated query pairs. Runs before profile resolution, so
    * an invalid identifier exits 2 with zero keyring or network access.
@@ -55,6 +61,7 @@ export interface ApiGetOptions {
 export async function runApiGet(command: Command, options: ApiGetOptions): Promise<void> {
   let redactionValues: string[] = []
   try {
+    const output = resolveOutputFormat(options.flags)
     const query = options.buildQuery?.() ?? []
     const path = options.buildPath?.() ?? options.spec.contract.path
 
@@ -78,7 +85,7 @@ export async function runApiGet(command: Command, options: ApiGetOptions): Promi
     })
 
     emitRetryDiagnostic(result.attempts)
-    const text = formatOutput(result.body, options.output)
+    const text = formatOutput(result.body, output)
     if (text !== '') {
       command.log(text)
     }

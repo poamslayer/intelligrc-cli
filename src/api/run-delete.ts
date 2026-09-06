@@ -8,10 +8,10 @@
  * A delete cannot be undone, so every delete command applies the same
  * confirmation rule:
  *
- * - `--yes` skips the pause.
+ * - `--force` skips the pause.
  * - With a terminal attached, an affirmative answer proceeds and any other
  *   answer, including a bare Enter, declines.
- * - With no terminal attached and `--yes` absent, the command declines.
+ * - With no terminal attached and `--force` absent, the command declines.
  *
  * A declined delete throws a CliFailure, so no request is sent and the command
  * exits 2 (invalid input). The prompt writes to stderr, so stdout carries only
@@ -21,7 +21,6 @@ import {type Command} from '@oclif/core'
 
 import {CliFailure, EXIT} from '../errors.js'
 import {type ApiCommandSpec} from '../manifest.js'
-import {type OutputFormat} from '../output.js'
 import {promptConfirm, type PromptInput} from '../prompt.js'
 import {apiWriteDescription, runApiWrite} from './run-write.js'
 
@@ -39,8 +38,8 @@ export function apiDeleteDescription(spec: ApiCommandSpec): string {
   return (
     `${apiWriteDescription(spec, 'DELETE')} Because a delete cannot be undone, ` +
     'the command pauses and asks for confirmation, defaulting to "no" on an ' +
-    'empty answer. Add --yes to skip the pause. When no terminal is attached ' +
-    'and --yes is absent, the command declines rather than deleting.'
+    'empty answer. Add --force to skip the pause. When no terminal is attached ' +
+    'and --force is absent, the command declines rather than deleting.'
   )
 }
 
@@ -61,9 +60,10 @@ export interface ApiDeleteOptions {
    */
   parseId: (raw: string) => string
   profile: string
-  output: OutputFormat
-  /** True when --yes was given, which skips the confirmation pause. */
-  yes: boolean
+  /** The command's parsed flags. See the note in ApiGetOptions. */
+  flags: Record<string, unknown>
+  /** True when --force was given, which skips the confirmation pause. */
+  force: boolean
 }
 
 export async function runApiDelete(command: Command, options: ApiDeleteOptions): Promise<void> {
@@ -75,13 +75,13 @@ export async function runApiDelete(command: Command, options: ApiDeleteOptions):
     spec: options.spec,
     method: 'DELETE',
     profile: options.profile,
-    output: options.output,
+    flags: options.flags,
     sendTenantHeader: true,
     buildPath: () => {
       id = options.parseId(options.id)
       return options.spec.contract.path.replace('{id}', id)
     },
-    confirm: () => confirmDelete(options.resource, id, options.yes),
+    confirm: () => confirmDelete(options.resource, id, options.force),
     // The identifier is a JSON number, matching the documented integer path
     // parameter the command sent.
     onNoContent: () => ({deleted: {resource: options.resource, id: Number(id)}}),
@@ -129,7 +129,7 @@ export async function confirmDelete(
     code: 'delete-confirmation-unavailable',
     message:
       `No terminal is attached to confirm deleting ${resource} ${id}. ` +
-      'Re-run with --yes to delete without a prompt. No request was sent.',
+      'Re-run with --force to delete without a prompt. No request was sent.',
     exitCode: EXIT.invalidInput,
   })
 }

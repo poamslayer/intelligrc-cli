@@ -2,7 +2,6 @@ import {Command} from '@oclif/core'
 
 import {runApiGet} from '../../api/run-get.js'
 import {apiCommandSpec, oclifFlags} from '../../manifest.js'
-import {type OutputFormat} from '../../output.js'
 
 const spec = apiCommandSpec('tenant list')
 
@@ -24,7 +23,7 @@ export default class TenantList extends Command {
     await runApiGet(this, {
       spec,
       profile: flags.profile as string,
-      output: flags.output as OutputFormat,
+      flags,
       // No tenant header: the documented tenant-list operation has no
       // x-tenant-id header.
       sendTenantHeader: false,

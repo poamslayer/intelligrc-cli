@@ -1,7 +1,7 @@
 /**
  * Unit tests for the shared delete confirmation, the rule every delete command
  * applies before it sends a request. The process-level suites cover the two
- * paths that need no terminal — `--yes` skips the pause, and a session with no
+ * paths that need no terminal — `--force` skips the pause, and a session with no
  * terminal declines — so these tests drive the two answers a terminal supplies:
  * an affirmative answer proceeds, and an empty answer declines and sends no
  * request. The confirmation takes its streams as parameters, exactly like
@@ -67,7 +67,7 @@ test('any non-affirmative answer declines the delete', async () => {
   }
 })
 
-test('--yes skips the pause, so nothing is written and no answer is read', async () => {
+test('--force skips the pause, so nothing is written and no answer is read', async () => {
   const {input, output, written} = terminalStreams()
 
   await confirmDelete('data type', '42', true, input, output)
@@ -84,7 +84,7 @@ test('a session with no terminal declines and explains how to delete without a p
     (error: {code?: string; exitCode?: number; message?: string}) => {
       assert.equal(error.code, 'delete-confirmation-unavailable')
       assert.equal(error.exitCode, 2)
-      assert.match(String(error.message), /--yes/)
+      assert.match(String(error.message), /--force/)
       return true
     },
   )
