@@ -22,7 +22,8 @@
     "topicSeparator": " "
   },
   "scripts": {
-    "build": "tsc",
+    "clean": "node -e \"require('node:fs').rmSync('dist',{recursive:true,force:true})\"",
+    "build": "npm run clean && tsc",
     "prepack": "npm run build",
     "test": "npm run build && node --test \"test/*.test.ts\"",
     "test:ci": "npm run build && node --test --test-reporter spec --test-reporter-destination stdout --test-reporter junit --test-reporter-destination test-report.xml \"test/*.test.ts\"",
