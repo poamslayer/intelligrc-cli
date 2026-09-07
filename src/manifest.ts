@@ -9,6 +9,8 @@
  */
 import {Args, Flags, type Interfaces} from '@oclif/core'
 
+import {ERROR_CATALOG, EXIT_CODE_CATALOG} from './errors.js'
+
 import {OUTPUT_FORMATS} from './output.js'
 
 export interface FlagSpec {
@@ -3303,27 +3305,75 @@ export const commandSpecs: CommandSpec[] = [
 ]
 
 /**
- * One catalog entry: the public command description without the contract
- * metadata. The catalog shape is unchanged from catalogVersion 1; the
- * contract stays an internal fact proved by the contract suite.
+ * What state a command changes. An agent must know this before it runs a
+ * command, and a person auditing an agent must know it afterwards.
+ *
+ * - 'remote': the command changes tenant data in IntelliGRC.
+ * - 'local': the command changes local state on this machine, and never
+ *   changes tenant data.
+ * - null: the command changes nothing. It may still send a request.
  */
-export type CatalogCommand = Omit<CommandSpec, 'contract'>
+export type WriteTarget = 'remote' | 'local' | null
+
+/**
+ * The commands that change local state. Every other write is a documented
+ * API operation, so its write target comes from the documented method
+ * instead of a list. `auth login` saves a profile and stores a secret;
+ * `auth remove` deletes both.
+ */
+const LOCAL_WRITE_COMMANDS = new Set(['auth login', 'auth remove'])
+
+/**
+ * A command's write target. For an API command this is the documented
+ * method, which the contract suite already proves against the archived
+ * OpenAPI document, so it cannot disagree with the operation the command
+ * sends.
+ */
+function writeTarget(spec: CommandSpec): WriteTarget {
+  if (spec.contract) {
+    return spec.contract.method === 'get' ? null : 'remote'
+  }
+
+  return LOCAL_WRITE_COMMANDS.has(spec.id) ? 'local' : null
+}
+
+/**
+ * One catalog entry: the public command description, its write target, and
+ * the documented operation it sends. The contract's parameter and body
+ * details stay internal facts proved by the contract suite; the catalog
+ * publishes only the method and path, which is what an agent needs to find
+ * the operation's response shape in the archived OpenAPI document.
+ */
+export type CatalogCommand = Omit<CommandSpec, 'contract'> & {
+  writes: WriteTarget
+  operation: {method: string; path: string} | null
+}
 
 export interface Catalog {
-  catalogVersion: 1
+  catalogVersion: 2
+  /** Every exit code the CLI can return, with its meaning. */
+  exitCodes: typeof EXIT_CODE_CATALOG
+  /** The failure-code vocabulary an agent will see on standard error. */
+  errors: typeof ERROR_CATALOG
   commands: CatalogCommand[]
 }
 
 export function buildCatalog(): Catalog {
   return {
-    catalogVersion: 1,
-    commands: commandSpecs.map(({id, summary, kind, permission, args, flags}) => ({
-      id,
-      summary,
-      kind,
-      permission,
-      args,
-      flags,
+    catalogVersion: 2,
+    exitCodes: EXIT_CODE_CATALOG,
+    errors: ERROR_CATALOG,
+    commands: commandSpecs.map((spec) => ({
+      id: spec.id,
+      summary: spec.summary,
+      kind: spec.kind,
+      writes: writeTarget(spec),
+      permission: spec.permission,
+      operation: spec.contract
+        ? {method: spec.contract.method.toUpperCase(), path: spec.contract.path}
+        : null,
+      args: spec.args,
+      flags: spec.flags,
     })),
   }
 }
