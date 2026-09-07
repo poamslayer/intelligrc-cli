@@ -5,20 +5,21 @@ CLI for all operations.
 
 ## Repository safety
 
-The `intelligrc` directory currently inherits a Git worktree rooted at `/Users/arnoldd`.
-That worktree points to `https://github.com/arnoldadlv/crm.git`, which is unrelated to this
-project.
+This directory is its own Git clone. The `origin` remote is
+`https://github.com/arnoldadlv/intelligrc-cli.git`. GitHub resolves that address to
+`poamslayer/intelligrc-cli`, so `gh` reports the latter name.
 
 Before reading or changing GitHub Issues:
 
 1. Run `git rev-parse --show-toplevel`.
 2. Confirm the result is `/Users/arnoldd/intelligrc`.
-3. Run `git remote get-url origin`.
-4. Confirm the remote identifies the intended IntelliGRC repository.
+3. Run `gh repo view --json nameWithOwner -q .nameWithOwner`.
+4. Confirm the result is `poamslayer/intelligrc-cli`.
 5. Stop and ask the user if either check fails.
 
-Never create, edit, label, comment on, or close issues in `arnoldadlv/crm` for IntelliGRC
-work.
+Never create, edit, label, comment on, or close issues in any other repository for
+IntelliGRC work. The home directory once carried an unrelated `arnoldadlv/crm` clone;
+the checks above guard against that class of mistake.
 
 ## Conventions
 
@@ -34,8 +35,7 @@ work.
 - **Remove a label**: `gh issue edit <number> --remove-label "..."`.
 - **Close an issue**: `gh issue close <number> --comment "..."`.
 
-After this directory becomes an independent Git clone, `gh` can infer the repository from
-its verified `origin` remote.
+`gh` infers the repository from the `origin` remote when run inside this directory.
 
 ## Pull requests as a triage surface
 

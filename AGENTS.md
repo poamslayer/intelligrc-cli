@@ -223,8 +223,8 @@ conformance requirement for this project.
 
 ### Issue tracker
 
-Work is tracked in GitHub Issues for the IntelliGRC repository. Never use the unrelated
-inherited `arnoldadlv/crm` remote. See `docs/agents/issue-tracker.md`.
+Work is tracked in GitHub Issues on `poamslayer/intelligrc-cli`. Verify the repository
+before every issue operation. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
