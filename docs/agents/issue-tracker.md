@@ -6,8 +6,9 @@ CLI for all operations.
 ## Repository safety
 
 This directory is its own Git clone. The `origin` remote is
-`https://github.com/arnoldadlv/intelligrc-cli.git`. GitHub resolves that address to
-`poamslayer/intelligrc-cli`, so `gh` reports the latter name.
+`https://github.com/poamslayer/intelligrc-cli.git`. The repository was once addressed as
+`arnoldadlv/intelligrc-cli`; GitHub still redirects that name, but pushes to it fail to
+open pull requests, so keep `origin` on the `poamslayer` address.
 
 Before reading or changing GitHub Issues:
 
