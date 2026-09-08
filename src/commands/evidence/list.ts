@@ -6,12 +6,20 @@ import {apiCommandSpec, oclifFlags, selectContract} from '../../manifest.js'
 
 const spec = apiCommandSpec('evidence list')
 
+/**
+ * The one variant this command can send. Reading it from the manifest keeps
+ * the help text equal to the contract the command actually selects.
+ */
+const [evaluationVariant] = spec.variants ?? []
+
 export default class EvidenceList extends Command {
   static override summary = spec.summary
 
   static override description =
-    `${apiGetDescription(spec)} With --evaluation-id or --framework-id, sends the ` +
-    'documented GET /v1/Evidence/Evaluation request instead, with the supplied query parameters.'
+    `${apiGetDescription(spec)} With ` +
+    evaluationVariant.selectedBy.map((name) => `--${name}`).join(' or ') +
+    `, sends the documented GET ${evaluationVariant.contract.path} request instead, ` +
+    'with the supplied query parameters.'
 
   static override enableJsonFlag = false
 
