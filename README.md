@@ -425,6 +425,10 @@ the command before any network access.
 
 Three commands replace the list of records associated with one record.
 
+Each data type association also has a read. `facility data-types get <id>` and
+`interconnection data-types get <id>` return the current list. The read and the write
+share the same identifier argument.
+
 | Command | Documented request | Identifier argument | Associated identifiers come from |
 |---|---|---|---|
 | `facility data-types set` | `PUT /v1/Facilities/{id}/datatypes` | integer | `lookup facility data-types` |

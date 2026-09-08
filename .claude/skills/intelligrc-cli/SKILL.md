@@ -59,7 +59,7 @@ intelligrc <topic> <subcommand> [ID] [--flags]
 - Every API command requires `--profile <name>`.
 - `--output json|jsonl|table` on every API command; default is `json` (pretty-printed, upstream field names preserved). `jsonl` emits one JSON line per array element.
 - `--json` is accepted everywhere `--output` is, and means `--output json`. It states the default rather than changing it. Passing `--json` with `--output jsonl` or `--output table` exits 2.
-- `get`, `data-types`, `update`, and `delete` commands take a positional `ID` (for example `intelligrc facility get 3`, `intelligrc personnel update 12 ...`). It is an integer for data types, facilities, interconnections, and personnel, and a UUID for assessment objectives, controls, and evidence.
+- `get`, `data-types get`, `data-types set`, `update`, and `delete` commands take a positional `ID` (for example `intelligrc facility get 3`, `intelligrc personnel update 12 ...`). It is an integer for data types, facilities, interconnections, and personnel, and a UUID for assessment objectives, controls, and evidence.
 - ID flags and arguments are validated before any network call or keychain read: `--evaluation-id` is an int32; `--framework-id`, `--assessment-objective-id`, `--parent-id`, and `--icl-version-id` are UUIDs. An invalid value exits 2 and sends nothing.
 
 ## Common patterns

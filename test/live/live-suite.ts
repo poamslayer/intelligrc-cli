@@ -429,7 +429,7 @@ async function main(): Promise<void> {
       },
       {command: 'facility get', needs: ['facilityId'], extraArgs: (s) => [String(s.facilityId.value)]},
       {
-        command: 'facility data-types',
+        command: 'facility data-types get',
         needs: ['facilityId'],
         extraArgs: (s) => [String(s.facilityId.value)],
       },
@@ -445,7 +445,7 @@ async function main(): Promise<void> {
         extraArgs: (s) => [String(s.interconnectionId.value)],
       },
       {
-        command: 'interconnection data-types',
+        command: 'interconnection data-types get',
         needs: ['interconnectionId'],
         extraArgs: (s) => [String(s.interconnectionId.value)],
       },

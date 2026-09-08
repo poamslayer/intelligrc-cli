@@ -356,7 +356,7 @@ const expectedCatalog = {
     },
     {
       id: 'evaluation current',
-      summary: 'Show the current evaluation for the profile tenant.',
+      summary: 'Get the current evaluation for the profile tenant.',
       kind: 'api',
       permission: 'Evaluations: Read',
       args: [],
@@ -576,7 +576,7 @@ const expectedCatalog = {
     },
     {
       id: 'assessment-objective history',
-      summary: 'Show the history of one assessment objective and its statuses.',
+      summary: 'Get the history of one assessment objective and its statuses.',
       kind: 'api',
       permission: 'GapAnalysis: Read',
       args: [],
@@ -1826,7 +1826,7 @@ const expectedCatalog = {
     },
     {
       id: 'data-type get',
-      summary: 'Show one data type by its integer identifier.',
+      summary: 'Get one data type by its integer identifier.',
       kind: 'api',
       permission: 'DataTypes: Read',
       args: [
@@ -2121,7 +2121,7 @@ const expectedCatalog = {
     },
     {
       id: 'facility get',
-      summary: 'Show one facility by its integer identifier.',
+      summary: 'Get one facility by its integer identifier.',
       kind: 'api',
       permission: 'Locations: Read',
       args: [
@@ -2158,8 +2158,8 @@ const expectedCatalog = {
       ],
     },
     {
-      id: 'facility data-types',
-      summary: 'List the data types associated with one facility.',
+      id: 'facility data-types get',
+      summary: 'Get the data types associated with one facility.',
       kind: 'api',
       permission: 'Locations: Read',
       args: [
@@ -2197,7 +2197,7 @@ const expectedCatalog = {
     },
     {
       id: 'facility data-types set',
-      summary: 'Replace the data types associated with one facility.',
+      summary: 'Set the data types associated with one facility, replacing the current list.',
       kind: 'api',
       permission: 'Locations: Write',
       args: [
@@ -2348,7 +2348,7 @@ const expectedCatalog = {
     },
     {
       id: 'interconnection get',
-      summary: 'Show one interconnection by its integer identifier.',
+      summary: 'Get one interconnection by its integer identifier.',
       kind: 'api',
       permission: 'Interconnections: Read',
       args: [
@@ -2386,8 +2386,8 @@ const expectedCatalog = {
       ],
     },
     {
-      id: 'interconnection data-types',
-      summary: 'List the data types associated with one interconnection.',
+      id: 'interconnection data-types get',
+      summary: 'Get the data types associated with one interconnection.',
       kind: 'api',
       permission: 'Interconnections: Read',
       args: [
@@ -2426,7 +2426,7 @@ const expectedCatalog = {
     },
     {
       id: 'interconnection data-types set',
-      summary: 'Replace the data types associated with one interconnection.',
+      summary: 'Set the data types associated with one interconnection, replacing the current list.',
       kind: 'api',
       permission: 'Interconnections: Write',
       args: [
@@ -2669,7 +2669,7 @@ const expectedCatalog = {
     },
     {
       id: 'personnel get',
-      summary: 'Show one person by their integer identifier.',
+      summary: 'Get one person by their integer identifier.',
       kind: 'api',
       permission: 'Personnel: Read',
       args: [
