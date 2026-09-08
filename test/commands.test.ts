@@ -231,7 +231,7 @@ const personnelWriteFlags = [
 // #7, #8, #9, and #10. This literal is the independent source of truth;
 // it must not be derived from src/manifest.ts.
 const expectedCatalog = {
-  catalogVersion: 3,
+  catalogVersion: 4,
   commands: [
     {
       id: 'auth login',
@@ -311,6 +311,40 @@ const expectedCatalog = {
           type: 'option',
           required: true,
           summary: 'Profile name to remove.',
+        },
+      ],
+    },
+    {
+      id: 'auth status',
+      summary: 'Print the resolved identity and its source without printing the secret.',
+      kind: 'profile',
+      permission: null,
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: false,
+          summary:
+            'Profile that supplies the credential, tenant, and base URL. Optional when ' +
+            'INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, ' +
+            'INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },

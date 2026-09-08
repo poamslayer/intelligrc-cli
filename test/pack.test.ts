@@ -133,13 +133,21 @@ test('a clean checkout builds, packs, installs, and serves the documented surfac
     catalogVersion: number
     commands: Array<{id: string; kind: string}>
   }
-  assert.equal(catalog.catalogVersion, 3)
-  assert.equal(catalog.commands.length, 77)
+  assert.equal(catalog.catalogVersion, 4)
+  assert.equal(catalog.commands.length, 78)
   assert.equal(catalog.commands.filter((command) => command.kind === 'api').length, 71)
   assert.ok(catalog.commands.some((command) => command.id === 'evaluation current'))
-  // The six local and profile commands ship in the installed catalog too.
+  // The seven local and profile commands ship in the installed catalog too.
   const installedIds = new Set(catalog.commands.map((command) => command.id))
-  for (const id of ['auth login', 'auth list', 'auth remove', 'commands', 'doctor', 'version']) {
+  for (const id of [
+    'auth login',
+    'auth list',
+    'auth remove',
+    'auth status',
+    'commands',
+    'doctor',
+    'version',
+  ]) {
     assert.ok(installedIds.has(id), `Installed catalog is missing the "${id}" command`)
   }
 
