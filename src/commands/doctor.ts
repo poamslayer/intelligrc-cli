@@ -11,7 +11,7 @@ import {resolveBaseUrl} from '../base-url.js'
 import {CliFailure, EXIT, emitFailure} from '../errors.js'
 import {commandSpec, oclifFlags} from '../manifest.js'
 import {ProfileStore} from '../profile-store.js'
-import {KeyringSecretStore} from '../secret-store.js'
+import {FileSecretStore} from '../secret-store.js'
 
 const spec = commandSpec('doctor')
 
@@ -59,8 +59,8 @@ export default class Doctor extends Command {
 
       passed.push({check: 'profile-complete', status: 'pass'})
 
-      // Check 2: the protected secret store returns the client secret.
-      const clientSecret = new KeyringSecretStore().get(profileName)
+      // Check 2: the secrets file holds the client secret.
+      const clientSecret = new FileSecretStore(this.config.configDir).get(profileName)
       if (!clientSecret) {
         throw clientSecretMissingFailure(profileName)
       }

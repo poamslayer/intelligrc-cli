@@ -84,7 +84,7 @@ export const ERROR_CATALOG = {
 
     // Exit 3: the local profile is missing, incomplete, or unreadable.
     {code: 'client-secret-env-missing', exitCode: EXIT.localConfiguration, meaning: 'The environment variable named by --client-secret-env is unset or empty.'},
-    {code: 'client-secret-missing', exitCode: EXIT.localConfiguration, meaning: 'The profile exists but its secret is absent from the secret store.'},
+    {code: 'client-secret-missing', exitCode: EXIT.localConfiguration, meaning: 'The profile exists but the secrets file holds no secret for it.'},
     {code: 'doctor-tenant-mismatch', exitCode: EXIT.localConfiguration, meaning: 'The tenant the credential returns is not the tenant saved in the profile.'},
     {code: 'profile-base-url-invalid', exitCode: EXIT.localConfiguration, meaning: 'The base URL saved in the profile is not usable.'},
     {code: 'profile-exists', exitCode: EXIT.localConfiguration, meaning: 'A profile of that name already exists. Pass --replace to overwrite it.'},
@@ -93,7 +93,8 @@ export const ERROR_CATALOG = {
     {code: 'profiles-file-unreadable', exitCode: EXIT.localConfiguration, meaning: 'The profiles file exists but cannot be read or parsed.'},
     {code: 'profiles-file-write-failed', exitCode: EXIT.localConfiguration, meaning: 'The profiles file could not be written.'},
     {code: 'rollback-failed', exitCode: EXIT.localConfiguration, meaning: 'A profile change failed and the previous state could not be restored. The message names what to check.'},
-    {code: 'secret-store-failure', exitCode: EXIT.localConfiguration, meaning: 'The operating-system secret store could not be read or written.'},
+    {code: 'secret-store-failure', exitCode: EXIT.localConfiguration, meaning: 'The secrets file could not be read, parsed, or written.'},
+    {code: 'secrets-file-permissions', exitCode: EXIT.localConfiguration, meaning: 'The secrets file is readable by group or others. Run chmod 600 on it.'},
 
     // Exit 4: the API rejected the credential or the permission.
     {code: 'authentication-failed', exitCode: EXIT.authentication, meaning: 'The API rejected the client credential, or the credential lacks the documented permission.'},

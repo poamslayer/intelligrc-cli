@@ -2450,7 +2450,7 @@ export const commandSpecs: CommandSpec[] = [
   },
   {
     id: 'auth remove',
-    summary: 'Remove one named profile and its protected secret.',
+    summary: 'Remove one named profile and its saved client secret.',
     kind: 'profile',
     permission: null,
     args: [],

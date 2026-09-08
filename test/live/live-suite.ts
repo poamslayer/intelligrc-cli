@@ -90,7 +90,7 @@ const redactionValues: string[] = []
 
 /**
  * Abort the run. Thrown (not process.exit) so the finally block still
- * removes the throwaway profile and its protected secret entry.
+ * removes the throwaway profile and its saved client secret.
  */
 function fail(message: string): never {
   throw new Error(message)
@@ -624,7 +624,7 @@ async function main(): Promise<void> {
     }
   } finally {
     if (loginSucceeded) {
-      // Remove the live profile and its protected secret entry.
+      // Remove the live profile and its saved client secret.
       await runCli(['auth', 'remove', '--profile', PROFILE], env).catch(() => null)
     }
   }

@@ -1,49 +1,52 @@
 /**
- * Shared fixtures for the auth command tests: one isolated home with a
- * fake keyring, plus readers for the fake keyring file and profiles.json.
+ * Shared fixtures for the auth command tests: one isolated home plus
+ * readers for secrets.json and profiles.json.
  */
 import assert from 'node:assert/strict'
 import {existsSync, readFileSync} from 'node:fs'
 import {join} from 'node:path'
 
 import {type FakeApi} from './fake-api.ts'
-import {fakeKeyringEnv, makeIsolatedHome, runCli} from './run-cli.ts'
+import {makeIsolatedHome, runCli} from './run-cli.ts'
 
 export const TEST_SECRET = 'super-secret-value-123'
 
 export interface AuthContext {
   home: string
-  keyringFile: string
   env: Record<string, string>
 }
 
 export function setupAuthContext(extraEnv: Record<string, string> = {}): AuthContext {
   const home = makeIsolatedHome()
-  const keyringFile = join(home, 'fake-keyring.json')
   const env = {
-    ...fakeKeyringEnv(keyringFile),
     INTELLIGRC_ALLOW_HTTP_LOCALHOST: '1',
     TEST_CLIENT_SECRET: TEST_SECRET,
     ...extraEnv,
   }
-  return {home, keyringFile, env}
+  return {home, env}
 }
 
 export function profilesPath(home: string): string {
   return join(home, '.config', 'intelligrc', 'profiles.json')
 }
 
+export function secretsPath(home: string): string {
+  return join(home, '.config', 'intelligrc', 'secrets.json')
+}
+
 export function readProfiles(home: string): {profiles: Record<string, Record<string, unknown>>} {
   return JSON.parse(readFileSync(profilesPath(home), 'utf8'))
 }
 
-/** The fake keyring's stored entries. A missing file reads as empty. */
-export function readKeyring(ctx: AuthContext): Record<string, string> {
-  if (!existsSync(ctx.keyringFile)) {
+/** The stored secrets. A missing file reads as empty. */
+export function readSecrets(home: string): Record<string, string> {
+  const path = secretsPath(home)
+  if (!existsSync(path)) {
     return {}
   }
 
-  return JSON.parse(readFileSync(ctx.keyringFile, 'utf8'))
+  return (JSON.parse(readFileSync(path, 'utf8')) as {secrets: Record<string, string>})
+    .secrets
 }
 
 export interface CreateProfileOptions {

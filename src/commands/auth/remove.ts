@@ -3,7 +3,7 @@ import {Command} from '@oclif/core'
 import {CliFailure, EXIT, emitFailure} from '../../errors.js'
 import {commandSpec, oclifFlags} from '../../manifest.js'
 import {ProfileStore} from '../../profile-store.js'
-import {KeyringSecretStore} from '../../secret-store.js'
+import {FileSecretStore} from '../../secret-store.js'
 
 const spec = commandSpec('auth remove')
 
@@ -11,9 +11,9 @@ export default class AuthRemove extends Command {
   static override summary = spec.summary
 
   static override description =
-    'Deletes the named profile from profiles.json and its client secret ' +
-    'from the protected secret store. Runs locally and never changes ' +
-    'IntelliGRC tenant data.'
+    'Deletes the named profile from profiles.json and its client secret from ' +
+    'the secrets file in the CLI config directory, mode 0600. Runs locally ' +
+    'and never changes IntelliGRC tenant data.'
 
   static override enableJsonFlag = false
 
@@ -38,7 +38,7 @@ export default class AuthRemove extends Command {
       // profiles.json so the administrator can repair the store and retry.
       // A missing entry is not a failure: removal then repairs a profile
       // whose secret is already gone.
-      const secretStore = new KeyringSecretStore()
+      const secretStore = new FileSecretStore(this.config.configDir)
       const secretExisted = secretStore.delete(profileName)
 
       profileStore.remove(profileName)

@@ -12,7 +12,7 @@
  * request proves the four required fields are sent and every optional field is
  * omitted when its flag is absent. A missing required flag or an invalid
  * integer or uuid in any scalar or array field exits 2 (invalid input) before
- * any network or keyring access.
+ * any network or secrets file access.
  */
 import assert from 'node:assert/strict'
 import {after, before, test} from 'node:test'

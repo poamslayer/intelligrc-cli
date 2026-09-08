@@ -43,7 +43,7 @@ export interface ApiGetOptions {
   flags: Record<string, unknown>
   /**
    * Builds the validated query pairs. Runs before profile resolution, so
-   * an invalid identifier exits 2 with zero keyring or network access.
+   * an invalid identifier exits 2 with zero secrets file or network access.
    */
   buildQuery?: () => QueryPairs
   /**

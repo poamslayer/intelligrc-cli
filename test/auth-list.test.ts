@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict'
+import {writeFileSync} from 'node:fs'
 import {test} from 'node:test'
 
 import {
   createProfile,
+  secretsPath,
   setupAuthContext,
   TEST_SECRET,
 } from './helpers/auth-fixtures.ts'
@@ -50,17 +52,18 @@ test('list reports non-secret settings for every profile without secrets', async
   }
 })
 
-test('list never touches the protected secret store', async () => {
+test('list never reads the secrets file', async () => {
   const ctx = setupAuthContext()
   const api = await startFakeApi()
   try {
     await createProfile(api, ctx, 'alpha')
 
-    // Any secret store operation would throw with this injection active,
-    // so a passing list proves it performed none.
+    // Any secrets file read would fail to parse, so a passing list proves
+    // the command did not read the file.
+    writeFileSync(secretsPath(ctx.home), 'not JSON', {mode: 0o600})
     const result = await runCli(['auth', 'list'], {
       home: ctx.home,
-      env: {...ctx.env, INTELLIGRC_FAKE_KEYRING_FAIL: 'all'},
+      env: ctx.env,
     })
 
     assert.equal(result.code, 0, result.stderr)

@@ -8,7 +8,7 @@
 import {resolveBaseUrl} from '../base-url.js'
 import {CliFailure, EXIT} from '../errors.js'
 import {ProfileStore} from '../profile-store.js'
-import {KeyringSecretStore} from '../secret-store.js'
+import {FileSecretStore} from '../secret-store.js'
 
 export interface ApiContext {
   baseUrl: string
@@ -49,7 +49,7 @@ export function clientSecretMissingFailure(profileName: string): CliFailure {
     code: 'client-secret-missing',
     message:
       `No client secret exists for the profile "${profileName}" in the ` +
-      'protected secret store. Recreate the profile with: ' +
+      'secrets file. Recreate the profile with: ' +
       'intelligrc auth login --replace',
     exitCode: EXIT.localConfiguration,
   })
@@ -93,7 +93,7 @@ export function resolveApiContext(
   }
 
   const clientSecret =
-    env.INTELLIGRC_CLIENT_SECRET ?? new KeyringSecretStore().get(profileName)
+    env.INTELLIGRC_CLIENT_SECRET ?? new FileSecretStore(configDir).get(profileName)
   if (!clientSecret) {
     throw clientSecretMissingFailure(profileName)
   }

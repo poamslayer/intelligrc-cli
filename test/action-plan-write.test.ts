@@ -12,7 +12,7 @@
  * and the boolean organization flag); a minimal request proves only the
  * required fields are sent and every optional field is omitted when its flag is
  * absent. A missing required flag or an invalid integer, number, date, or uuid
- * in any field exits 2 (invalid input) before any network or keyring access.
+ * in any field exits 2 (invalid input) before any network or secrets file access.
  */
 import assert from 'node:assert/strict'
 import {after, before, test} from 'node:test'

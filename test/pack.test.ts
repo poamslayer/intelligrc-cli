@@ -7,7 +7,7 @@ import {test} from 'node:test'
 import {promisify} from 'node:util'
 
 import {FakeApi} from './helpers/fake-api.ts'
-import {fakeKeyringEnv, isolatedEnv, packageVersion, projectRoot} from './helpers/run-cli.ts'
+import {isolatedEnv, packageVersion, projectRoot} from './helpers/run-cli.ts'
 
 const execFileAsync = promisify(execFile)
 
@@ -62,14 +62,12 @@ async function runAgainstFakeApi(
 }
 
 /**
- * Environment for one installed-binary run: the shared per-user isolation
- * plus the file-backed fake keyring, for a binary outside the repository
- * checkout.
+ * Environment for one installed-binary run with per-user isolation for a
+ * binary outside the repository checkout.
  */
 function installedEnv(home: string, extra: Record<string, string> = {}): Record<string, string> {
   return {
     ...isolatedEnv(home),
-    ...fakeKeyringEnv(join(home, 'fake-keyring.json')),
     ...extra,
   }
 }

@@ -10,8 +10,8 @@ export default class AuthList extends Command {
   static override summary = spec.summary
 
   static override description =
-    'Reads profiles.json only. Never retrieves a secret from the protected ' +
-    'secret store and never contacts a network service.'
+    'Reads profiles.json only. Never reads the secrets file ' +
+    'and never contacts a network service.'
 
   static override enableJsonFlag = false
 

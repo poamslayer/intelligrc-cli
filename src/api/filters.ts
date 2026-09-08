@@ -4,7 +4,7 @@
  * documented query parameters, and request-body builders that turn write-command
  * flags into the documented request body. Every parser runs after flag parsing
  * and before profile resolution, so an invalid identifier, number, UUID, or
- * date exits 2 (invalid input) with zero keyring or network access. A query
+ * date exits 2 (invalid input) with zero secrets file or network access. A query
  * value goes into the query string under the documented camelCase parameter
  * name; a body value goes into the JSON body under the documented field name.
  */
@@ -167,7 +167,7 @@ export interface DataTypeBody {
 /**
  * Build the validated data-type body from the write command's flags. Runs
  * before profile resolution, so a non-integer level identifier exits 2 with
- * a stable code and zero keyring or network access. The CLI does not check
+ * a stable code and zero secrets file or network access. The CLI does not check
  * the level identifiers against the lookup catalogs — the IntelliGRC API is
  * the authority that accepts or rejects them.
  */
@@ -209,7 +209,7 @@ export interface DataTypeIdsBody {
 /**
  * Build the validated data-type association body from the repeatable
  * --data-type-id flag. Runs before profile resolution, so a non-integer
- * element exits 2 with a stable code and zero keyring or network access. An
+ * element exits 2 with a stable code and zero secrets file or network access. An
  * omitted flag (oclif passes undefined) and an empty list both produce an
  * empty array, which serializes as the documented empty `dataTypeIds` array.
  */
@@ -276,7 +276,7 @@ export interface AssessmentObjectiveIdsBody {
 /**
  * Build the validated assessment-objective association body from the
  * repeatable --assessment-objective-id flag. Runs before profile resolution,
- * so a malformed UUID exits 2 with a stable code and zero keyring or network
+ * so a malformed UUID exits 2 with a stable code and zero secrets file or network
  * access. The flag is required, so oclif guarantees at least one value; the
  * `?? []` guard keeps the builder total for direct callers.
  */
@@ -358,7 +358,7 @@ export interface AssessmentObjectiveUpdateBody {
 /**
  * Build the validated assessment-objective update body from the update
  * command's flags. Runs before profile resolution, so a non-integer
- * evaluation or status identifier exits 2 with a stable code and zero keyring
+ * evaluation or status identifier exits 2 with a stable code and zero secrets file
  * or network access. Each field is included only when the user supplied its
  * flag, matching the documented partial-update contract.
  */
@@ -416,7 +416,7 @@ export interface ControlUpdateBody {
 /**
  * Build the validated control update body from the update command's flags.
  * Runs before profile resolution, so a non-integer evaluation identifier exits
- * 2 with a stable code and zero keyring or network access. Each field is
+ * 2 with a stable code and zero secrets file or network access. Each field is
  * included only when the user supplied its flag, matching the documented
  * partial-update contract.
  */
@@ -482,7 +482,7 @@ export interface InterconnectionUpdateBody {
  * Build the validated interconnection create body from the create command's
  * flags. Runs before profile resolution, so a non-integer identifier or a
  * malformed authorization-type value exits 2 with a stable code and zero
- * keyring or network access. The `--name`, `--authorizing-official-id`, and
+ * secrets file or network access. The `--name`, `--authorizing-official-id`, and
  * `--authorization-type` flags are required, so oclif guarantees they are
  * present; the optional `--provider` and `--description` flags contribute a
  * field only when supplied.
@@ -519,7 +519,7 @@ export function buildInterconnectionCreateBody(
  * Build the validated interconnection update body from the update command's
  * flags. Runs before profile resolution, so a non-integer identifier or a
  * malformed authorization-type value exits 2 with a stable code and zero
- * keyring or network access. `--name` is required; every other field is
+ * secrets file or network access. `--name` is required; every other field is
  * included only when the user supplied its flag, matching the documented
  * partial-update contract.
  */
@@ -628,7 +628,7 @@ function parseAuthorizationType(raw: string): AuthorizationTypeInput {
 /**
  * Build the shared invalid-authorization-type failure. Every malformed
  * --authorization-type value fails the same way: exit 2 with a stable code,
- * before any keyring or network access. `reason` names the specific problem so
+ * before any secrets file or network access. `reason` names the specific problem so
  * the user learns exactly what was wrong.
  */
 function authorizationTypeFailure(raw: string, reason: string): CliFailure {
@@ -672,7 +672,7 @@ export interface EvaluationCreateBody {
  * Build the validated evaluation create body from the create command's flags.
  * Runs before profile resolution, so a non-integer identifier, a non-numeric
  * budget, a malformed UUID, or an invalid date exits 2 with a stable code and
- * zero keyring or network access. The seven required flags are enforced by
+ * zero secrets file or network access. The seven required flags are enforced by
  * oclif; each optional field is included only when the user supplied its flag.
  */
 export function buildEvaluationCreateBody(flags: Record<string, unknown>): EvaluationCreateBody {
@@ -747,7 +747,7 @@ export interface BoundaryCreateBody {
 /**
  * Build the validated boundary create body from the create command's flags.
  * Runs before profile resolution, so a non-integer identifier or a malformed
- * UUID in any scalar or array field exits 2 with a stable code and zero keyring
+ * UUID in any scalar or array field exits 2 with a stable code and zero secrets file
  * or network access. The four required flags are enforced by oclif; each
  * optional scalar or array field is included only when the user supplied its
  * flag, so an omitted flag leaves the field out of the body entirely.
@@ -831,7 +831,7 @@ type KeysMatching<T, V> = {
  * both a typo and a type mismatch are compile errors; the value is written
  * through a Record view. Every validating assigner runs before profile
  * resolution, so an invalid value exits 2 with the flag-specific code before
- * any keyring or network access.
+ * any secrets file or network access.
  */
 
 /** Assign one optional string body field when its flag was supplied. */
@@ -979,7 +979,7 @@ export interface FacilityWriteBody {
  * Build the validated facility body from the create or update command's flags.
  * The two documented DTOs share one field set, so one builder serves both
  * commands. It runs before profile resolution, so a non-integer value in any
- * of the three integer flags exits 2 with a stable code and zero keyring or
+ * of the three integer flags exits 2 with a stable code and zero secrets file or
  * network access. The required --name flag is enforced by oclif; each optional
  * field is included only when its flag is supplied. The CLI does not check the
  * documented string constraints on `state`, `zipCode`, and `website` — the
@@ -1023,7 +1023,7 @@ export interface EvidenceLinkCreateBody {
 /**
  * Build the validated evidence link create body. Runs before profile
  * resolution, so a --parent-id that is not a UUID exits 2 with a stable code
- * and zero keyring or network access. The required --file-name and --url flags
+ * and zero secrets file or network access. The required --file-name and --url flags
  * are enforced by oclif. The CLI does not check that --url is a well-formed
  * uniform resource identifier — the IntelliGRC API is the authority that
  * accepts or rejects a value, as it is for every other documented string
@@ -1055,7 +1055,7 @@ export interface EvidenceFolderCreateBody {
 /**
  * Build the validated evidence folder create body. Runs before profile
  * resolution, so a --parent-id that is not a UUID exits 2 with a stable code
- * and zero keyring or network access. The required --name flag is enforced by
+ * and zero secrets file or network access. The required --name flag is enforced by
  * oclif. The CLI does not check the documented rule that a folder name must be
  * unique within its parent — the API enforces it and replies 409 Conflict.
  */
@@ -1097,7 +1097,7 @@ export interface PersonnelWriteBody {
  * Build the validated personnel body from the create or update command's
  * flags. The two documented DTOs share one field set, so one builder serves
  * both commands. It runs before profile resolution, so a non-integer
- * --user-type-id exits 2 with a stable code and zero keyring or network
+ * --user-type-id exits 2 with a stable code and zero secrets file or network
  * access. The required --first-name and --last-name flags are enforced by
  * oclif; each optional field is included only when its flag is supplied. The
  * CLI does not check --user-type-id against any catalog — the IntelliGRC API
@@ -1149,7 +1149,7 @@ export interface ActionPlanProjectCreateBody {
 /**
  * Build the validated action-plan project create body. Runs before profile
  * resolution, so an invalid integer, number, or date exits 2 with a stable
- * code and zero keyring or network access. The three required flags are
+ * code and zero secrets file or network access. The three required flags are
  * enforced by oclif; each optional field is included only when its flag is
  * supplied.
  */
@@ -1202,7 +1202,7 @@ export interface ActionPlanTaskCreateBody {
 /**
  * Build the validated action-plan task create body. Runs before profile
  * resolution, so an invalid integer, number, date, or UUID exits 2 with a
- * stable code and zero keyring or network access. The four required flags are
+ * stable code and zero secrets file or network access. The four required flags are
  * enforced by oclif; each optional field is included only when its flag is
  * supplied.
  */
@@ -1263,7 +1263,7 @@ export interface ActionPlanSubTaskCreateBody {
 /**
  * Build the validated action-plan subtask create body. Runs before profile
  * resolution, so an invalid integer, number, date, or UUID exits 2 with a
- * stable code and zero keyring or network access. The four required flags are
+ * stable code and zero secrets file or network access. The four required flags are
  * enforced by oclif; each optional field is included only when its flag is
  * supplied.
  */
@@ -1364,7 +1364,7 @@ export function parseFrameworkIdList(values: string[]): string[] {
  * must be a real calendar day: a round-trip through UTC rejects an impossible
  * date such as 2026-02-30, and the fixed form rejects a bare date-time so the
  * sent instant is never ambiguous. A malformed value throws exit 2 with the
- * flag-specific code, before any keyring or network access.
+ * flag-specific code, before any secrets file or network access.
  */
 function parseDateFlag(raw: string, flagName: string): string {
   if (CALENDAR_DATE_PATTERN.test(raw)) {
@@ -1396,7 +1396,7 @@ function parseDateFlag(raw: string, flagName: string): string {
  * format: double" field rather than a string. The flag name appears in the
  * stable error code and the message; `label` names the kind of value, for
  * example "amount" for a budget. A non-numeric value throws exit 2 before any
- * keyring or network access.
+ * secrets file or network access.
  */
 function parseNumberFlag(raw: string, flagName: string, label: string): number {
   if (!DECIMAL_PATTERN.test(raw)) {
@@ -1436,7 +1436,7 @@ function parseIntegerFlag(raw: string, flagName: string, label: string): number 
 /**
  * Shared int32 validation, the integer counterpart of parseUuid. Every
  * documented integer identifier fails the same way: exit 2 with a stable
- * code, before any keyring or network access.
+ * code, before any secrets file or network access.
  */
 function parseInt32Id(raw: string, code: string, label: string, documentedName: string): string {
   if (!isInt32(raw)) {
@@ -1504,7 +1504,7 @@ export function parseIclVersionId(raw: string): string {
 
 /**
  * Shared UUID validation. Every documented UUID input fails the same way:
- * exit 2 with a stable code, before any keyring or network access.
+ * exit 2 with a stable code, before any secrets file or network access.
  */
 function parseUuid(raw: string, code: string, label: string, documentedName: string): string {
   if (!UUID_PATTERN.test(raw)) {

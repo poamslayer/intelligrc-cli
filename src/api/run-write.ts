@@ -9,7 +9,7 @@
  *
  * Input validation (the body and path builders) and the confirmation run
  * before profile resolution, so an invalid flag or a declined delete exits
- * with zero keyring or network access, exactly like the read path.
+ * with zero secrets file or network access, exactly like the read path.
  */
 import {type Command} from '@oclif/core'
 
@@ -43,7 +43,7 @@ export interface ApiWriteOptions {
   sendTenantHeader: boolean
   /**
    * Builds the validated JSON request body. Runs before profile resolution,
-   * so an invalid flag exits 2 with zero keyring or network access. Absent
+   * so an invalid flag exits 2 with zero secrets file or network access. Absent
    * for a DELETE, which carries no body.
    */
   buildBody?: () => unknown

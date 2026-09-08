@@ -56,7 +56,7 @@ export interface ApiDeleteOptions {
   /**
    * Validates the identifier argument and returns its canonical form, for
    * example parsePersonnelId. It runs before the confirmation, so a bad
-   * identifier exits 2 without a prompt, a keyring read, or a request.
+   * identifier exits 2 without a prompt, a secrets file read, or a request.
    */
   parseId: (raw: string) => string
   profile: string

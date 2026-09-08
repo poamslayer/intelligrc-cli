@@ -2,7 +2,12 @@ import assert from 'node:assert/strict'
 import {rmSync} from 'node:fs'
 import {after, before, test} from 'node:test'
 
-import {TEST_SECRET, createProfile, setupAuthContext} from './helpers/auth-fixtures.ts'
+import {
+  TEST_SECRET,
+  createProfile,
+  secretsPath,
+  setupAuthContext,
+} from './helpers/auth-fixtures.ts'
 import {startFakeApi, type FakeApi} from './helpers/fake-api.ts'
 import {runCli} from './helpers/run-cli.ts'
 
@@ -69,10 +74,10 @@ test('tenant list with an unknown profile exits 3 without a request', async () =
   assert.equal(api.requests.length, requestsBefore)
 })
 
-test('tenant list with a missing protected secret exits 3 without a request', async () => {
+test('tenant list with a missing saved secret exits 3 without a request', async () => {
   const ctx = setupAuthContext()
   await createProfile(api, ctx, 'nosecret')
-  rmSync(ctx.keyringFile)
+  rmSync(secretsPath(ctx.home))
   const requestsBefore = api.requests.length
 
   const result = await runCli(['tenant', 'list', '--profile', 'nosecret'], {
