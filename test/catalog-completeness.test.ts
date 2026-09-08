@@ -8,7 +8,7 @@ import {projectRoot, runCli} from './helpers/run-cli.ts'
 /**
  * The catalog is the only surface an agent reads before it runs anything, so
  * it must carry the facts an agent needs to act safely: which commands change
- * state, which operation each one sends, and what the exit codes and error
+ * state, which operations each one can send, and what the exit codes and error
  * codes mean. Every expectation here is written out by hand from the
  * documented behaviour. None of it is derived from src/manifest.ts, so this
  * suite still disagrees with the manifest when the manifest is wrong.
@@ -72,38 +72,51 @@ test('every other command reports that it writes nothing', async () => {
   assert.ok(readOnly.includes('data-type list'), 'a list command only reads')
 })
 
-test('the catalog names the documented operation each API command sends', async () => {
+test('the catalog names the documented operations each API command can send', async () => {
   const commands = (await catalog()).commands as Array<{
     id: string
     kind: string
-    operation: {method: string; path: string} | null
+    operations: Array<{method: string; path: string; selectedBy?: string[]}>
   }>
   const find = (id: string) => commands.find((c) => c.id === id)!
 
-  assert.deepEqual(find('data-type list').operation, {method: 'GET', path: '/v1/DataTypes'})
-  assert.deepEqual(find('data-type delete').operation, {
-    method: 'DELETE',
-    path: '/v1/DataTypes/{id}',
-  })
-  assert.deepEqual(find('personnel create').operation, {method: 'POST', path: '/v1/Personnel'})
+  assert.deepEqual(find('data-type list').operations, [{method: 'GET', path: '/v1/DataTypes'}])
+  assert.deepEqual(find('data-type delete').operations, [
+    {method: 'DELETE', path: '/v1/DataTypes/{id}'},
+  ])
+  assert.deepEqual(find('personnel create').operations, [
+    {method: 'POST', path: '/v1/Personnel'},
+  ])
   // The documented path says Facilities even though the documented
   // permission for the same operation says "Locations: Write".
-  assert.deepEqual(find('facility update').operation, {
-    method: 'PUT',
-    path: '/v1/Facilities/{id}',
-  })
+  assert.deepEqual(find('facility update').operations, [
+    {method: 'PUT', path: '/v1/Facilities/{id}'},
+  ])
+  assert.deepEqual(find('evidence list').operations, [
+    {method: 'GET', path: '/v1/Evidence'},
+    {
+      method: 'GET',
+      path: '/v1/Evidence/Evaluation',
+      selectedBy: ['evaluation-id', 'framework-id'],
+    },
+  ])
 
-  // A command that sends no documented operation reports none.
-  assert.equal(find('commands').operation, null)
-  assert.equal(find('version').operation, null)
-  assert.equal(find('auth login').operation, null)
+  // A command that sends no documented operation reports an empty list.
+  assert.deepEqual(find('commands').operations, [])
+  assert.deepEqual(find('version').operations, [])
+  assert.deepEqual(find('auth login').operations, [])
 
-  // Every API command names one, and no other command does.
+  // Every API command names at least one, and no other command names one.
   for (const command of commands) {
     assert.equal(
-      command.operation !== null,
+      command.operations.length > 0,
       command.kind === 'api',
-      `${command.id} operation should be present only for an API command`,
+      `${command.id} operations should be non-empty only for an API command`,
+    )
+    assert.equal(
+      Object.prototype.hasOwnProperty.call(command, 'operation'),
+      false,
+      `${command.id} must not publish the removed operation field`,
     )
   }
 })

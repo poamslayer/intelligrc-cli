@@ -9,7 +9,7 @@
 import {type Command} from '@oclif/core'
 
 import {emitFailure} from '../errors.js'
-import {type ApiCommandSpec} from '../manifest.js'
+import {type ApiCommandSpec, type OperationContract} from '../manifest.js'
 import {formatOutput} from '../output.js'
 import {apiRequest, emitRetryDiagnostic, type QueryPairs} from './client.js'
 import {resolveOutputFormat} from './filters.js'
@@ -32,6 +32,8 @@ export function apiGetDescription(spec: ApiCommandSpec): string {
 
 export interface ApiGetOptions {
   spec: ApiCommandSpec
+  /** The selected contract when the command has variants. Defaults to spec.contract. */
+  contract?: OperationContract
   profile: string
   /**
    * The command's parsed flags. The runner resolves the output format from
@@ -63,7 +65,8 @@ export async function runApiGet(command: Command, options: ApiGetOptions): Promi
   try {
     const output = resolveOutputFormat(options.flags)
     const query = options.buildQuery?.() ?? []
-    const path = options.buildPath?.() ?? options.spec.contract.path
+    const contract = options.contract ?? options.spec.contract
+    const path = options.buildPath?.() ?? contract.path
 
     const context = resolveApiContext(
       options.profile,

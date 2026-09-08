@@ -1,7 +1,8 @@
 # intelligrc-cli
 
-A command-line interface (CLI) for the IntelliGRC API. The CLI maps every one of the 50
-documented `GET` read operations to one stable command, and 22 of the 23 documented write
+A command-line interface (CLI) for the IntelliGRC API. Every documented `GET` read
+operation is reachable from one stable read command. `evidence list` sends one of two
+documented operations depending on its flags. The CLI maps 22 of the 23 documented write
 operations to one write command each. Every write command reuses the same guarded write
 runtime. The one unimplemented write is `POST /v1/Evidence/Upload`, the multipart
 evidence-file upload: use the IntelliGRC web app to upload an evidence file.
@@ -72,12 +73,14 @@ intelligrc version
    intelligrc evaluation current --profile prod
    intelligrc assessment-objective list --profile prod --evaluation-id 42
    intelligrc control list --profile prod
+   intelligrc evidence list --profile prod --evaluation-id 42
    ```
 
 4. Let an agent discover the surface. The catalog describes every command, argument,
    flag, and documented permission. Each command also states whether it writes
-   (`"writes"` is `"remote"`, `"local"`, or `null`) and which documented operation it
-   sends (`"operation"`). The catalog also publishes the exit codes and the failure-code
+   (`"writes"` is `"remote"`, `"local"`, or `null`) and lists the documented operations
+   it can send (`"operations"`). A variant operation names the flags that select it under
+   `"selectedBy"`. The catalog also publishes the exit codes and the failure-code
    vocabulary, so an agent needs neither this file nor the source. It runs locally: no
    profile, no network.
 
@@ -425,6 +428,10 @@ the command before any network access.
 
 Three commands replace the list of records associated with one record.
 
+Each data type association also has a read. `facility data-types get <id>` and
+`interconnection data-types get <id>` return the current list. The read and the write
+share the same identifier argument.
+
 | Command | Documented request | Identifier argument | Associated identifiers come from |
 |---|---|---|---|
 | `facility data-types set` | `PUT /v1/Facilities/{id}/datatypes` | integer | `lookup facility data-types` |
@@ -508,10 +515,10 @@ Keep these two categories separate when relying on this CLI.
 Verified against the archived OpenAPI document (`official-docs/swagger/v1/swagger.json`
 in the source repository):
 
-- The archived OpenAPI document defines exactly 50 `GET` operations, and the CLI maps
-  each one to one command. An automated contract suite compares every path, parameter,
-  documented permission, and write request-body field against the archived OpenAPI
-  document on every test run.
+- The archived OpenAPI document defines exactly 50 `GET` operations. The CLI's 49 read
+  commands cover all 50 operations, with `evidence list` covering two. An automated
+  contract suite compares every path, parameter, documented permission, and write
+  request-body field against the archived OpenAPI document on every test run.
 - The archived OpenAPI document defines exactly 23 operations that are not `GET`, and the
   CLI maps 22 of them to one command each. The one operation the CLI does not implement is
   `POST /v1/Evidence/Upload`, which the document describes as a multipart file upload.

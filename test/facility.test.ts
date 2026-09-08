@@ -1,9 +1,9 @@
 /**
  * Process-level tests for the issue #9 facility retrieval commands:
- * facility list, facility get, facility data-types, and four facility
+ * facility list, facility get, facility data-types get, and four facility
  * lookups. Each command maps to one documented GET operation through the
  * guarded API runtime. None of the seven operations documents a query
- * parameter; facility get and facility data-types substitute a documented
+ * parameter; facility get and facility data-types get substitute a documented
  * int32 path identifier. Every operation documents the permission
  * "Locations: Read".
  */
@@ -37,14 +37,14 @@ const SAMPLE_FACILITY_ID = '42'
 /**
  * The 7 documented mappings with their documented permission. Each
  * command sends one GET request to the exact case-sensitive path with no
- * query string. The facility get and facility data-types entries
+ * query string. The facility get and facility data-types get entries
  * substitute their integer argument into the documented path.
  */
 const MAPPINGS: Array<[string[], string, string]> = [
   [['facility', 'list'], '/v1/Facilities', 'Locations: Read'],
   [['facility', 'get', SAMPLE_FACILITY_ID], '/v1/Facilities/42', 'Locations: Read'],
   [
-    ['facility', 'data-types', SAMPLE_FACILITY_ID],
+    ['facility', 'data-types', 'get', SAMPLE_FACILITY_ID],
     '/v1/Facilities/42/datatypes',
     'Locations: Read',
   ],
@@ -92,22 +92,22 @@ test('facility get sends the identifier in canonical integer form and preserves 
   assert.equal(api.requests.at(-1)!.path, '/v1/Facilities/7')
 })
 
-test('facility data-types sends the identifier in canonical integer form', async () => {
+test('facility data-types get sends the identifier in canonical integer form', async () => {
   const body = [{id: 3, name: 'CUI'}]
   api.enqueue({status: 200, body})
 
-  const result = await run(['facility', 'data-types', '007', '--profile', 'main'])
+  const result = await run(['facility', 'data-types', 'get', '007', '--profile', 'main'])
 
   assert.equal(result.code, 0, result.stderr)
   assert.equal(result.stderr, '')
   assert.equal(api.requests.at(-1)!.path, '/v1/Facilities/7/datatypes')
 })
 
-for (const command of ['get', 'data-types']) {
-  test(`a non-integer facility identifier on facility ${command} exits 2 before any network access`, async () => {
+for (const command of [['get'], ['data-types', 'get']]) {
+  test(`a non-integer facility identifier on facility ${command.join(' ')} exits 2 before any network access`, async () => {
     const requestsBefore = api.requests.length
 
-    const result = await run(['facility', command, 'seven', '--profile', 'main'])
+    const result = await run(['facility', ...command, 'seven', '--profile', 'main'])
 
     assert.equal(result.code, 2)
     assert.equal(result.stdout, '')
@@ -115,10 +115,10 @@ for (const command of ['get', 'data-types']) {
     assert.equal(api.requests.length, requestsBefore)
   })
 
-  test(`a facility identifier beyond the documented int32 range on facility ${command} exits 2 before any network access`, async () => {
+  test(`a facility identifier beyond the documented int32 range on facility ${command.join(' ')} exits 2 before any network access`, async () => {
     const requestsBefore = api.requests.length
 
-    const result = await run(['facility', command, '2147483648', '--profile', 'main'])
+    const result = await run(['facility', ...command, '2147483648', '--profile', 'main'])
 
     assert.equal(result.code, 2)
     assert.equal(result.stdout, '')
@@ -126,10 +126,10 @@ for (const command of ['get', 'data-types']) {
     assert.equal(api.requests.length, requestsBefore)
   })
 
-  test(`facility ${command} without an identifier exits 2 before any network access`, async () => {
+  test(`facility ${command.join(' ')} without an identifier exits 2 before any network access`, async () => {
     const requestsBefore = api.requests.length
 
-    const result = await run(['facility', command, '--profile', 'main'])
+    const result = await run(['facility', ...command, '--profile', 'main'])
 
     assert.equal(result.code, 2)
     assert.equal(result.stdout, '')
@@ -137,6 +137,23 @@ for (const command of ['get', 'data-types']) {
     assert.equal(api.requests.length, requestsBefore)
   })
 }
+
+test('facility data-types without get uses the unknown-command failure contract', async () => {
+  const result = await run(['facility', 'data-types', '7', '--profile', 'main'])
+
+  assert.equal(result.code, 2)
+  assert.equal(result.stdout, '')
+  assert.equal(JSON.parse(result.stderr).error.code, 'command-not-found')
+})
+
+test('facility data-types get help shows the summary, documented path, and permission', async () => {
+  const result = await run(['facility', 'data-types', 'get', '--help'])
+
+  assert.equal(result.code, 0, result.stderr)
+  assert.match(result.stdout, /Get the data types associated with one facility/)
+  assert.match(result.stdout, /\/v1\/Facilities\/\{id\}\/datatypes/)
+  assert.match(result.stdout, /Locations: Read/)
+})
 
 test('jsonl output prints one valid JSON line per facility', async () => {
   const facilities = [

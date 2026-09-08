@@ -1,12 +1,12 @@
 import {Command} from '@oclif/core'
 
-import {parseFacilityId} from '../../api/filters.js'
-import {apiGetDescription, runApiGet} from '../../api/run-get.js'
-import {apiCommandSpec, oclifArgs, oclifFlags} from '../../manifest.js'
+import {parseFacilityId} from '../../../api/filters.js'
+import {apiGetDescription, runApiGet} from '../../../api/run-get.js'
+import {apiCommandSpec, oclifArgs, oclifFlags} from '../../../manifest.js'
 
-const spec = apiCommandSpec('facility data-types')
+const spec = apiCommandSpec('facility data-types get')
 
-export default class FacilityDataTypes extends Command {
+export default class FacilityDataTypesGet extends Command {
   static override summary = spec.summary
 
   static override description = apiGetDescription(spec)
@@ -18,7 +18,7 @@ export default class FacilityDataTypes extends Command {
   static override flags = oclifFlags(spec)
 
   async run(): Promise<void> {
-    const {args, flags} = await this.parse(FacilityDataTypes)
+    const {args, flags} = await this.parse(FacilityDataTypesGet)
 
     await runApiGet(this, {
       spec,

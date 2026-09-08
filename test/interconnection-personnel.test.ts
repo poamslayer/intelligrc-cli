@@ -1,7 +1,7 @@
 /**
  * Process-level tests for the issue #10 interconnection and personnel
  * retrieval commands: interconnection list, interconnection get,
- * interconnection data-types, three interconnection lookups, personnel
+ * interconnection data-types get, three interconnection lookups, personnel
  * list, and personnel get. Each command maps to one documented GET
  * operation through the guarded API runtime. None of the eight operations
  * documents a query parameter; the three identifier commands substitute a
@@ -39,7 +39,7 @@ const SAMPLE_ID = '42'
 /**
  * The 8 documented mappings with their documented permission. Each
  * command sends one GET request to the exact case-sensitive path with no
- * query string. The interconnection get, interconnection data-types, and
+ * query string. The interconnection get, interconnection data-types get, and
  * personnel get entries substitute their integer argument into the
  * documented path.
  */
@@ -47,7 +47,7 @@ const MAPPINGS: Array<[string[], string, string]> = [
   [['interconnection', 'list'], '/v1/Interconnections', 'Interconnections: Read'],
   [['interconnection', 'get', SAMPLE_ID], '/v1/Interconnections/42', 'Interconnections: Read'],
   [
-    ['interconnection', 'data-types', SAMPLE_ID],
+    ['interconnection', 'data-types', 'get', SAMPLE_ID],
     '/v1/Interconnections/42/datatypes',
     'Interconnections: Read',
   ],
@@ -99,7 +99,7 @@ for (const [argv, path] of MAPPINGS) {
  */
 const ID_COMMANDS: Array<[string[], string, string]> = [
   [['interconnection', 'get'], '/v1/Interconnections/7', 'invalid-interconnection-id'],
-  [['interconnection', 'data-types'], '/v1/Interconnections/7/datatypes', 'invalid-interconnection-id'],
+  [['interconnection', 'data-types', 'get'], '/v1/Interconnections/7/datatypes', 'invalid-interconnection-id'],
   [['personnel', 'get'], '/v1/Personnel/7', 'invalid-personnel-id'],
 ]
 
@@ -149,6 +149,23 @@ for (const [argv, canonicalPath, errorCode] of ID_COMMANDS) {
     assert.equal(api.requests.length, requestsBefore)
   })
 }
+
+test('interconnection data-types without get uses the unknown-command failure contract', async () => {
+  const result = await run(['interconnection', 'data-types', '9', '--profile', 'main'])
+
+  assert.equal(result.code, 2)
+  assert.equal(result.stdout, '')
+  assert.equal(JSON.parse(result.stderr).error.code, 'command-not-found')
+})
+
+test('interconnection data-types get help shows the summary, documented path, and permission', async () => {
+  const result = await run(['interconnection', 'data-types', 'get', '--help'])
+
+  assert.equal(result.code, 0, result.stderr)
+  assert.match(result.stdout, /Get the data types associated with one interconnection/)
+  assert.match(result.stdout, /\/v1\/Interconnections\/\{id\}\/datatypes/)
+  assert.match(result.stdout, /Interconnections:\s+Read/)
+})
 
 test('jsonl output prints one valid JSON line per interconnection', async () => {
   const interconnections = [

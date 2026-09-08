@@ -110,12 +110,16 @@ function contractOf(spec: CommandSpec): OperationContract {
   return spec.contract
 }
 
+/** Every operation contract an API command can send, default first. */
+function contractsOf(spec: CommandSpec): OperationContract[] {
+  return [contractOf(spec), ...(spec.variants ?? []).map((variant) => variant.contract)]
+}
+
 /** The manifest spec mapped to one documented method and path, by exact string. */
 function specForOperation(method: string, path: string): CommandSpec {
-  const matches = apiSpecs.filter((spec) => {
-    const contract = contractOf(spec)
-    return contract.method === method && contract.path === path
-  })
+  const matches = apiSpecs.filter((spec) =>
+    contractsOf(spec).some((contract) => contract.method === method && contract.path === path),
+  )
   assert.equal(matches.length, 1, `Expected exactly one command for documented ${method} ${path}`)
   return matches[0]
 }
@@ -200,18 +204,28 @@ test('only API commands carry contract metadata', () => {
         undefined,
         `Non-API command "${spec.id}" must not carry contract metadata`,
       )
+      assert.equal(
+        spec.variants,
+        undefined,
+        `Non-API command "${spec.id}" must not carry variant metadata`,
+      )
     }
   }
 })
 
 test('manifest GET mappings and documented GET operations form a bijection', () => {
-  const manifestPairs = readSpecs.map((spec) => {
-    const contract = contractOf(spec)
-    assert.equal(contract.method, 'get', `Command "${spec.id}" maps to a non-GET method`)
-    return `${contract.method} ${contract.path}`
-  })
+  const manifestPairs = readSpecs.flatMap((spec) =>
+    contractsOf(spec).map((contract) => {
+      assert.equal(
+        contract.method,
+        'get',
+        `Command "${spec.id}" contract ${contract.path} maps to a non-GET method`,
+      )
+      return `${contract.method} ${contract.path}`
+    }),
+  )
 
-  // No duplicated mapping: two commands must not claim one operation.
+  // No duplicated mapping: two contracts must not claim one operation.
   assert.equal(new Set(manifestPairs).size, manifestPairs.length, 'Duplicate method-and-path mapping')
 
   // Exact-set equality: nothing missing, nothing undocumented, and a
@@ -273,62 +287,91 @@ test('every mapped write operation is a documented write and the mapped write se
 
 test('every documented parameter of a mapped operation appears exactly once with its documented facts', () => {
   for (const spec of apiSpecs) {
-    const contract = contractOf(spec)
-    const operation = documentedOperationFor(contract.method, contract.path)
-    assert.ok(operation, `Command "${spec.id}" maps to undocumented ${contract.method} ${contract.path}`)
-    const documented = operation.parameters ?? []
-
-    assert.equal(
-      contract.parameters.length,
-      documented.length,
-      `Command "${spec.id}" maps ${contract.parameters.length} parameters; ` +
-        `the contract documents ${documented.length} for ${contract.path}`,
-    )
-
-    for (const parameter of documented) {
-      const matches = contract.parameters.filter((candidate) => candidate.name === parameter.name)
-      assert.equal(
-        matches.length,
-        1,
-        `Command "${spec.id}" must map the documented parameter "${parameter.name}" exactly once`,
+    for (const contract of contractsOf(spec)) {
+      const operation = documentedOperationFor(contract.method, contract.path)
+      assert.ok(
+        operation,
+        `Command "${spec.id}" contract ${contract.path} maps to undocumented ` +
+          `${contract.method} ${contract.path}`,
       )
-      const mapped = matches[0]
-      const label = `parameter "${parameter.name}" of ${contract.path}`
-      assert.equal(mapped.in, parameter.in, `Wrong location for ${label}`)
-      assert.equal(mapped.required, parameter.required ?? false, `Wrong required status for ${label}`)
-      assert.equal(mapped.type, parameter.schema?.type, `Wrong type for ${label}`)
-      assert.equal(mapped.format, parameter.schema?.format, `Wrong format for ${label}`)
-      assert.deepEqual(mapped.default, parameter.schema?.default, `Wrong default for ${label}`)
+      const documented = operation.parameters ?? []
+
+      assert.equal(
+        contract.parameters.length,
+        documented.length,
+        `Command "${spec.id}" contract ${contract.path} maps ${contract.parameters.length} ` +
+          `parameters; the contract documents ${documented.length}`,
+      )
+
+      for (const parameter of documented) {
+        const matches = contract.parameters.filter((candidate) => candidate.name === parameter.name)
+        assert.equal(
+          matches.length,
+          1,
+          `Command "${spec.id}" contract ${contract.path} must map the documented parameter ` +
+            `"${parameter.name}" exactly once`,
+        )
+        const mapped = matches[0]
+        const label = `parameter "${parameter.name}" of ${contract.path}`
+        assert.equal(mapped.in, parameter.in, `Wrong location for ${label}`)
+        assert.equal(mapped.required, parameter.required ?? false, `Wrong required status for ${label}`)
+        assert.equal(mapped.type, parameter.schema?.type, `Wrong type for ${label}`)
+        assert.equal(mapped.format, parameter.schema?.format, `Wrong format for ${label}`)
+        assert.deepEqual(mapped.default, parameter.schema?.default, `Wrong default for ${label}`)
+      }
     }
   }
 })
 
 test('every mapped parameter names one existing CLI input with a matching required status', () => {
   for (const spec of apiSpecs) {
-    const contract = contractOf(spec)
-    const usedSources = new Set<string>()
-    for (const parameter of contract.parameters) {
-      const pool = parameter.source.kind === 'flag' ? spec.flags : spec.args
-      const inputs = pool.filter((input) => input.name === parameter.source.name)
-      assert.equal(
-        inputs.length,
-        1,
-        `Command "${spec.id}" maps "${parameter.name}" to a ${parameter.source.kind} ` +
-          `named "${parameter.source.name}" that does not exist exactly once`,
-      )
-      assert.equal(
-        inputs[0].required,
-        parameter.required,
-        `Command "${spec.id}" input "${parameter.source.name}" required status must match ` +
-          `the documented parameter "${parameter.name}"`,
-      )
+    for (const contract of contractsOf(spec)) {
+      const usedSources = new Set<string>()
+      for (const parameter of contract.parameters) {
+        const pool = parameter.source.kind === 'flag' ? spec.flags : spec.args
+        const inputs = pool.filter((input) => input.name === parameter.source.name)
+        assert.equal(
+          inputs.length,
+          1,
+          `Command "${spec.id}" contract ${contract.path} maps "${parameter.name}" to a ` +
+            `${parameter.source.kind} named "${parameter.source.name}" that does not exist exactly once`,
+        )
+        assert.equal(
+          inputs[0].required,
+          parameter.required,
+          `Command "${spec.id}" contract ${contract.path} input "${parameter.source.name}" ` +
+            `required status must match the documented parameter "${parameter.name}"`,
+        )
 
-      const sourceKey = `${parameter.source.kind}:${parameter.source.name}`
-      assert.ok(
-        !usedSources.has(sourceKey),
-        `Command "${spec.id}" maps two parameters to the same input "${parameter.source.name}"`,
+        const sourceKey = `${parameter.source.kind}:${parameter.source.name}`
+        assert.ok(
+          !usedSources.has(sourceKey),
+          `Command "${spec.id}" contract ${contract.path} maps two parameters to the same ` +
+            `input "${parameter.source.name}"`,
+        )
+        usedSources.add(sourceKey)
+      }
+    }
+  }
+})
+
+test('every variant keeps the default method and names selecting flags exactly once', () => {
+  for (const spec of apiSpecs) {
+    const defaultContract = contractOf(spec)
+    for (const variant of spec.variants ?? []) {
+      assert.equal(
+        variant.contract.method,
+        defaultContract.method,
+        `Command "${spec.id}" variant ${variant.contract.path} must use the default method`,
       )
-      usedSources.add(sourceKey)
+      for (const name of variant.selectedBy) {
+        assert.equal(
+          spec.flags.filter((flag) => flag.name === name).length,
+          1,
+          `Command "${spec.id}" variant ${variant.contract.path} must name selecting flag ` +
+            `"${name}" exactly once`,
+        )
+      }
     }
   }
 })
@@ -430,31 +473,35 @@ test('every mapped API command reports its documented permission, and tenant lis
   }
 })
 
-test('every catalog operation is a documented operation, and only API commands carry one', () => {
+test('every catalog operation is documented, and only API commands publish operations', () => {
   const documented = new Set(documentedOperations().map(({method, path}) => `${method.toUpperCase()} ${path}`))
 
   for (const command of buildCatalog().commands) {
     if (command.kind !== 'api') {
-      assert.equal(command.operation, null, `${command.id} must not publish an operation`)
+      assert.deepEqual(command.operations, [], `${command.id} must not publish operations`)
       continue
     }
 
-    assert.ok(command.operation, `${command.id} must publish its documented operation`)
-    const named = `${command.operation.method} ${command.operation.path}`
-    assert.ok(documented.has(named), `${command.id} publishes undocumented operation ${named}`)
+    assert.ok(command.operations.length > 0, `${command.id} must publish a documented operation`)
+    for (const operation of command.operations) {
+      const named = `${operation.method} ${operation.path}`
+      assert.ok(documented.has(named), `${command.id} publishes undocumented operation ${named}`)
+    }
   }
 })
 
 test('a catalog write target agrees with the documented method', () => {
   for (const command of buildCatalog().commands) {
-    if (command.kind !== 'api' || !command.operation) {
+    if (command.kind !== 'api') {
       continue
     }
 
+    const defaultOperation = command.operations[0]
+    assert.ok(defaultOperation, `${command.id} must publish its default operation first`)
     assert.equal(
       command.writes,
-      command.operation.method === 'GET' ? null : 'remote',
-      `${command.id} reports the wrong write target for ${command.operation.method}`,
+      defaultOperation.method === 'GET' ? null : 'remote',
+      `${command.id} reports the wrong write target for ${defaultOperation.method}`,
     )
   }
 })

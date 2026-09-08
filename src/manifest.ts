@@ -138,6 +138,19 @@ export interface OperationContract {
   requestBody?: RequestBodyFieldContract[]
 }
 
+/**
+ * One alternative operation an API command sends instead of its default
+ * contract. The variant is selected when any flag named in `selectedBy`
+ * was supplied on the command line. Its contract has the same shape as the
+ * default and is compared against the archived OpenAPI document by the
+ * contract suite in the same way.
+ */
+export interface VariantContract {
+  /** CLI flag names; any one of them, when supplied, selects this variant. */
+  selectedBy: string[]
+  contract: OperationContract
+}
+
 export interface CommandSpec {
   id: string
   summary: string
@@ -145,8 +158,8 @@ export interface CommandSpec {
    * 'local' commands never contact a network service. 'profile' commands
    * manage or diagnose local profiles; among them `auth login` and `doctor`
    * send one request each to the documented tenant-list operation. 'api'
-   * commands map to one documented GET operation through the guarded
-   * request runtime.
+   * commands send their default operation, or one of their variants when a
+   * selecting flag is supplied, through the guarded request runtime.
    */
   kind: 'local' | 'profile' | 'api'
   /**
@@ -165,6 +178,11 @@ export interface CommandSpec {
    * suite compares this field against the archived OpenAPI document.
    */
   contract?: OperationContract
+  /**
+   * Present only on an API command that can send more than one documented
+   * operation. Today only `evidence list` carries one.
+   */
+  variants?: VariantContract[]
 }
 
 /** An API command's spec, with the contract guaranteed present. */
@@ -2480,7 +2498,7 @@ export const commandSpecs: CommandSpec[] = [
   },
   {
     id: 'evaluation current',
-    summary: 'Show the current evaluation for the profile tenant.',
+    summary: 'Get the current evaluation for the profile tenant.',
     kind: 'api',
     permission: 'Evaluations: Read',
     args: [],
@@ -2530,7 +2548,7 @@ export const commandSpecs: CommandSpec[] = [
   },
   {
     id: 'assessment-objective history',
-    summary: 'Show the history of one assessment objective and its statuses.',
+    summary: 'Get the history of one assessment objective and its statuses.',
     kind: 'api',
     permission: 'GapAnalysis: Read',
     args: [],
@@ -2579,22 +2597,19 @@ export const commandSpecs: CommandSpec[] = [
     contract: put('/v1/Controls/{controlId}', [controlIdPathParameter], controlUpdateBodyFields),
   },
   {
-    id: 'evidence for-evaluation',
-    summary: 'List uploaded evidence for an evaluation.',
+    id: 'evidence list',
+    summary: 'List uploaded evidence for the profile tenant, or for one evaluation.',
     kind: 'api',
     permission: 'Evidence: Read',
     args: [],
     flags: [profileFlag, evaluationIdFlag, frameworkIdFlag, apiOutputFlag, jsonFlag],
-    contract: get('/v1/Evidence/Evaluation', [evaluationIdParameter, frameworkIdParameter]),
-  },
-  {
-    id: 'evidence list',
-    summary: 'List all uploaded evidence for the profile tenant.',
-    kind: 'api',
-    permission: 'Evidence: Read',
-    args: [],
-    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/Evidence'),
+    variants: [
+      {
+        selectedBy: ['evaluation-id', 'framework-id'],
+        contract: get('/v1/Evidence/Evaluation', [evaluationIdParameter, frameworkIdParameter]),
+      },
+    ],
   },
   {
     id: 'evidence assessment-objectives set',
@@ -2801,7 +2816,7 @@ export const commandSpecs: CommandSpec[] = [
   },
   {
     id: 'data-type get',
-    summary: 'Show one data type by its integer identifier.',
+    summary: 'Get one data type by its integer identifier.',
     kind: 'api',
     permission: 'DataTypes: Read',
     args: [dataTypeIdArg],
@@ -2873,7 +2888,7 @@ export const commandSpecs: CommandSpec[] = [
   },
   {
     id: 'facility get',
-    summary: 'Show one facility by its integer identifier.',
+    summary: 'Get one facility by its integer identifier.',
     kind: 'api',
     permission: 'Locations: Read',
     args: [facilityIdArg],
@@ -2881,8 +2896,8 @@ export const commandSpecs: CommandSpec[] = [
     contract: get('/v1/Facilities/{id}', [idPathParameter]),
   },
   {
-    id: 'facility data-types',
-    summary: 'List the data types associated with one facility.',
+    id: 'facility data-types get',
+    summary: 'Get the data types associated with one facility.',
     kind: 'api',
     permission: 'Locations: Read',
     args: [facilityIdArg],
@@ -2891,7 +2906,7 @@ export const commandSpecs: CommandSpec[] = [
   },
   {
     id: 'facility data-types set',
-    summary: 'Replace the data types associated with one facility.',
+    summary: 'Set the data types associated with one facility, replacing the current list.',
     kind: 'api',
     permission: 'Locations: Write',
     args: [facilityIdArg],
@@ -2927,7 +2942,7 @@ export const commandSpecs: CommandSpec[] = [
   },
   {
     id: 'interconnection get',
-    summary: 'Show one interconnection by its integer identifier.',
+    summary: 'Get one interconnection by its integer identifier.',
     kind: 'api',
     permission: 'Interconnections: Read',
     args: [interconnectionIdArg],
@@ -2935,8 +2950,8 @@ export const commandSpecs: CommandSpec[] = [
     contract: get('/v1/Interconnections/{id}', [idPathParameter]),
   },
   {
-    id: 'interconnection data-types',
-    summary: 'List the data types associated with one interconnection.',
+    id: 'interconnection data-types get',
+    summary: 'Get the data types associated with one interconnection.',
     kind: 'api',
     permission: 'Interconnections: Read',
     args: [interconnectionIdArg],
@@ -2945,7 +2960,7 @@ export const commandSpecs: CommandSpec[] = [
   },
   {
     id: 'interconnection data-types set',
-    summary: 'Replace the data types associated with one interconnection.',
+    summary: 'Set the data types associated with one interconnection, replacing the current list.',
     kind: 'api',
     permission: 'Interconnections: Write',
     args: [interconnectionIdArg],
@@ -2999,7 +3014,7 @@ export const commandSpecs: CommandSpec[] = [
   },
   {
     id: 'personnel get',
-    summary: 'Show one person by their integer identifier.',
+    summary: 'Get one person by their integer identifier.',
     kind: 'api',
     permission: 'Personnel: Read',
     args: [personnelIdArg],
@@ -3282,16 +3297,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: null,
     args: [],
-    flags: [
-      {
-        name: 'profile',
-        type: 'option',
-        required: true,
-        summary: 'Profile that supplies the credential and base URL.',
-      },
-      apiOutputFlag,
-      jsonFlag,
-    ],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/Tenants'),
   },
   {
@@ -3339,18 +3345,25 @@ function writeTarget(spec: CommandSpec): WriteTarget {
 
 /**
  * One catalog entry: the public command description, its write target, and
- * the documented operation it sends. The contract's parameter and body
+ * the documented operations it can send. The contracts' parameter and body
  * details stay internal facts proved by the contract suite; the catalog
  * publishes only the method and path, which is what an agent needs to find
- * the operation's response shape in the archived OpenAPI document.
+ * each operation's response shape in the archived OpenAPI document.
  */
-export type CatalogCommand = Omit<CommandSpec, 'contract'> & {
+export interface CatalogOperation {
+  method: string
+  path: string
+  /** Present on a variant: the flag names that select it. Absent on the default. */
+  selectedBy?: string[]
+}
+
+export type CatalogCommand = Omit<CommandSpec, 'contract' | 'variants'> & {
   writes: WriteTarget
-  operation: {method: string; path: string} | null
+  operations: CatalogOperation[]
 }
 
 export interface Catalog {
-  catalogVersion: 2
+  catalogVersion: 3
   /** Every exit code the CLI can return, with its meaning. */
   exitCodes: typeof EXIT_CODE_CATALOG
   /** The failure-code vocabulary an agent will see on standard error. */
@@ -3360,7 +3373,7 @@ export interface Catalog {
 
 export function buildCatalog(): Catalog {
   return {
-    catalogVersion: 2,
+    catalogVersion: 3,
     exitCodes: EXIT_CODE_CATALOG,
     errors: ERROR_CATALOG,
     commands: commandSpecs.map((spec) => ({
@@ -3369,9 +3382,16 @@ export function buildCatalog(): Catalog {
       kind: spec.kind,
       writes: writeTarget(spec),
       permission: spec.permission,
-      operation: spec.contract
-        ? {method: spec.contract.method.toUpperCase(), path: spec.contract.path}
-        : null,
+      operations: spec.contract
+        ? [
+            {method: spec.contract.method.toUpperCase(), path: spec.contract.path},
+            ...(spec.variants ?? []).map((variant) => ({
+              method: variant.contract.method.toUpperCase(),
+              path: variant.contract.path,
+              selectedBy: variant.selectedBy,
+            })),
+          ]
+        : [],
       args: spec.args,
       flags: spec.flags,
     })),
@@ -3400,6 +3420,23 @@ export function apiCommandSpec(id: string): ApiCommandSpec {
   }
 
   return spec as ApiCommandSpec
+}
+
+/**
+ * The contract an API command sends for one parsed command line: the first
+ * variant whose selecting flag was supplied, else the default contract.
+ */
+export function selectContract(
+  spec: ApiCommandSpec,
+  flags: Record<string, unknown>,
+): OperationContract {
+  for (const variant of spec.variants ?? []) {
+    if (variant.selectedBy.some((name) => flags[name] !== undefined)) {
+      return variant.contract
+    }
+  }
+
+  return spec.contract
 }
 
 /**
