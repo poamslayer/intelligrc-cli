@@ -107,13 +107,17 @@ test('the populated path covers every catalog command and stays read-only', {tim
 
     const report = readReport(workDir)
 
-    // Every API command in the catalog has exactly one case record.
+    // Every API command in the catalog has a case record. `evidence list`
+    // has two, one per documented operation it can send, so the case count
+    // is one more than the command count.
     assert.equal(report.coverage.uncovered.length, 0)
     assert.equal(report.coverage.covered, report.coverage.apiCommands)
     const commandCases = report.cases.filter(
       (c) => c.command !== 'auth login' && c.command !== 'doctor',
     )
-    assert.equal(commandCases.length, report.coverage.apiCommands)
+    assert.equal(new Set(commandCases.map((c) => c.command)).size, report.coverage.apiCommands)
+    assert.equal(commandCases.length, report.coverage.apiCommands + 1)
+    assert.equal(commandCases.filter((c) => c.command === 'evidence list').length, 2)
 
     // The populated fixture leaves no skips and no failures.
     assert.deepEqual(
