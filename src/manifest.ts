@@ -3297,16 +3297,7 @@ export const commandSpecs: CommandSpec[] = [
     kind: 'api',
     permission: null,
     args: [],
-    flags: [
-      {
-        name: 'profile',
-        type: 'option',
-        required: true,
-        summary: 'Profile that supplies the credential and base URL.',
-      },
-      apiOutputFlag,
-      jsonFlag,
-    ],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
     contract: get('/v1/Tenants'),
   },
   {

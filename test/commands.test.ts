@@ -3646,7 +3646,7 @@ const expectedCatalog = {
           name: 'profile',
           type: 'option',
           required: true,
-          summary: 'Profile that supplies the credential and base URL.',
+          summary: 'Profile that supplies the credential, tenant, and base URL.',
         },
         {
           name: 'output',
