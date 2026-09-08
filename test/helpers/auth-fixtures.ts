@@ -3,7 +3,7 @@
  * readers for secrets.json and profiles.json.
  */
 import assert from 'node:assert/strict'
-import {existsSync, readFileSync} from 'node:fs'
+import {existsSync, readFileSync, writeFileSync} from 'node:fs'
 import {join} from 'node:path'
 
 import {type FakeApi} from './fake-api.ts'
@@ -32,6 +32,20 @@ export function profilesPath(home: string): string {
 
 export function secretsPath(home: string): string {
   return join(home, '.config', 'intelligrc', 'secrets.json')
+}
+
+/** Write one private credentials file and return its path. */
+export function writeCredentialsFile(
+  home: string,
+  fields: Record<string, unknown>,
+): string {
+  const path = join(home, 'credentials.json')
+  writeFileSync(
+    path,
+    `${JSON.stringify({credentialsVersion: 1, ...fields}, null, 2)}\n`,
+    {mode: 0o600},
+  )
+  return path
 }
 
 export function readProfiles(home: string): {profiles: Record<string, Record<string, unknown>>} {

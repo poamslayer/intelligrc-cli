@@ -45,8 +45,11 @@ const SHARED_OUTPUT_FLAGS: FlagSpec[] = [
   {
     name: 'profile',
     type: 'option',
-    required: true,
-    summary: 'Profile that supplies the credential, tenant, and base URL.',
+    required: false,
+    summary:
+      'Profile that supplies the credential, tenant, and base URL. Optional when ' +
+      'INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, ' +
+      'INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
   },
   {
     name: 'output',

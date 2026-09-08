@@ -37,7 +37,7 @@ export function apiWriteDescription(spec: ApiCommandSpec, method: HttpMethod): s
 export interface ApiWriteOptions {
   spec: ApiCommandSpec
   method: HttpMethod
-  profile: string
+  profile: string | undefined
   /** The command's parsed flags. See the note in ApiGetOptions. */
   flags: Record<string, unknown>
   sendTenantHeader: boolean

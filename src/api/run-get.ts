@@ -34,7 +34,7 @@ export interface ApiGetOptions {
   spec: ApiCommandSpec
   /** The selected contract when the command has variants. Defaults to spec.contract. */
   contract?: OperationContract
-  profile: string
+  profile: string | undefined
   /**
    * The command's parsed flags. The runner resolves the output format from
    * them inside its own error handling, so a contradictory pair of format

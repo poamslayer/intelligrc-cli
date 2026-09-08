@@ -75,6 +75,8 @@ export const ERROR_CATALOG = {
     {code: 'conflicting-output-flags', exitCode: EXIT.invalidInput, meaning: '--json was combined with an --output format other than json.'},
     {code: 'delete-confirmation-unavailable', exitCode: EXIT.invalidInput, meaning: 'A delete needed confirmation, no terminal was attached, and --force was absent. Nothing was deleted.'},
     {code: 'delete-declined', exitCode: EXIT.invalidInput, meaning: 'The delete confirmation was answered with anything other than yes. Nothing was deleted.'},
+    {code: 'identity-required', exitCode: EXIT.invalidInput, meaning: 'No --profile, no INTELLIGRC_CREDENTIALS_FILE, and no complete environment identity.'},
+    {code: 'identity-source-conflict', exitCode: EXIT.invalidInput, meaning: '--profile and INTELLIGRC_CREDENTIALS_FILE were both supplied.'},
     {code: 'missing-required-argument', exitCode: EXIT.invalidInput, meaning: 'A required positional argument was absent.'},
     {code: 'missing-required-flag', exitCode: EXIT.invalidInput, meaning: 'A required flag was absent.'},
     {code: 'profile-name-invalid', exitCode: EXIT.invalidInput, meaning: 'The profile name contains characters the CLI does not allow.'},
@@ -85,6 +87,9 @@ export const ERROR_CATALOG = {
     // Exit 3: the local profile is missing, incomplete, or unreadable.
     {code: 'client-secret-env-missing', exitCode: EXIT.localConfiguration, meaning: 'The environment variable named by --client-secret-env is unset or empty.'},
     {code: 'client-secret-missing', exitCode: EXIT.localConfiguration, meaning: 'The profile exists but the secrets file holds no secret for it.'},
+    {code: 'credentials-file-invalid', exitCode: EXIT.localConfiguration, meaning: 'The credentials file has the wrong version or lacks a required field.'},
+    {code: 'credentials-file-permissions', exitCode: EXIT.localConfiguration, meaning: 'The credentials file is readable by group or others. Run chmod 600 on it.'},
+    {code: 'credentials-file-unreadable', exitCode: EXIT.localConfiguration, meaning: 'The credentials file cannot be opened or parsed.'},
     {code: 'doctor-tenant-mismatch', exitCode: EXIT.localConfiguration, meaning: 'The tenant the credential returns is not the tenant saved in the profile.'},
     {code: 'profile-base-url-invalid', exitCode: EXIT.localConfiguration, meaning: 'The base URL saved in the profile is not usable.'},
     {code: 'profile-exists', exitCode: EXIT.localConfiguration, meaning: 'A profile of that name already exists. Pass --replace to overwrite it.'},
