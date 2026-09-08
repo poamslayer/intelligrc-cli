@@ -1,8 +1,8 @@
 /**
  * Process-level tests for the issue #5 compliance retrieval commands:
  * evaluation current, assessment-objective list, control list, and
- * evidence for-evaluation. Each command maps to one documented GET
- * operation through the guarded API runtime.
+ * evidence list. The evidence command selects its documented GET operation
+ * from the supplied filters. Every command uses the guarded API runtime.
  */
 import assert from 'node:assert/strict'
 import {after, before, test} from 'node:test'
@@ -78,11 +78,11 @@ test('control list passes validated filters under their documented names', async
   assert.equal(request.path, `/v1/Controls?evaluationId=42&frameworkId=${FRAMEWORK_ID}`)
 })
 
-test('evidence for-evaluation maps to GET /v1/Evidence/Evaluation', async () => {
+test('filtered evidence list maps to GET /v1/Evidence/Evaluation', async () => {
   api.enqueue({status: 200, body: []})
 
   const result = await run([
-    'evidence', 'for-evaluation', '--profile', 'main', '--evaluation-id', '7',
+    'evidence', 'list', '--profile', 'main', '--evaluation-id', '7',
   ])
 
   assert.equal(result.code, 0, result.stderr)
@@ -107,7 +107,7 @@ test('a single given filter appears alone in the query string', async () => {
   api.enqueue({status: 200, body: []})
 
   const result = await run([
-    'evidence', 'for-evaluation', '--profile', 'main', '--framework-id', FRAMEWORK_ID,
+    'evidence', 'list', '--profile', 'main', '--framework-id', FRAMEWORK_ID,
   ])
 
   assert.equal(result.code, 0, result.stderr)
@@ -135,6 +135,30 @@ test('a non-integer evaluation identifier exits 2 before any network access', as
   assert.equal(result.code, 2)
   assert.equal(result.stdout, '')
   assert.equal(JSON.parse(result.stderr).error.code, 'invalid-evaluation-id')
+  assert.equal(api.requests.length, requestsBefore)
+})
+
+test('evidence list rejects a non-integer evaluation identifier before network access', async () => {
+  const requestsBefore = api.requests.length
+
+  const result = await run([
+    'evidence', 'list', '--profile', 'main', '--evaluation-id', 'seven',
+  ])
+
+  assert.equal(result.code, 2)
+  assert.equal(result.stdout, '')
+  assert.equal(JSON.parse(result.stderr).error.code, 'invalid-evaluation-id')
+  assert.equal(api.requests.length, requestsBefore)
+})
+
+test('the removed evaluation evidence command uses unknown-command behavior', async () => {
+  const requestsBefore = api.requests.length
+
+  const result = await run(['evidence', 'for-evaluation', '--profile', 'main'])
+
+  assert.equal(result.code, 2)
+  assert.equal(result.stdout, '')
+  assert.equal(JSON.parse(result.stderr).error.code, 'command-not-found')
   assert.equal(api.requests.length, requestsBefore)
 })
 
@@ -215,7 +239,7 @@ test('tenant list supports the shared jsonl format', async () => {
 test('a 403 names the documented permission without claiming the profile holds it', async () => {
   api.enqueue({status: 403, body: {title: 'Forbidden', status: 403}})
 
-  const result = await run(['evidence', 'for-evaluation', '--profile', 'main'])
+  const result = await run(['evidence', 'list', '--profile', 'main'])
 
   assert.equal(result.code, 4)
   assert.equal(result.stdout, '')
@@ -246,7 +270,7 @@ test('the current-evaluation identifier chains through the three list commands',
   const chained: Array<[string[], string]> = [
     [['assessment-objective', 'list'], '/v1/AssessmentObjectives'],
     [['control', 'list'], '/v1/Controls'],
-    [['evidence', 'for-evaluation'], '/v1/Evidence/Evaluation'],
+    [['evidence', 'list'], '/v1/Evidence/Evaluation'],
   ]
   for (const [argv, path] of chained) {
     api.enqueue({status: 200, body: [{id: `${path}-row`}]})

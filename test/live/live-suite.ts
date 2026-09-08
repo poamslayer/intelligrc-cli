@@ -372,7 +372,7 @@ async function main(): Promise<void> {
       },
       {command: 'evidence list'},
       {
-        command: 'evidence for-evaluation',
+        command: 'evidence list',
         needs: ['evaluationId'],
         extraArgs: (s) => ['--evaluation-id', String(s.evaluationId.value)],
       },

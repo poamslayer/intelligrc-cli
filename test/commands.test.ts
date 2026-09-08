@@ -231,7 +231,7 @@ const personnelWriteFlags = [
 // #7, #8, #9, and #10. This literal is the independent source of truth;
 // it must not be derived from src/manifest.ts.
 const expectedCatalog = {
-  catalogVersion: 2,
+  catalogVersion: 3,
   commands: [
     {
       id: 'auth login',
@@ -812,8 +812,8 @@ const expectedCatalog = {
       ],
     },
     {
-      id: 'evidence for-evaluation',
-      summary: 'List uploaded evidence for an evaluation.',
+      id: 'evidence list',
+      summary: 'List uploaded evidence for the profile tenant, or for one evaluation.',
       kind: 'api',
       permission: 'Evidence: Read',
       args: [],
@@ -839,37 +839,6 @@ const expectedCatalog = {
           summary:
             'Framework identifier (UUID), sent as the documented frameworkId ' +
             'query parameter. Omitted from the request when not given.',
-        },
-        {
-          name: 'output',
-          type: 'option',
-          required: false,
-          allowedValues: ['json', 'jsonl', 'table'],
-          default: 'json',
-          summary: 'Output format.',
-        },
-        {
-          name: 'json',
-          type: 'boolean',
-          required: false,
-          summary:
-            'Print JSON, the default format. Equivalent to `--output json`. ' +
-            'Cannot be combined with `--output jsonl` or `--output table`.',
-        },
-      ],
-    },
-    {
-      id: 'evidence list',
-      summary: 'List all uploaded evidence for the profile tenant.',
-      kind: 'api',
-      permission: 'Evidence: Read',
-      args: [],
-      flags: [
-        {
-          name: 'profile',
-          type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
         },
         {
           name: 'output',
@@ -3717,7 +3686,7 @@ test('commands --output json emits the full catalog as valid JSON', async () => 
   // This suite owns every command's identity, summary, kind, permission,
   // arguments, and flags. Three catalog fields are owned elsewhere and are
   // removed before the comparison, so their expectations live in one place
-  // each: `writes` in test/catalog-completeness.test.ts, `operation` in
+  // each: `writes` in test/catalog-completeness.test.ts, `operations` in
   // test/contract.test.ts against the archived OpenAPI document, and the
   // exit-code and error tables in test/catalog-completeness.test.ts.
   const parsed = JSON.parse(result.stdout) as {
@@ -3732,7 +3701,7 @@ test('commands --output json emits the full catalog as valid JSON', async () => 
   assert.deepEqual(
     {
       catalogVersion: parsed.catalogVersion,
-      commands: parsed.commands.map(({writes, operation, ...command}) => command),
+      commands: parsed.commands.map(({writes, operations, ...command}) => command),
     },
     expectedCatalog,
   )

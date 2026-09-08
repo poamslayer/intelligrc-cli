@@ -135,9 +135,9 @@ test('a clean checkout builds, packs, installs, and serves the documented surfac
     catalogVersion: number
     commands: Array<{id: string; kind: string}>
   }
-  assert.equal(catalog.catalogVersion, 2)
-  assert.equal(catalog.commands.length, 78)
-  assert.equal(catalog.commands.filter((command) => command.kind === 'api').length, 72)
+  assert.equal(catalog.catalogVersion, 3)
+  assert.equal(catalog.commands.length, 77)
+  assert.equal(catalog.commands.filter((command) => command.kind === 'api').length, 71)
   assert.ok(catalog.commands.some((command) => command.id === 'evaluation current'))
   // The six local and profile commands ship in the installed catalog too.
   const installedIds = new Set(catalog.commands.map((command) => command.id))

@@ -5,17 +5,17 @@ description: Query and edit IntelliGRC governance, risk, and compliance data (ev
 
 # IntelliGRC CLI
 
-Use the `intelligrc` CLI to read and edit data in the IntelliGRC API. The CLI maps all 50 documented GET operations to one read command each, and 22 of the 23 documented write operations to one write command each. The only unimplemented write is `POST /v1/Evidence/Upload`, the multipart evidence-file upload: for that one, direct the user to the IntelliGRC web app.
+Use the `intelligrc` CLI to read and edit data in the IntelliGRC API. The CLI's 49 read commands cover all 50 documented GET operations. `evidence list` sends one of two documented operations depending on its flags. The CLI maps 22 of the 23 documented write operations to one write command each. The only unimplemented write is `POST /v1/Evidence/Upload`, the multipart evidence-file upload: for that one, direct the user to the IntelliGRC web app.
 
 ## Command reference
 
 Run `intelligrc commands` for the full command catalog as JSON. This works offline, needs no profile, and is always up to date. Run `intelligrc <command> --help` for per-command flags.
 
-The catalog (`catalogVersion: 2`) carries four things:
+The catalog (`catalogVersion: 3`) carries four things:
 
 - `commands[]` — each with `id`, `summary`, `kind`, `permission`, `args`, `flags`, plus:
   - `writes`: `"remote"` changes tenant data in IntelliGRC, `"local"` changes local state on this machine, `null` changes nothing. **Check this before running a command on someone's behalf.**
-  - `operation`: the documented `method` and `path` the command sends, or `null`. Use the path to find the response shape in the IntelliGRC OpenAPI document.
+  - `operations`: the documented `method` and `path` entries the command can send, or an empty list. A variant entry carries `selectedBy`, the flag names that select it. Use each path to find the response shape in the IntelliGRC OpenAPI document.
 - `exitCodes[]` — every exit code with its meaning.
 - `errors` — `codes[]` (exact failure codes with their exit code and meaning), `families[]` (the `invalid-` prefix, whose remainder names the input that failed), and `diagnostics[]` (written to stderr while the command still succeeds).
 
@@ -69,7 +69,7 @@ intelligrc evaluation current --profile prod                    # The active eva
 intelligrc evaluation list --profile prod
 intelligrc assessment-objective list --profile prod --evaluation-id 42 --output jsonl | jq -r '.status'
 intelligrc control list --profile prod --framework-id <uuid>
-intelligrc evidence for-evaluation --profile prod --evaluation-id 42
+intelligrc evidence list --profile prod --evaluation-id 42
 intelligrc evidence-folder list --profile prod
 intelligrc action-plan-project list --profile prod --include-tasks true --include-subtasks true
 intelligrc facility list --profile prod --output table

@@ -67,7 +67,7 @@ _Avoid_: schema, registry, command table
 
 **Catalog**:
 The JSON that `intelligrc commands` prints: every command with its verb, permission,
-flags, operation, and whether it writes. It is derived from the manifest and needs no
+flags, operations, and whether it writes. It is derived from the manifest and needs no
 credentials.
 _Avoid_: introspection, capabilities, command list
 
