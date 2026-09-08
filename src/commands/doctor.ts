@@ -28,7 +28,7 @@ export default class Doctor extends Command {
   static override summary = spec.summary
 
   static override description =
-    'Checks the saved profile in order: completeness, protected-secret ' +
+    'Checks the saved profile in order: completeness, secrets file ' +
     'access, the HTTPS transport rule, tenant-list access, and exact ' +
     'agreement between the returned tenant and the saved profile. Doctor ' +
     'diagnoses the stored configuration, so INTELLIGRC_* overrides are ' +

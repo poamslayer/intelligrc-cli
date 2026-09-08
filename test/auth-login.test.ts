@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import {existsSync, readFileSync} from 'node:fs'
+import {existsSync, readFileSync, statSync} from 'node:fs'
 import {test} from 'node:test'
 
 import {
@@ -7,6 +7,7 @@ import {
   profilesPath,
   readSecrets,
   readProfiles,
+  secretsPath,
   setupAuthContext as setup,
   TEST_SECRET as SECRET,
 } from './helpers/auth-fixtures.ts'
@@ -73,6 +74,9 @@ test('login saves the profile and secret when discovery returns one tenant', asy
     assert.equal(api.requests[0].headers['x-client-secret'], SECRET)
 
     assert.deepEqual(readSecrets(ctx.home), {acme: SECRET})
+    if (process.platform !== 'win32') {
+      assert.equal(statSync(secretsPath(ctx.home)).mode & 0o777, 0o600)
+    }
 
     const profiles = readProfiles(ctx.home)
     const saved = profiles.profiles.acme as Record<string, unknown>

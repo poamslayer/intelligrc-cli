@@ -587,7 +587,7 @@ Completed 2026-09-08 in commit `c12d3c0`. `npm test`: 491 pass, 0 fail, plus one
 
 ### 4. Remove the keychain from the workflow and record the decision
 
-Completed 2026-09-08. The validation grep matches only ADR-0002. `.github/workflows/live.yml` was also changed: it installed `gnome-keyring` and ran the live suite inside a D-Bus session solely for the keychain, and the validation grep covers every workflow file. `README.md` had no Authentication heading, so one was added after "First compliance workflow". The workflow run on the pull request is recorded in Plan history.
+Completed 2026-09-08. The validation grep matches only ADR-0002. `.github/workflows/live.yml` was also changed: it installed `gnome-keyring` and ran the live suite inside a D-Bus session solely for the keychain, and the validation grep covers every workflow file. `README.md` had no Authentication heading, so one was added after "First compliance workflow". Pull request #94; the workflow result is recorded in Plan history.
 
 - Worker: `fable-worker` subagent (writing). It edits the ADR, the documentation, and
   the workflow YAML; no Codex worker is needed for this slice.
@@ -728,6 +728,7 @@ Completed 2026-09-08. The validation grep matches only ADR-0002. `.github/workfl
 
 ## Plan history
 
+- 2026-09-08: Code review (standards and spec axes) after the four slices. Fixed: a blank `INTELLIGRC_*` variable overrode a good field with an empty string, so blank now counts as unset everywhere in `resolveIdentity`; the secrets temp file is created exclusively so mode 0600 always applies; leftover "protected secret" and "profile resolution" wording; the README write section contradicted the Authentication section; a README migration note for pre-existing profiles. Added tests: blank override, secrets file mode 0600 after login, and the `chmod 600` message on both permission codes. Not changed, by design: `FileSecretStore` mirrors `ProfileStore` rather than sharing a base class, `resolve.ts` stays a thin wrapper, and the `SecretStore` interface stays for the rollback unit test.
 - 2026-09-08: Slices 1 to 4 implemented on branch `feature/identity-rewrite` (commits `73ac310`, `d7b832d`, `c12d3c0`, and the slice 4 commit). Two discoveries: the process-level rollback happy-path test cannot be produced with a single-directory file store and moved to a unit test; the live workflow also depended on the keychain and was simplified. The two profiles saved on the owner's machine (`prod`, `tp`) still hold their secret in the macOS keychain and need `auth login --replace` once; the `security` command needs a GUI approval to read them, so this was not automated.
 - 2026-09-08: Published as GitHub issues #89 (store), #90 (environment identity), #91
   (credentials file), #92 (`auth status` and catalog env), #93 (CI, ADR, docs). Slice 2

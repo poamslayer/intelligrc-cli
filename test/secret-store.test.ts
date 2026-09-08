@@ -62,7 +62,13 @@ test(
 
     assert.throws(
       () => new FileSecretStore(directory).get('acme'),
-      (error: unknown) => error instanceof CliFailure && error.code === 'secrets-file-permissions',
+      (error: unknown) => {
+        assert.ok(error instanceof CliFailure)
+        assert.equal(error.code, 'secrets-file-permissions')
+        assert.ok(error.message.includes(path))
+        assert.match(error.message, /chmod 600/)
+        return true
+      },
     )
   },
 )

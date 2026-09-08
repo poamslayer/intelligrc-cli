@@ -42,13 +42,13 @@ export interface ApiGetOptions {
    */
   flags: Record<string, unknown>
   /**
-   * Builds the validated query pairs. Runs before profile resolution, so
+   * Builds the validated query pairs. Runs before identity resolution, so
    * an invalid identifier exits 2 with zero secrets file or network access.
    */
   buildQuery?: () => QueryPairs
   /**
    * Builds the request path when the documented path contains a path
-   * parameter. Runs before profile resolution under the same guarantee
+   * parameter. Runs before identity resolution under the same guarantee
    * as buildQuery. When absent, the request uses the operation
    * contract's path unchanged.
    */

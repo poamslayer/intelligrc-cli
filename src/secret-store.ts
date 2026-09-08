@@ -111,7 +111,13 @@ export class FileSecretStore implements SecretStore {
     const temporaryPath = `${this.filePath}.tmp-${process.pid}`
     try {
       mkdirSync(this.configDir, {recursive: true, mode: 0o700})
-      writeFileSync(temporaryPath, `${JSON.stringify(file, null, 2)}\n`, {mode: 0o600})
+      // Remove any leftover temp file first, then create the new one
+      // exclusively, so the 0600 mode always applies to a fresh file.
+      rmSync(temporaryPath, {force: true})
+      writeFileSync(temporaryPath, `${JSON.stringify(file, null, 2)}\n`, {
+        mode: 0o600,
+        flag: 'wx',
+      })
       try {
         renameSync(temporaryPath, this.filePath)
       } catch (error) {

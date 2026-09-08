@@ -3,7 +3,7 @@
  * builder live here: query-filter builders that turn optional flags into the
  * documented query parameters, and request-body builders that turn write-command
  * flags into the documented request body. Every parser runs after flag parsing
- * and before profile resolution, so an invalid identifier, number, UUID, or
+ * and before identity resolution, so an invalid identifier, number, UUID, or
  * date exits 2 (invalid input) with zero secrets file or network access. A query
  * value goes into the query string under the documented camelCase parameter
  * name; a body value goes into the JSON body under the documented field name.
@@ -166,7 +166,7 @@ export interface DataTypeBody {
 
 /**
  * Build the validated data-type body from the write command's flags. Runs
- * before profile resolution, so a non-integer level identifier exits 2 with
+ * before identity resolution, so a non-integer level identifier exits 2 with
  * a stable code and zero secrets file or network access. The CLI does not check
  * the level identifiers against the lookup catalogs — the IntelliGRC API is
  * the authority that accepts or rejects them.
@@ -208,7 +208,7 @@ export interface DataTypeIdsBody {
 
 /**
  * Build the validated data-type association body from the repeatable
- * --data-type-id flag. Runs before profile resolution, so a non-integer
+ * --data-type-id flag. Runs before identity resolution, so a non-integer
  * element exits 2 with a stable code and zero secrets file or network access. An
  * omitted flag (oclif passes undefined) and an empty list both produce an
  * empty array, which serializes as the documented empty `dataTypeIds` array.
@@ -275,7 +275,7 @@ export interface AssessmentObjectiveIdsBody {
 
 /**
  * Build the validated assessment-objective association body from the
- * repeatable --assessment-objective-id flag. Runs before profile resolution,
+ * repeatable --assessment-objective-id flag. Runs before identity resolution,
  * so a malformed UUID exits 2 with a stable code and zero secrets file or network
  * access. The flag is required, so oclif guarantees at least one value; the
  * `?? []` guard keeps the builder total for direct callers.
@@ -357,7 +357,7 @@ export interface AssessmentObjectiveUpdateBody {
 
 /**
  * Build the validated assessment-objective update body from the update
- * command's flags. Runs before profile resolution, so a non-integer
+ * command's flags. Runs before identity resolution, so a non-integer
  * evaluation or status identifier exits 2 with a stable code and zero secrets file
  * or network access. Each field is included only when the user supplied its
  * flag, matching the documented partial-update contract.
@@ -415,7 +415,7 @@ export interface ControlUpdateBody {
 
 /**
  * Build the validated control update body from the update command's flags.
- * Runs before profile resolution, so a non-integer evaluation identifier exits
+ * Runs before identity resolution, so a non-integer evaluation identifier exits
  * 2 with a stable code and zero secrets file or network access. Each field is
  * included only when the user supplied its flag, matching the documented
  * partial-update contract.
@@ -480,7 +480,7 @@ export interface InterconnectionUpdateBody {
 
 /**
  * Build the validated interconnection create body from the create command's
- * flags. Runs before profile resolution, so a non-integer identifier or a
+ * flags. Runs before identity resolution, so a non-integer identifier or a
  * malformed authorization-type value exits 2 with a stable code and zero
  * secrets file or network access. The `--name`, `--authorizing-official-id`, and
  * `--authorization-type` flags are required, so oclif guarantees they are
@@ -517,7 +517,7 @@ export function buildInterconnectionCreateBody(
 
 /**
  * Build the validated interconnection update body from the update command's
- * flags. Runs before profile resolution, so a non-integer identifier or a
+ * flags. Runs before identity resolution, so a non-integer identifier or a
  * malformed authorization-type value exits 2 with a stable code and zero
  * secrets file or network access. `--name` is required; every other field is
  * included only when the user supplied its flag, matching the documented
@@ -670,7 +670,7 @@ export interface EvaluationCreateBody {
 
 /**
  * Build the validated evaluation create body from the create command's flags.
- * Runs before profile resolution, so a non-integer identifier, a non-numeric
+ * Runs before identity resolution, so a non-integer identifier, a non-numeric
  * budget, a malformed UUID, or an invalid date exits 2 with a stable code and
  * zero secrets file or network access. The seven required flags are enforced by
  * oclif; each optional field is included only when the user supplied its flag.
@@ -746,7 +746,7 @@ export interface BoundaryCreateBody {
 
 /**
  * Build the validated boundary create body from the create command's flags.
- * Runs before profile resolution, so a non-integer identifier or a malformed
+ * Runs before identity resolution, so a non-integer identifier or a malformed
  * UUID in any scalar or array field exits 2 with a stable code and zero secrets file
  * or network access. The four required flags are enforced by oclif; each
  * optional scalar or array field is included only when the user supplied its
@@ -978,7 +978,7 @@ export interface FacilityWriteBody {
 /**
  * Build the validated facility body from the create or update command's flags.
  * The two documented DTOs share one field set, so one builder serves both
- * commands. It runs before profile resolution, so a non-integer value in any
+ * commands. It runs before identity resolution, so a non-integer value in any
  * of the three integer flags exits 2 with a stable code and zero secrets file or
  * network access. The required --name flag is enforced by oclif; each optional
  * field is included only when its flag is supplied. The CLI does not check the
@@ -1096,7 +1096,7 @@ export interface PersonnelWriteBody {
 /**
  * Build the validated personnel body from the create or update command's
  * flags. The two documented DTOs share one field set, so one builder serves
- * both commands. It runs before profile resolution, so a non-integer
+ * both commands. It runs before identity resolution, so a non-integer
  * --user-type-id exits 2 with a stable code and zero secrets file or network
  * access. The required --first-name and --last-name flags are enforced by
  * oclif; each optional field is included only when its flag is supplied. The
@@ -1526,7 +1526,7 @@ function parseUuid(raw: string, code: string, label: string, documentedName: str
  * is a shorthand for `--output json`, so the two agree unless the caller asks
  * for `jsonl` or `table` and passes `--json` at the same time. That
  * combination is contradictory, so it exits 2 rather than silently picking
- * one. Runs before profile resolution, like every other parser here.
+ * one. Runs before identity resolution, like every other parser here.
  */
 export function resolveOutputFormat(flags: Record<string, unknown>): OutputFormat {
   const output = (flags.output as OutputFormat | undefined) ?? 'json'

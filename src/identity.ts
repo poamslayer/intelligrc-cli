@@ -84,7 +84,11 @@ interface IdentityBase {
   secretSource: SecretSource
 }
 
-/** Choose one identity source and apply the documented environment overrides. */
+/**
+ * Choose one identity source and apply the documented environment overrides.
+ * A variable set to the empty string counts as unset everywhere: it does not
+ * form the environment identity and it does not override a field.
+ */
 export function resolveIdentity(
   profileName: string | undefined,
   configDir: string,
@@ -124,10 +128,9 @@ export function resolveIdentity(
       throw profileIncompleteFailure(profileName)
     }
 
-    const environmentSecretIsSet = env.INTELLIGRC_CLIENT_SECRET !== undefined
-    const clientSecret = environmentSecretIsSet
-      ? env.INTELLIGRC_CLIENT_SECRET
-      : new FileSecretStore(configDir).get(profileName)
+    const environmentSecret = nonEmpty(env.INTELLIGRC_CLIENT_SECRET)
+    const clientSecret =
+      environmentSecret ?? new FileSecretStore(configDir).get(profileName)
     if (!clientSecret) {
       throw clientSecretMissingFailure(profileName)
     }
@@ -140,7 +143,7 @@ export function resolveIdentity(
       tenantId: profile.tenantId,
       tenantName: profile.tenantName ?? null,
       baseUrl: profile.baseUrl,
-      secretSource: environmentSecretIsSet ? 'environment' : 'secrets-file',
+      secretSource: environmentSecret === undefined ? 'secrets-file' : 'environment',
     }
   } else {
     const clientId = nonEmpty(env.INTELLIGRC_CLIENT_ID)
@@ -163,7 +166,7 @@ export function resolveIdentity(
       clientSecret,
       tenantId,
       tenantName: null,
-      baseUrl: env.INTELLIGRC_BASE_URL,
+      baseUrl: nonEmpty(env.INTELLIGRC_BASE_URL),
       secretSource: 'environment',
     }
   }
@@ -200,7 +203,7 @@ function applyOverride(
   env: NodeJS.ProcessEnv,
   overrides: string[],
 ): void {
-  const value = env[variable]
+  const value = nonEmpty(env[variable])
   if (value !== undefined) {
     base[field] = value
     overrides.push(variable)

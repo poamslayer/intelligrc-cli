@@ -3,6 +3,7 @@ import {chmodSync, writeFileSync} from 'node:fs'
 import {after, before, test} from 'node:test'
 
 import {
+  createProfile,
   setupAuthContext,
   writeCredentialsFile,
 } from './helpers/auth-fixtures.ts'
@@ -138,7 +139,10 @@ test(
 
     assert.equal(result.code, 3)
     assert.equal(result.stdout, '')
-    assert.equal(JSON.parse(result.stderr).error.code, 'credentials-file-permissions')
+    const error = JSON.parse(result.stderr).error
+    assert.equal(error.code, 'credentials-file-permissions')
+    assert.ok(error.message.includes(path))
+    assert.match(error.message, /chmod 600/)
     assert.equal(api.requests.length, requestsBefore)
   },
 )
@@ -204,4 +208,22 @@ test('the tenant environment variable overrides the credentials file', async () 
   assert.equal(result.code, 0, result.stderr)
   assert.equal(api.requests.length, requestsBefore + 1)
   assert.equal(api.requests.at(-1)!.headers['x-tenant-id'], 'environment-tenant')
+})
+
+test('a blank environment variable does not override a profile field', async () => {
+  const ctx = setupAuthContext()
+  await createProfile(api, ctx, 'acme')
+  api.enqueue({status: 200, body: []})
+  const requestsBefore = api.requests.length
+
+  const result = await runCli(['facility', 'list', '--profile', 'acme'], {
+    home: ctx.home,
+    env: {...ctx.env, INTELLIGRC_CLIENT_ID: '', INTELLIGRC_TENANT_ID: '', INTELLIGRC_BASE_URL: ''},
+  })
+
+  assert.equal(result.code, 0, result.stderr)
+  assert.equal(api.requests.length, requestsBefore + 1)
+  const request = api.requests.at(-1)!
+  assert.equal(request.headers['x-client-id'], 'client-acme')
+  assert.equal(request.headers['x-tenant-id'], 'tenant-acme')
 })

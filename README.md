@@ -109,6 +109,11 @@ and the environment variables that overrode a field, and never prints the secret
 intelligrc auth status --profile prod
 ```
 
+Profiles created before the secrets file existed hold their secret in the operating
+system secret store, which this version no longer reads. Recreate each one once with
+`intelligrc auth login --profile NAME --client-id ID --replace`; until then, commands that
+use that profile exit 3 with `client-secret-missing`.
+
 ### Headless identity
 
 A container, a CI runner, or an agent sandbox has no saved profile. Use one of the two
@@ -151,8 +156,8 @@ replaces the matching field, and `auth status` lists the replaced fields under
 
 ## Writing data types
 
-The CLI can create, update, and delete data types. Each write command requires
-`--profile` and prints the record the API returned.
+The CLI can create, update, and delete data types. Each write command needs one
+identity source (the examples use `--profile`) and prints the record the API returned.
 
 ```sh
 # Create a data type. The three level identifiers come from the matching

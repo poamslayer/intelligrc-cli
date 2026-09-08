@@ -8,7 +8,7 @@
  * exit code.
  *
  * Input validation (the body and path builders) and the confirmation run
- * before profile resolution, so an invalid flag or a declined delete exits
+ * before identity resolution, so an invalid flag or a declined delete exits
  * with zero secrets file or network access, exactly like the read path.
  */
 import {type Command} from '@oclif/core'
@@ -42,26 +42,26 @@ export interface ApiWriteOptions {
   flags: Record<string, unknown>
   sendTenantHeader: boolean
   /**
-   * Builds the validated JSON request body. Runs before profile resolution,
+   * Builds the validated JSON request body. Runs before identity resolution,
    * so an invalid flag exits 2 with zero secrets file or network access. Absent
    * for a DELETE, which carries no body.
    */
   buildBody?: () => unknown
   /**
    * Builds the request path when the documented path contains a path
-   * parameter. Runs before profile resolution under the same guarantee as
+   * parameter. Runs before identity resolution under the same guarantee as
    * buildBody. When absent, the request uses the contract's path unchanged.
    */
   buildPath?: () => string
   /**
    * Builds the validated query pairs when the documented operation carries a
-   * query parameter. Runs before profile resolution under the same guarantee
+   * query parameter. Runs before identity resolution under the same guarantee
    * as buildBody. When absent, the request sends no query string.
    */
   buildQuery?: () => QueryPairs
   /**
    * Optional confirmation for a destructive operation. Runs after input
-   * validation and before profile resolution. It resolves to proceed or
+   * validation and before identity resolution. It resolves to proceed or
    * throws a CliFailure to decline, so a declined delete sends no request.
    */
   confirm?: () => Promise<void>
