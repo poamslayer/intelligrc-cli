@@ -77,6 +77,17 @@ only this machine.
 _Avoid_: mutation, side effect
 
 **Profile**:
-One named, saved credential set for one tenant. The secret lives in the operating
-system keychain.
+One named, saved credential set for one tenant. The secret lives in the secrets file in
+the CLI config directory.
 _Avoid_: login, account, connection, config
+
+**Credentials file**:
+A JSON file that holds one complete identity, named by `INTELLIGRC_CREDENTIALS_FILE`. The
+CLI never writes it. This is how a container or CI secret mount hands the CLI an
+identity.
+_Avoid_: secret mount, env file, token file
+
+**Identity source**:
+Which of profile, credentials file, or environment supplied the identity. Exactly one
+source is the base; individual environment variables may override fields of that base.
+_Avoid_: auth mode, credential provider, backend

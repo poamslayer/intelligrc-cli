@@ -61,21 +61,15 @@ jobs:
           npm install --global --prefix "$PREFIX" "${{ runner.temp }}"/intelligrc-cli-*.tgz
           echo "INTELLIGRC_INSTALLED_BIN=$PREFIX/bin/intelligrc" >> "$GITHUB_ENV"
 
-      # The upstream keyring-node recipe: the CLI stores the live secret
-      # in a real Secret Service keyring for the duration of the run.
+      # The CLI stores the live secret in secrets.json (mode 0600) under the
+      # runner's config directory for the duration of the run. The runner is
+      # discarded after the job, so no cleanup step is needed.
       - name: Run the live suite
         env:
           INTELLIGRC_LIVE_CLIENT_ID: ${{ secrets.INTELLIGRC_LIVE_CLIENT_ID }}
           INTELLIGRC_LIVE_CLIENT_SECRET: ${{ secrets.INTELLIGRC_LIVE_CLIENT_SECRET }}
           INTELLIGRC_LIVE_BASE_URL: ${{ vars.INTELLIGRC_LIVE_BASE_URL }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gnome-keyring dbus dbus-x11
-          dbus-run-session -- bash -c '
-            rm -f "$HOME/.local/share/keyrings/"*
-            echo -n "ci-throwaway" | gnome-keyring-daemon --unlock
-            npm run check:live -- "$INTELLIGRC_INSTALLED_BIN"
-          '
+        run: npm run check:live -- "$INTELLIGRC_INSTALLED_BIN"
 
       # The report contains no credential material, tenant identifier, or
       # response data; the runner refuses to write it otherwise.

@@ -2,8 +2,6 @@
 #
 # Every job runs with fake credentials against local fake responses only:
 # the workflow reads no repository secret and contacts no IntelliGRC host.
-# Generated test-secret values never appear in logs or artifacts — the
-# native-store check fails when any output or file contains one.
 #
 # A failure on any operating system blocks release: the publish work in
 # issue #14 requires this workflow to pass on the release commit.
@@ -32,8 +30,6 @@ jobs:
         with:
           node-version: 24
 
-      # A native @napi-rs/keyring package that fails to install for a
-      # supported target fails here and blocks release.
       - name: Install dependencies
         run: npm ci
 
@@ -70,39 +66,22 @@ jobs:
           $runJs = Join-Path $prefix 'node_modules\intelligrc-cli\bin\run.js'
           Add-Content -Path $env:GITHUB_ENV -Value "INTELLIGRC_INSTALLED_RUN_JS=$runJs"
 
-      # Native protected storage: set, retrieve, replace, and delete a
-      # generated secret through the installed public executable against
-      # the real operating-system store. The check script fails when any
-      # output or file contains a generated secret value.
-      - name: Native store check (Linux, Secret Service via gnome-keyring)
-        if: runner.os == 'Linux'
+      - name: Secrets file is private after login (POSIX)
+        if: runner.os != 'Windows'
+        shell: bash
+        env:
+          INTELLIGRC_ALLOW_HTTP_LOCALHOST: '1'
+          CI_SECRET: ci-throwaway
+          XDG_CONFIG_HOME: ${{ runner.temp }}/xdg
         run: |
-          sudo apt-get update
-          sudo apt-get install -y gnome-keyring dbus dbus-x11
-          # The upstream keyring-node CI recipe: clear any stale keyring
-          # shipped in the runner image, then create and unlock the login
-          # keyring (the default Secret Service collection) with a
-          # throwaway password inside one D-Bus session.
-          dbus-run-session -- bash -c '
-            rm -f "$HOME/.local/share/keyrings/"*
-            echo -n "ci-throwaway" | gnome-keyring-daemon --unlock
-            npm run check:native-store -- "$INTELLIGRC_INSTALLED_BIN"
-          '
-
-      - name: Native store check (macOS, Keychain)
-        if: runner.os == 'macOS'
-        run: |
-          security create-keychain -p ci-throwaway ci.keychain-db
-          security set-keychain-settings ci.keychain-db
-          security unlock-keychain -p ci-throwaway ci.keychain-db
-          security default-keychain -s ci.keychain-db
-          security list-keychains -d user -s ci.keychain-db login.keychain-db
-          npm run check:native-store -- "$INTELLIGRC_INSTALLED_BIN"
-
-      - name: Native store check (Windows, Credential Manager)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        run: npm run check:native-store -- node $env:INTELLIGRC_INSTALLED_RUN_JS
+          set +e
+          "$INTELLIGRC_INSTALLED_BIN" auth login --profile ci --client-id ci \
+            --client-secret-env CI_SECRET --base-url http://127.0.0.1:9 2>/dev/null
+          set -e
+          # Login fails at tenant discovery (nothing listens), so no secrets file
+          # may exist afterward. A file here means a secret was written before
+          # discovery succeeded.
+          test ! -e "$XDG_CONFIG_HOME/intelligrc/secrets.json"
 
       # The report holds test names and pass/fail results only: no tenant
       # identifier, no command response data, no credential material.

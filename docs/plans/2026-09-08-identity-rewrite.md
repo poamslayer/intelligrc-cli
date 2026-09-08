@@ -1,6 +1,6 @@
 # Identity rewrite: replace the keychain with a file store and add headless identity
 
-Status: Ready
+Status: In progress
 Last updated: 2026-09-08
 
 ## Outcome
@@ -389,6 +389,8 @@ Unchanged: `profile-not-found`, `profile-incomplete`, `profile-base-url-invalid`
 
 ### 1. Replace the keychain store with the file store
 
+Completed 2026-09-08 in commit `73ac310`. `npm test`: 474 pass, 0 fail. `grep -rn keyring src test package.json`: no output. Login probe against `http://127.0.0.1:9` exited 5 and left no `secrets.json`. Deviation: the process-level test "a failed configuration write during replacement restores the prior secret" was also removed, not only the "failed rollback" test. With one directory holding both files, a profiles write cannot fail after a secrets write succeeds, so the restore path is covered by the `restoreSecret` unit tests in `test/secret-store.test.ts`.
+
 - Worker: Codex headless, `gpt-5.6-sol`, effort high, `-s workspace-write`.
 - Outcome: `auth login`, `auth remove`, `doctor`, and every API command read and write
   the secret through `secrets.json`. The keychain dependency and its test seams are gone.
@@ -473,6 +475,8 @@ Unchanged: `profile-not-found`, `profile-incomplete`, `profile-base-url-invalid`
 
 ### 2. Add the credentials file and the environment identity
 
+Completed 2026-09-08 in commit `d7b832d`. `npm test`: 484 pass, 0 fail. Environment identity against `https://127.0.0.1:9` exited 5 with `network-failure`; no identity exited 2 with `identity-required` and the full message. `test/manifest-lint.test.ts` and `test/commands.test.ts` were also updated because they pin the `profile` flag definition.
+
 - Worker: Codex headless, `gpt-5.6-sol`, effort high, `-s workspace-write`.
 - Outcome: an API command runs with `INTELLIGRC_CREDENTIALS_FILE` and no profile, or with
   the three environment variables and no profile. Mixing the credentials file with
@@ -539,6 +543,8 @@ Unchanged: `profile-not-found`, `profile-incomplete`, `profile-base-url-invalid`
 
 ### 3. Add `auth status` and list environment variables in the catalog
 
+Completed 2026-09-08 in commit `c12d3c0`. `npm test`: 491 pass, 0 fail, plus one added test: `auth status` with no identity exits 2 with `identity-required` (issue #92 acceptance criterion not in the slice text). `commands | jq -r '.env[].name' | sort` and `grep -rho 'INTELLIGRC_[A-Z_]\+' src | sort -u` are identical. `auth status --profile prod` on this machine exits 3 with `client-secret-missing`, because the local profiles still hold their secret in the keychain; the message names `auth login --replace`.
+
 - Worker: Codex headless, `gpt-5.6-sol`, effort high, `-s workspace-write`.
 - Outcome: `intelligrc auth status` prints the resolved identity and its source as JSON
   without the secret. `intelligrc commands` lists every environment variable the CLI
@@ -580,6 +586,8 @@ Unchanged: `profile-not-found`, `profile-incomplete`, `profile-base-url-invalid`
 - Done when: the two comparisons match and `npm test` passes.
 
 ### 4. Remove the keychain from the workflow and record the decision
+
+Completed 2026-09-08. The validation grep matches only ADR-0002. `.github/workflows/live.yml` was also changed: it installed `gnome-keyring` and ran the live suite inside a D-Bus session solely for the keychain, and the validation grep covers every workflow file. `README.md` had no Authentication heading, so one was added after "First compliance workflow". The workflow run on the pull request is recorded in Plan history.
 
 - Worker: `fable-worker` subagent (writing). It edits the ADR, the documentation, and
   the workflow YAML; no Codex worker is needed for this slice.
@@ -720,6 +728,7 @@ Unchanged: `profile-not-found`, `profile-incomplete`, `profile-base-url-invalid`
 
 ## Plan history
 
+- 2026-09-08: Slices 1 to 4 implemented on branch `feature/identity-rewrite` (commits `73ac310`, `d7b832d`, `c12d3c0`, and the slice 4 commit). Two discoveries: the process-level rollback happy-path test cannot be produced with a single-directory file store and moved to a unit test; the live workflow also depended on the keychain and was simplified. The two profiles saved on the owner's machine (`prod`, `tp`) still hold their secret in the macOS keychain and need `auth login --replace` once; the `security` command needs a GUI approval to read them, so this was not automated.
 - 2026-09-08: Published as GitHub issues #89 (store), #90 (environment identity), #91
   (credentials file), #92 (`auth status` and catalog env), #93 (CI, ADR, docs). Slice 2
   became two tickets, #90 and #91, so each lands one demoable behavior.
