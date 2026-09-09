@@ -8,7 +8,7 @@
  * write-command tests assert. They also prove the reused machinery: a repeated
  * flag builds the uuid array in order, the optional preserveExisting query
  * parameter is sent only when given, and a malformed uuid (in the path or the
- * body) exits 2 before any network or keyring access.
+ * body) exits 2 before any network or secrets file access.
  */
 import assert from 'node:assert/strict'
 import {after, before, test} from 'node:test'

@@ -36,18 +36,28 @@ Retryability is not in the catalog, because it is not a property of the code: an
 
 ## Authentication
 
-API commands read credentials from a named profile. The client secret lives in the OS keychain; non-secret settings live in `~/.config/intelligrc/profiles.json`.
+API commands take their identity from exactly one of three identity sources. `--profile` is optional when another source is present; with no source at all the command exits 2 with `identity-required`.
+
+1. A profile, named with `--profile`. The client secret lives in `~/.config/intelligrc/secrets.json` (mode 0600); non-secret settings live in `~/.config/intelligrc/profiles.json`.
+   `intelligrc facility list --profile prod`
+2. A credentials file named by `INTELLIGRC_CREDENTIALS_FILE`: JSON with `credentialsVersion: 1`, `clientId`, `clientSecret`, `tenantId`, and optional `tenantName` and `baseUrl`. Mode 0600. Cannot be combined with `--profile` (exit 2, `identity-source-conflict`).
+   `INTELLIGRC_CREDENTIALS_FILE=/run/secrets/intelligrc.json intelligrc facility list`
+3. The environment identity: `INTELLIGRC_CLIENT_ID`, `INTELLIGRC_CLIENT_SECRET`, and `INTELLIGRC_TENANT_ID` all set, no `--profile`.
+   `INTELLIGRC_CLIENT_ID=... INTELLIGRC_CLIENT_SECRET=... INTELLIGRC_TENANT_ID=... intelligrc facility list`
 
 ```bash
 intelligrc auth login --profile prod --client-id <ID> --client-secret-env MY_SECRET_VAR
 intelligrc auth list                 # Saved profiles (offline, no secrets shown)
+intelligrc auth status --profile prod  # Resolved identity, its source, and overrides; never prints the secret
 intelligrc doctor --profile prod     # Five ordered health checks; stops at first failure
 intelligrc auth remove --profile prod
 ```
 
+- Run `auth status` before the first write in a session. It reports `identity.source` (`profile`, `credentials-file`, or `environment`), `secretSource`, `secretPresent`, and `overrides`, so a stale environment variable cannot point a write at the wrong tenant unnoticed. It fails with the same code and exit code an API command would.
 - `auth login` rejects a `--client-secret VALUE` flag by design so the secret never enters shell history. Headless use requires `--client-secret-env` naming an environment variable; interactive use gets a masked prompt.
 - Login validates the credential against `/v1/Tenants` and saves only when exactly one tenant returns.
-- Environment overrides for API commands: `INTELLIGRC_BASE_URL`, `INTELLIGRC_CLIENT_ID`, `INTELLIGRC_CLIENT_SECRET`, `INTELLIGRC_TENANT_ID`. `doctor` ignores them.
+- A secrets file or credentials file readable by group or others exits 3 with `secrets-file-permissions` or `credentials-file-permissions`; the message names the path and `chmod 600`.
+- Environment variables for API commands: `INTELLIGRC_CREDENTIALS_FILE`, `INTELLIGRC_BASE_URL`, `INTELLIGRC_CLIENT_ID`, `INTELLIGRC_CLIENT_SECRET`, `INTELLIGRC_TENANT_ID`. On top of a profile or a credentials file, each set variable overrides the matching field. `doctor` ignores them. `intelligrc commands` lists every variable under `env`.
 
 ## Syntax
 
@@ -56,11 +66,11 @@ intelligrc <topic> <subcommand> [ID] [--flags]
 ```
 
 - Topics are space-separated: `intelligrc evaluation current`, `intelligrc lookup facility types`.
-- Every API command requires `--profile <name>`.
+- Every API command needs one identity source. `--profile <name>` is optional when `INTELLIGRC_CREDENTIALS_FILE` or the environment identity is present (see Authentication).
 - `--output json|jsonl|table` on every API command; default is `json` (pretty-printed, upstream field names preserved). `jsonl` emits one JSON line per array element.
 - `--json` is accepted everywhere `--output` is, and means `--output json`. It states the default rather than changing it. Passing `--json` with `--output jsonl` or `--output table` exits 2.
 - `get`, `data-types get`, `data-types set`, `update`, and `delete` commands take a positional `ID` (for example `intelligrc facility get 3`, `intelligrc personnel update 12 ...`). It is an integer for data types, facilities, interconnections, and personnel, and a UUID for assessment objectives, controls, and evidence.
-- ID flags and arguments are validated before any network call or keychain read: `--evaluation-id` is an int32; `--framework-id`, `--assessment-objective-id`, `--parent-id`, and `--icl-version-id` are UUIDs. An invalid value exits 2 and sends nothing.
+- ID flags and arguments are validated before any network call or secrets file read: `--evaluation-id` is an int32; `--framework-id`, `--assessment-objective-id`, `--parent-id`, and `--icl-version-id` are UUIDs. An invalid value exits 2 and sends nothing.
 
 ## Common patterns
 
@@ -82,7 +92,7 @@ Lookup commands (`intelligrc lookup ...`) return the ID-to-name tables for statu
 
 ## Writing data
 
-Every write command requires `--profile` and prints the record the API returned. Run
+Every write command needs one identity source (the examples use `--profile`) and prints the record the API returned. Run
 `intelligrc <command> --help` for the exact flags: each flag summary names the body field it
 supplies and says whether the field is required.
 

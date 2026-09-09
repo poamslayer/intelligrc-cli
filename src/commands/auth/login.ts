@@ -6,7 +6,7 @@ import {CliFailure, EXIT, emitFailure} from '../../errors.js'
 import {commandSpec, oclifFlags} from '../../manifest.js'
 import {ProfileStore, type ProfileSettings} from '../../profile-store.js'
 import {promptSecret} from '../../prompt.js'
-import {KeyringSecretStore} from '../../secret-store.js'
+import {FileSecretStore, restoreSecret} from '../../secret-store.js'
 
 const spec = commandSpec('auth login')
 
@@ -19,8 +19,8 @@ export default class AuthLogin extends Command {
     'Reads the client secret from a masked prompt or from the environment ' +
     'variable named by --client-secret-env, discovers the assigned tenant ' +
     'from the documented tenant-list operation, and saves the profile only ' +
-    'when exactly one tenant returns. The secret is stored in the operating ' +
-    'system protected secret store, never in a configuration file.'
+    'when exactly one tenant returns. The secret is stored in the secrets file ' +
+    'in the CLI config directory, mode 0600.'
 
   static override enableJsonFlag = false
 
@@ -116,7 +116,7 @@ export default class AuthLogin extends Command {
         createdAt: new Date().toISOString(),
       }
 
-      const secretStore = new KeyringSecretStore()
+      const secretStore = new FileSecretStore(this.config.configDir)
       // Read the prior secret before any write so a failed replacement can
       // restore it.
       const priorSecret = existing ? secretStore.get(profileName) : null
@@ -125,7 +125,7 @@ export default class AuthLogin extends Command {
       try {
         profileStore.upsert(profileName, settings)
       } catch (error) {
-        this.rollbackSecret(secretStore, profileName, existing !== undefined, priorSecret)
+        restoreSecret(secretStore, profileName, existing !== undefined, priorSecret)
         throw error
       }
 
@@ -186,31 +186,4 @@ export default class AuthLogin extends Command {
     })
   }
 
-  /**
-   * Undo the secret write after a failed profiles.json write. A failed
-   * restore surfaces the exact component that requires repair.
-   */
-  private rollbackSecret(
-    secretStore: KeyringSecretStore,
-    profileName: string,
-    hadProfile: boolean,
-    priorSecret: string | null,
-  ): void {
-    try {
-      if (hadProfile && priorSecret !== null) {
-        secretStore.set(profileName, priorSecret)
-      } else {
-        secretStore.delete(profileName)
-      }
-    } catch {
-      throw new CliFailure({
-        code: 'rollback-failed',
-        message:
-          'Writing profiles.json failed and the protected secret entry ' +
-          `for profile "${profileName}" (service "intelligrc-cli") could ` +
-          'not be restored. Repair that secret store entry manually.',
-        exitCode: EXIT.localConfiguration,
-      })
-    }
-  }
 }

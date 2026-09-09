@@ -1,7 +1,7 @@
 /**
  * Non-secret profile settings, stored as one JSON file in the oclif
  * per-user configuration directory. The file never contains the client
- * secret; that value lives only in the protected secret store.
+ * secret; that value lives only in the secrets file.
  */
 import {mkdirSync, readFileSync, renameSync, rmSync, writeFileSync} from 'node:fs'
 import {join} from 'node:path'

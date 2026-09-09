@@ -12,7 +12,7 @@
  * {interconnectionAuthorizationTypeId, otherValue?} objects, one object per
  * flag occurrence, encoded as key=value pairs (id=, other=). A malformed
  * authorization-type value exits 2 (invalid input) before any network or
- * keyring access, exactly like the scalar input validators.
+ * secrets file access, exactly like the scalar input validators.
  */
 import assert from 'node:assert/strict'
 import {after, before, test} from 'node:test'

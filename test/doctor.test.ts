@@ -2,7 +2,13 @@ import assert from 'node:assert/strict'
 import {rmSync} from 'node:fs'
 import {after, before, test} from 'node:test'
 
-import {TEST_SECRET, createProfile, setupAuthContext, type AuthContext} from './helpers/auth-fixtures.ts'
+import {
+  TEST_SECRET,
+  createProfile,
+  secretsPath,
+  setupAuthContext,
+  type AuthContext,
+} from './helpers/auth-fixtures.ts'
 import {startFakeApi, type FakeApi} from './helpers/fake-api.ts'
 import {runCli, type CliResult} from './helpers/run-cli.ts'
 
@@ -80,10 +86,10 @@ test('doctor reports a missing profile with exit 3', async () => {
   assert.equal(api.requests.length, requestsBefore)
 })
 
-test('doctor reports a missing protected secret with exit 3 and no request', async () => {
+test('doctor reports a missing saved secret with exit 3 and no request', async () => {
   const ctx = setupAuthContext()
   await createProfile(api, ctx, 'lostsecret')
-  rmSync(ctx.keyringFile)
+  rmSync(secretsPath(ctx.home))
   const requestsBefore = api.requests.length
 
   const result = await doctor(ctx, 'lostsecret')

@@ -12,7 +12,7 @@ import {join} from 'node:path'
 import {test} from 'node:test'
 
 import {FakeApi, type FakeResponse, type RecordedRequest} from './helpers/fake-api.ts'
-import {fakeKeyringEnv, isolatedEnv, projectRoot} from './helpers/run-cli.ts'
+import {isolatedEnv, projectRoot} from './helpers/run-cli.ts'
 
 const LIVE_CLIENT_ID = 'live-client-id-3f6f4f1e'
 const LIVE_CLIENT_SECRET = 'live-client-secret-9d2f0b7c'
@@ -30,7 +30,6 @@ function runSuite(api: FakeApi, workDir: string): Promise<RunnerResult> {
   const home = mkdtempSync(join(tmpdir(), 'intelligrc-live-test-'))
   const env = {
     ...isolatedEnv(home),
-    ...fakeKeyringEnv(join(home, 'fake-keyring.json')),
     INTELLIGRC_ALLOW_HTTP_LOCALHOST: '1',
     INTELLIGRC_LIVE_CLIENT_ID: LIVE_CLIENT_ID,
     INTELLIGRC_LIVE_CLIENT_SECRET: LIVE_CLIENT_SECRET,

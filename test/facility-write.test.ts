@@ -11,7 +11,7 @@
  * request proves every field maps to its documented body field; a minimal
  * request proves only `name` is sent when no optional flag is given. A missing
  * --name, a non-integer integer flag, or a non-integer identifier argument
- * exits 2 (invalid input) before any network or keyring access.
+ * exits 2 (invalid input) before any network or secrets file access.
  */
 import assert from 'node:assert/strict'
 import {after, before, test} from 'node:test'

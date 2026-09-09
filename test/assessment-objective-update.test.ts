@@ -8,7 +8,7 @@
  * the partial-update contract: a field appears in the body only when its flag
  * is given, integer fields serialize as JSON numbers, the single-string
  * validationMethods field passes through, and a malformed uuid or non-integer
- * flag exits 2 before any network or keyring access.
+ * flag exits 2 before any network or secrets file access.
  */
 import assert from 'node:assert/strict'
 import {after, before, test} from 'node:test'

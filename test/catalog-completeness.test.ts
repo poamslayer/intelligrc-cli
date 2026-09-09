@@ -68,8 +68,36 @@ test('every other command reports that it writes nothing', async () => {
   const readOnly = commands.filter((c) => c.writes === null).map((c) => c.id)
 
   assert.equal(readOnly.length, commands.length - REMOTE_WRITES.length - LOCAL_WRITES.length)
+  assert.ok(readOnly.includes('auth status'), 'auth status only reads')
   assert.ok(readOnly.includes('doctor'), 'doctor only reads')
   assert.ok(readOnly.includes('data-type list'), 'a list command only reads')
+})
+
+test('the catalog lists every environment variable the source reads', async () => {
+  const sourceVariables = new Set<string>()
+  for (const entry of readdirSync(join(projectRoot, 'src'), {
+    recursive: true,
+    withFileTypes: true,
+  })) {
+    if (!entry.isFile()) {
+      continue
+    }
+
+    const text = readFileSync(join(entry.parentPath, entry.name), 'utf8')
+    for (const match of text.matchAll(/INTELLIGRC_[A-Z_]+/g)) {
+      sourceVariables.add(match[0])
+    }
+  }
+
+  const published = (await catalog()).env as Array<{name: string}>
+  assert.deepEqual(
+    published.map((entry) => entry.name).sort(),
+    [...sourceVariables].sort(),
+  )
+})
+
+test('the catalog uses version 4', async () => {
+  assert.equal((await catalog()).catalogVersion, 4)
 })
 
 test('the catalog names the documented operations each API command can send', async () => {

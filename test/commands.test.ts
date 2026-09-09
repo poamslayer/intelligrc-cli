@@ -231,7 +231,7 @@ const personnelWriteFlags = [
 // #7, #8, #9, and #10. This literal is the independent source of truth;
 // it must not be derived from src/manifest.ts.
 const expectedCatalog = {
-  catalogVersion: 3,
+  catalogVersion: 4,
   commands: [
     {
       id: 'auth login',
@@ -301,7 +301,7 @@ const expectedCatalog = {
     },
     {
       id: 'auth remove',
-      summary: 'Remove one named profile and its protected secret.',
+      summary: 'Remove one named profile and its saved client secret.',
       kind: 'profile',
       permission: null,
       args: [],
@@ -311,6 +311,40 @@ const expectedCatalog = {
           type: 'option',
           required: true,
           summary: 'Profile name to remove.',
+        },
+      ],
+    },
+    {
+      id: 'auth status',
+      summary: 'Print the resolved identity and its source without printing the secret.',
+      kind: 'profile',
+      permission: null,
+      args: [],
+      flags: [
+        {
+          name: 'profile',
+          type: 'option',
+          required: false,
+          summary:
+            'Profile that supplies the credential, tenant, and base URL. Optional when ' +
+            'INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, ' +
+            'INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
+        },
+        {
+          name: 'output',
+          type: 'option',
+          required: false,
+          allowedValues: ['json', 'jsonl', 'table'],
+          default: 'json',
+          summary: 'Output format.',
+        },
+        {
+          name: 'json',
+          type: 'boolean',
+          required: false,
+          summary:
+            'Print JSON, the default format. Equivalent to `--output json`. ' +
+            'Cannot be combined with `--output jsonl` or `--output table`.',
         },
       ],
     },
@@ -364,8 +398,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -395,8 +429,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -426,8 +460,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'name',
@@ -537,8 +571,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'evaluation-id',
@@ -584,8 +618,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'assessment-objective-id',
@@ -639,8 +673,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'evaluation-id',
@@ -720,8 +754,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'evaluation-id',
@@ -774,8 +808,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'evaluation-id',
@@ -821,8 +855,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'evaluation-id',
@@ -875,8 +909,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'assessment-objective-id',
@@ -928,8 +962,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'file-name',
@@ -992,8 +1026,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'parent-id',
@@ -1032,8 +1066,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'name',
@@ -1079,8 +1113,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'evaluation-id',
@@ -1138,8 +1172,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'name',
@@ -1244,8 +1278,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'evaluation-id',
@@ -1293,8 +1327,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'name',
@@ -1431,8 +1465,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'evaluation-id',
@@ -1470,8 +1504,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'title',
@@ -1589,8 +1623,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -1620,8 +1654,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'name',
@@ -1810,8 +1844,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -1841,8 +1875,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -1872,8 +1906,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'name',
@@ -1951,8 +1985,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'name',
@@ -2030,8 +2064,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'force',
@@ -2067,8 +2101,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -2105,8 +2139,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -2143,8 +2177,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -2181,8 +2215,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'data-type-id',
@@ -2223,8 +2257,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         ...facilityWriteFlags,
         {
@@ -2262,8 +2296,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         ...facilityWriteFlags,
         {
@@ -2294,8 +2328,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -2333,8 +2367,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -2372,8 +2406,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -2411,8 +2445,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'data-type-id',
@@ -2453,8 +2487,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'name',
@@ -2537,8 +2571,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'name',
@@ -2615,8 +2649,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -2653,8 +2687,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -2684,8 +2718,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         ...personnelWriteFlags,
         {
@@ -2723,8 +2757,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         ...personnelWriteFlags,
         {
@@ -2762,8 +2796,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'force',
@@ -2799,8 +2833,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -2830,8 +2864,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -2861,8 +2895,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -2892,8 +2926,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -2923,8 +2957,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -2954,8 +2988,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -2985,8 +3019,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -3016,8 +3050,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -3047,8 +3081,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -3078,8 +3112,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -3109,8 +3143,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -3140,8 +3174,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -3171,8 +3205,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -3202,8 +3236,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -3233,8 +3267,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -3264,8 +3298,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -3295,8 +3329,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -3326,8 +3360,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -3357,8 +3391,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -3388,8 +3422,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -3419,8 +3453,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -3450,8 +3484,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -3481,8 +3515,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -3513,8 +3547,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -3544,8 +3578,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -3575,8 +3609,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',
@@ -3606,8 +3640,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'icl-version-id',
@@ -3645,8 +3679,8 @@ const expectedCatalog = {
         {
           name: 'profile',
           type: 'option',
-          required: true,
-          summary: 'Profile that supplies the credential, tenant, and base URL.',
+          required: false,
+          summary: 'Profile that supplies the credential, tenant, and base URL. Optional when INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
         },
         {
           name: 'output',

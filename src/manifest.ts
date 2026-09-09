@@ -195,8 +195,11 @@ export type ApiCommandSpec = CommandSpec & {kind: 'api'; contract: OperationCont
 const profileFlag: FlagSpec = {
   name: 'profile',
   type: 'option',
-  required: true,
-  summary: 'Profile that supplies the credential, tenant, and base URL.',
+  required: false,
+  summary:
+    'Profile that supplies the credential, tenant, and base URL. Optional when ' +
+    'INTELLIGRC_CREDENTIALS_FILE or the INTELLIGRC_CLIENT_ID, ' +
+    'INTELLIGRC_CLIENT_SECRET, and INTELLIGRC_TENANT_ID variables supply the identity.',
 }
 
 const apiOutputFlag: FlagSpec = {
@@ -2450,7 +2453,7 @@ export const commandSpecs: CommandSpec[] = [
   },
   {
     id: 'auth remove',
-    summary: 'Remove one named profile and its protected secret.',
+    summary: 'Remove one named profile and its saved client secret.',
     kind: 'profile',
     permission: null,
     args: [],
@@ -2462,6 +2465,14 @@ export const commandSpecs: CommandSpec[] = [
         summary: 'Profile name to remove.',
       },
     ],
+  },
+  {
+    id: 'auth status',
+    summary: 'Print the resolved identity and its source without printing the secret.',
+    kind: 'profile',
+    permission: null,
+    args: [],
+    flags: [profileFlag, apiOutputFlag, jsonFlag],
   },
   {
     id: 'commands',
@@ -3362,20 +3373,60 @@ export type CatalogCommand = Omit<CommandSpec, 'contract' | 'variants'> & {
   operations: CatalogOperation[]
 }
 
+export const ENV_CATALOG = [
+  {
+    name: 'INTELLIGRC_CREDENTIALS_FILE',
+    meaning:
+      'Path to a credentials file that supplies the whole identity. Cannot be combined with --profile.',
+  },
+  {
+    name: 'INTELLIGRC_CLIENT_ID',
+    meaning:
+      'Client ID. Overrides the profile or credentials file; with the secret and tenant, forms the environment identity.',
+  },
+  {
+    name: 'INTELLIGRC_CLIENT_SECRET',
+    meaning:
+      'Client secret. Overrides the secrets file or credentials file; with the client ID and tenant, forms the environment identity.',
+  },
+  {
+    name: 'INTELLIGRC_TENANT_ID',
+    meaning:
+      'Tenant ID. Overrides the profile or credentials file; with the client ID and secret, forms the environment identity.',
+  },
+  {
+    name: 'INTELLIGRC_BASE_URL',
+    meaning:
+      'API base URL. Overrides the profile or credentials file. HTTPS required.',
+  },
+  {
+    name: 'INTELLIGRC_ALLOW_HTTP_LOCALHOST',
+    meaning:
+      'Set to 1 to allow plain HTTP for a loopback host. Exists for automated tests.',
+  },
+  {
+    name: 'INTELLIGRC_ATTEMPT_TIMEOUT_MS',
+    meaning: 'Per-attempt request timeout in milliseconds.',
+  },
+] as const
+
 export interface Catalog {
-  catalogVersion: 3
+  catalogVersion: 4
   /** Every exit code the CLI can return, with its meaning. */
   exitCodes: typeof EXIT_CODE_CATALOG
   /** The failure-code vocabulary an agent will see on standard error. */
   errors: typeof ERROR_CATALOG
+  /** Every environment variable the CLI reads, with its meaning. */
+  env: typeof ENV_CATALOG
   commands: CatalogCommand[]
 }
 
 export function buildCatalog(): Catalog {
   return {
-    catalogVersion: 3,
+    catalogVersion: 4,
     exitCodes: EXIT_CODE_CATALOG,
     errors: ERROR_CATALOG,
+    env: ENV_CATALOG,
     commands: commandSpecs.map((spec) => ({
       id: spec.id,
       summary: spec.summary,

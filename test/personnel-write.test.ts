@@ -13,7 +13,7 @@
  * request proves only the two required fields are sent when no optional flag
  * is given. A missing required flag, a non-integer --user-type-id, or a
  * non-integer identifier argument exits 2 (invalid input) before any network
- * or keyring access.
+ * or secrets file access.
  */
 import assert from 'node:assert/strict'
 import {after, before, test} from 'node:test'

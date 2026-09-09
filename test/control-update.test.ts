@@ -8,7 +8,7 @@
  * partial-update contract: a field appears in the body only when its flag is
  * given, the integer evaluationId serializes as a JSON number, the
  * summaryStatement text passes through, and a malformed control id or a
- * non-integer evaluation-id exits 2 before any network or keyring access.
+ * non-integer evaluation-id exits 2 before any network or secrets file access.
  *
  * The documented controlId path parameter is a universally unique identifier
  * (UUID), not an integer, so the command validates it as a UUID exactly like

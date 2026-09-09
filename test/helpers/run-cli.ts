@@ -2,7 +2,7 @@ import {spawn} from 'node:child_process'
 import {mkdtempSync, readFileSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
-import {fileURLToPath, pathToFileURL} from 'node:url'
+import {fileURLToPath} from 'node:url'
 
 export interface CliResult {
   stdout: string
@@ -20,21 +20,6 @@ export const packageVersion = (
 /** Create one isolated per-user state directory for a sequence of CLI runs. */
 export function makeIsolatedHome(): string {
   return mkdtempSync(join(tmpdir(), 'intelligrc-cli-test-'))
-}
-
-/**
- * Environment that redirects @napi-rs/keyring to the file-backed fake for a
- * spawned CLI process. keyringFile is the JSON file that holds the fake
- * store's entries.
- */
-export function fakeKeyringEnv(keyringFile: string): Record<string, string> {
-  const registerUrl = pathToFileURL(
-    join(projectRoot, 'test', 'helpers', 'fake-keyring-register.mjs'),
-  ).href
-  return {
-    NODE_OPTIONS: `--import ${registerUrl}`,
-    INTELLIGRC_FAKE_KEYRING_FILE: keyringFile,
-  }
 }
 
 /**

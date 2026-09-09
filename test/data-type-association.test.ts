@@ -9,7 +9,7 @@
  * assert. They also prove the shared array-body machinery: a repeated flag
  * builds the array in order, an omitted flag serializes as the documented
  * empty array, and a non-integer element exits 2 before any network or
- * keyring access.
+ * secrets file access.
  */
 import assert from 'node:assert/strict'
 import {after, before, test} from 'node:test'

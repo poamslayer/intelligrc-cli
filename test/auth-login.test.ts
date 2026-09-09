@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict'
-import {existsSync, readFileSync} from 'node:fs'
+import {existsSync, readFileSync, statSync} from 'node:fs'
 import {test} from 'node:test'
 
 import {
   type AuthContext,
   profilesPath,
-  readKeyring,
+  readSecrets,
   readProfiles,
+  secretsPath,
   setupAuthContext as setup,
   TEST_SECRET as SECRET,
 } from './helpers/auth-fixtures.ts'
@@ -72,12 +73,10 @@ test('login saves the profile and secret when discovery returns one tenant', asy
     assert.equal(api.requests[0].headers['x-client-id'], 'client-1')
     assert.equal(api.requests[0].headers['x-client-secret'], SECRET)
 
-    const keyring = readKeyring(ctx)
-    const accounts = Object.keys(keyring)
-    assert.equal(accounts.length, 1)
-    assert.ok(accounts[0].startsWith('intelligrc-cli'))
-    assert.ok(accounts[0].endsWith('acme'))
-    assert.deepEqual(Object.values(keyring), [SECRET])
+    assert.deepEqual(readSecrets(ctx.home), {acme: SECRET})
+    if (process.platform !== 'win32') {
+      assert.equal(statSync(secretsPath(ctx.home)).mode & 0o777, 0o600)
+    }
 
     const profiles = readProfiles(ctx.home)
     const saved = profiles.profiles.acme as Record<string, unknown>
@@ -103,7 +102,7 @@ test('login with zero tenants leaves no profile and no secret behind', async () 
     assert.equal(result.code, 8)
     assert.equal(result.stdout, '')
     assert.equal(stderrError(result.stderr).code, 'tenant-discovery-empty')
-    assert.deepEqual(readKeyring(ctx), {})
+    assert.deepEqual(readSecrets(ctx.home), {})
     assert.ok(!existsSync(profilesPath(ctx.home)))
   } finally {
     await api.close()
@@ -124,7 +123,7 @@ test('login with multiple tenants leaves no profile and no secret behind', async
     assert.equal(result.code, 8)
     assert.equal(result.stdout, '')
     assert.equal(stderrError(result.stderr).code, 'tenant-discovery-multiple')
-    assert.deepEqual(readKeyring(ctx), {})
+    assert.deepEqual(readSecrets(ctx.home), {})
     assert.ok(!existsSync(profilesPath(ctx.home)))
   } finally {
     await api.close()
@@ -140,7 +139,7 @@ test('login fails before any request when the named secret variable is unset', a
     assert.equal(result.code, 3)
     assert.equal(stderrError(result.stderr).code, 'client-secret-env-missing')
     assert.equal(api.requests.length, 0)
-    assert.deepEqual(readKeyring(ctx), {})
+    assert.deepEqual(readSecrets(ctx.home), {})
   } finally {
     await api.close()
   }
@@ -233,7 +232,7 @@ test('login maps an authentication rejection to exit code 4', async () => {
 
     assert.equal(result.code, 4)
     assert.equal(stderrError(result.stderr).code, 'authentication-failed')
-    assert.deepEqual(readKeyring(ctx), {})
+    assert.deepEqual(readSecrets(ctx.home), {})
     assert.ok(!existsSync(profilesPath(ctx.home)))
   } finally {
     await api.close()

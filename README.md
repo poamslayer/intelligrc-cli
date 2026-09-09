@@ -18,8 +18,6 @@ and retrieves compliance data without constructing raw HTTP requests.
 ## Requirements
 
 - Node.js 24 or later.
-- A protected secret store: Windows Credential Manager, macOS Keychain, Linux Secret
-  Service, or the Linux kernel keyring.
 - One IntelliGRC API credential (client ID and client secret).
 
 ## Installation
@@ -53,7 +51,7 @@ intelligrc version
 
 1. Create a profile. Login validates the credential against the documented tenant-list
    operation and saves the tenant when the credential returns exactly one tenant. The
-   client secret goes to the operating-system secret store, never to a file.
+   client secret goes to `secrets.json` in the CLI config directory with mode 0600.
 
    ```sh
    intelligrc auth login --profile prod --client-id YOUR_CLIENT_ID
@@ -66,8 +64,9 @@ intelligrc version
    intelligrc doctor --profile prod
    ```
 
-3. Retrieve compliance data. Every API command requires `--profile` and prints the
-   upstream response on standard output with the documented field names preserved.
+3. Retrieve compliance data. Every API command needs one identity source (the examples
+   use `--profile`; see Authentication) and prints the upstream response on standard
+   output with the documented field names preserved.
 
    ```sh
    intelligrc evaluation current --profile prod
@@ -88,10 +87,77 @@ intelligrc version
    intelligrc commands
    ```
 
+## Authentication
+
+Every API command takes its identity from exactly one identity source:
+
+- A profile, named with `--profile`. `auth login` saves the non-secret settings in
+  `profiles.json` and the client secret in `secrets.json`, both in the CLI config
+  directory (`~/.config/intelligrc` on Linux and macOS, `%LOCALAPPDATA%\intelligrc` on
+  Windows). `secrets.json` has mode 0600.
+- A credentials file, named by `INTELLIGRC_CREDENTIALS_FILE`.
+- The environment identity: `INTELLIGRC_CLIENT_ID`, `INTELLIGRC_CLIENT_SECRET`, and
+  `INTELLIGRC_TENANT_ID` all set, with no `--profile`.
+
+`--profile` is optional when a credentials file or the environment identity is present.
+When no source is present, the command exits 2 with `identity-required`. Passing
+`--profile` together with `INTELLIGRC_CREDENTIALS_FILE` exits 2 with
+`identity-source-conflict`. `auth status` prints the source in use, the resolved fields,
+and the environment variables that overrode a field, and never prints the secret:
+
+```sh
+intelligrc auth status --profile prod
+```
+
+Profiles created before the secrets file existed hold their secret in the operating
+system secret store, which this version no longer reads. Recreate each one once with
+`intelligrc auth login --profile NAME --client-id ID --replace`; until then, commands that
+use that profile exit 3 with `client-secret-missing`.
+
+### Headless identity
+
+A container, a CI runner, or an agent sandbox has no saved profile. Use one of the two
+headless sources.
+
+A credentials file holds one complete identity. The CLI only reads it, and on Linux and
+macOS refuses it unless its mode is 0600.
+
+```sh
+cat > /run/secrets/intelligrc.json <<'EOF'
+{
+  "credentialsVersion": 1,
+  "clientId": "YOUR_CLIENT_ID",
+  "clientSecret": "YOUR_CLIENT_SECRET",
+  "tenantId": "YOUR_TENANT_ID"
+}
+EOF
+chmod 600 /run/secrets/intelligrc.json
+INTELLIGRC_CREDENTIALS_FILE=/run/secrets/intelligrc.json intelligrc facility list
+```
+
+`tenantName` and `baseUrl` are optional fields in that file. A file that cannot be
+opened or parsed exits 3 with `credentials-file-unreadable`; a file with the wrong
+version or a missing required field exits 3 with `credentials-file-invalid`.
+
+The environment identity needs the three variables together. With one missing, the
+command exits 2 with `identity-required`.
+
+```sh
+export INTELLIGRC_CLIENT_ID=YOUR_CLIENT_ID
+export INTELLIGRC_CLIENT_SECRET=YOUR_CLIENT_SECRET
+export INTELLIGRC_TENANT_ID=YOUR_TENANT_ID
+intelligrc facility list
+```
+
+`INTELLIGRC_BASE_URL` sets the base URL for either headless source. On top of a profile
+or a credentials file, each of the four `INTELLIGRC_*` identity variables that is set
+replaces the matching field, and `auth status` lists the replaced fields under
+`overrides`.
+
 ## Writing data types
 
-The CLI can create, update, and delete data types. Each write command requires
-`--profile` and prints the record the API returned.
+The CLI can create, update, and delete data types. Each write command needs one
+identity source (the examples use `--profile`) and prints the record the API returned.
 
 ```sh
 # Create a data type. The three level identifiers come from the matching
@@ -534,11 +600,16 @@ Assumed, not verified:
   authenticated call has confirmed it. Each profile saves its own base URL, so support
   confirmation or live evidence can replace the assumption per profile without a new
   release (`auth login --base-url`).
+- The credential is a long-lived vendor client secret; the archived OpenAPI document
+  defines no token exchange, so no short-lived credential exists.
 
 ## Security properties
 
-- The client secret lives only in the operating-system secret store and is never
-  printed. Diagnostics redact client IDs, tenant IDs, and credential headers.
+- The client secret is stored only in `secrets.json` in the CLI config directory with
+  mode 0600, or supplied through `INTELLIGRC_CREDENTIALS_FILE` or
+  `INTELLIGRC_CLIENT_SECRET`. The CLI refuses a secrets or credentials file that is
+  readable by group or others. The secret is never printed. Diagnostics redact client
+  IDs, tenant IDs, and credential headers.
 - Requests use HTTPS with normal certificate validation and no bypass. Plain HTTP is
   permitted only for loopback hosts when `INTELLIGRC_ALLOW_HTTP_LOCALHOST=1` is set,
   which exists for automated tests.

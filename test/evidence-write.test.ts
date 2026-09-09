@@ -7,7 +7,7 @@
  * The tests assert the recorded method, path, headers, and full JSON body at
  * the API boundary, and the process output and exit code. A missing required
  * flag or a --parent-id that is not a universally unique identifier (UUID)
- * exits 2 (invalid input) before any network or keyring access. The documented
+ * exits 2 (invalid input) before any network or secrets file access. The documented
  * 409 conflict on folder create is passed through with the message the API
  * returned.
  */

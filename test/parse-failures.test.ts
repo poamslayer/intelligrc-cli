@@ -11,7 +11,7 @@ import {runCli} from './helpers/run-cli.ts'
  */
 
 test('a missing required flag emits the JSON failure contract on stderr', async () => {
-  const result = await runCli(['data-type', 'list'])
+  const result = await runCli(['auth', 'remove'])
 
   assert.equal(result.code, 2)
   assert.equal(result.stdout, '')
@@ -19,6 +19,18 @@ test('a missing required flag emits the JSON failure contract on stderr', async 
   const failure = JSON.parse(result.stderr).error
   assert.equal(failure.code, 'missing-required-flag')
   assert.match(failure.message, /profile/)
+})
+
+test('an API command with no identity emits the identity-required failure', async () => {
+  const result = await runCli(['data-type', 'list'])
+
+  assert.equal(result.code, 2)
+  assert.equal(result.stdout, '')
+
+  const failure = JSON.parse(result.stderr).error
+  assert.equal(failure.code, 'identity-required')
+  assert.match(failure.message, /--profile/)
+  assert.match(failure.message, /INTELLIGRC_CREDENTIALS_FILE/)
 })
 
 test('an unknown flag emits the JSON failure contract on stderr', async () => {

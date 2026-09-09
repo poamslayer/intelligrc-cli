@@ -1,13 +1,14 @@
 import assert from 'node:assert/strict'
-import {chmodSync, mkdirSync} from 'node:fs'
+import {chmodSync} from 'node:fs'
 import {dirname} from 'node:path'
 import {test} from 'node:test'
 
 import {
   type AuthContext,
   profilesPath,
-  readKeyring,
+  readSecrets,
   readProfiles,
+  secretsPath,
   setupAuthContext,
 } from './helpers/auth-fixtures.ts'
 import {type FakeApi, startFakeApi} from './helpers/fake-api.ts'
@@ -62,7 +63,7 @@ function readProfile(ctx: AuthContext): Record<string, unknown> {
 }
 
 function storedSecrets(ctx: AuthContext): string[] {
-  return Object.values(readKeyring(ctx))
+  return Object.values(readSecrets(ctx.home))
 }
 
 test('login without --replace leaves an existing profile unchanged', async () => {
@@ -114,18 +115,18 @@ test('login with --replace stores the new tenant and secret', async () => {
 })
 
 test(
-  'a failed configuration write during replacement restores the prior secret',
+  'a failed secret write during replacement leaves the configuration untouched',
   {skip: process.platform === 'win32'},
   async () => {
     const ctx = setup()
     const api = await startFakeApi()
     const configDir = dirname(profilesPath(ctx.home))
+    const secretsFile = secretsPath(ctx.home)
     try {
       await createInitialProfile(api, ctx)
       api.enqueueTenants([{id: 'tenant-2', name: 'Replacement'}])
 
-      // Make profiles.json unwritable so the profiles.json write fails
-      // after the new secret is already stored.
+      chmodSync(secretsFile, 0o400)
       chmodSync(configDir, 0o500)
 
       const result = await login(api, ctx, {
@@ -134,78 +135,16 @@ test(
         replace: true,
       })
 
-      assert.notEqual(result.code, 0)
-      const error = (JSON.parse(result.stderr) as {error: {code: string; message: string}})
-        .error
-      assert.equal(error.code, 'profiles-file-write-failed')
-      assert.ok(error.message.includes('profiles.json'))
+      assert.equal(result.code, 3)
+      const error = (JSON.parse(result.stderr) as {error: {code: string}}).error
+      assert.equal(error.code, 'secret-store-failure')
 
-      // The prior secret is back and the prior configuration is intact.
-      assert.deepEqual(storedSecrets(ctx), [FIRST_SECRET])
       chmodSync(configDir, 0o700)
       assert.equal(readProfile(ctx).clientId, 'client-1')
-    } finally {
-      chmodSync(configDir, 0o700)
-      await api.close()
-    }
-  },
-)
-
-test('a failed secret write during replacement leaves the configuration untouched', async () => {
-  const ctx = setup()
-  const api = await startFakeApi()
-  try {
-    await createInitialProfile(api, ctx)
-    api.enqueueTenants([{id: 'tenant-2', name: 'Replacement'}])
-
-    const result = await login(api, ctx, {
-      secretEnv: 'SECOND_SECRET_VAR',
-      clientId: 'client-2',
-      replace: true,
-      env: {...ctx.env, INTELLIGRC_FAKE_KEYRING_FAIL: 'set'},
-    })
-
-    assert.notEqual(result.code, 0)
-    const error = (JSON.parse(result.stderr) as {error: {code: string}}).error
-    assert.equal(error.code, 'secret-store-failure')
-
-    assert.equal(readProfile(ctx).clientId, 'client-1')
-    assert.deepEqual(storedSecrets(ctx), [FIRST_SECRET])
-  } finally {
-    await api.close()
-  }
-})
-
-test(
-  'a failed rollback names the secret store entry that requires repair',
-  {skip: process.platform === 'win32'},
-  async () => {
-    const ctx = setup()
-    const api = await startFakeApi()
-    const configDir = dirname(profilesPath(ctx.home))
-    try {
-      // Fresh profile: the profiles.json write fails, and rollback (which
-      // deletes the just-written secret) fails too.
-      mkdirSync(configDir, {recursive: true})
-      chmodSync(configDir, 0o500)
-      api.enqueueTenants([{id: 'tenant-1', name: 'Original'}])
-
-      const result = await login(api, ctx, {
-        env: {...ctx.env, INTELLIGRC_FAKE_KEYRING_FAIL: 'delete'},
-      })
-
-      assert.equal(result.code, 3)
-      const error = (JSON.parse(result.stderr) as {error: {code: string; message: string}})
-        .error
-      assert.equal(error.code, 'rollback-failed')
-      // The exact component that requires repair is named.
-      assert.ok(error.message.includes('intelligrc-cli'))
-      assert.ok(error.message.includes('acme'))
-
-      // The stranded secret is the state the message describes.
       assert.deepEqual(storedSecrets(ctx), [FIRST_SECRET])
     } finally {
       chmodSync(configDir, 0o700)
+      chmodSync(secretsFile, 0o600)
       await api.close()
     }
   },

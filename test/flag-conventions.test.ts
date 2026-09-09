@@ -25,7 +25,7 @@ test('--json with a conflicting --output exits 2 before the profile is read', as
   assert.equal(result.stdout, '')
 
   // profile "nope" does not exist. Reporting the flag conflict rather than
-  // profile-not-found proves the check runs before any keyring access.
+  // profile-not-found proves the check runs before any secrets file access.
   const failure = JSON.parse(result.stderr).error
   assert.equal(failure.code, 'conflicting-output-flags')
 })

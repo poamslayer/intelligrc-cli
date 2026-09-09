@@ -10,7 +10,7 @@
  * is built from the repeated --framework-id flag, the calendar-date flags are
  * validated and sent as the documented date-time field at midnight UTC, and a
  * missing required flag or an invalid integer, number, uuid, or date value
- * exits 2 (invalid input) before any network or keyring access.
+ * exits 2 (invalid input) before any network or secrets file access.
  */
 import assert from 'node:assert/strict'
 import {after, before, test} from 'node:test'
