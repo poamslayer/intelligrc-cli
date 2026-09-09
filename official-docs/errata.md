@@ -1,10 +1,10 @@
 # Errata: observed API behavior that the archived contract does not document
 
-This file records conflicts between the archived OpenAPI document
-(`swagger/v1/swagger.json`) and behavior observed against the live API.
-The archived document stays unmodified: it is the contract of record, and
-this file preserves the observed side of each conflict as a compatibility
-fact.
+This file records conflicts between IntelliGRC's OpenAPI document (kept as a
+local, gitignored copy at `swagger/v1/swagger.json`; see `README.md` in this
+directory) and behavior observed against the live API. The vendor's document
+stays unmodified: it is the contract of record, and this file preserves the
+observed side of each conflict as a compatibility fact.
 
 ## 1. Error responses: JSON body labeled text/plain
 

@@ -3,3 +3,28 @@ dist/
 *.tgz
 test-report.xml
 live-report.json
+
+# Tool scratch output
+.playwright-cli/
+.DS_Store
+*.log
+
+# Claude Code runtime state (never project files)
+**/.claude/scheduled_tasks.lock
+**/.claude/scheduled_tasks.json
+**/.claude/routines/.state/
+**/.claude/worktrees/
+**/.claude/checkpoints/
+**/.claude/mailbox/
+**/.claude/agent-registry.json
+**/.claude/agent-memory-local
+**/.claude/first-run
+**/.claude/assistant-daemon-state.json
+
+# IntelliGRC's API documentation is proprietary and is not distributed with this repository.
+# Keep a local copy here for the contract test; see official-docs/README.md.
+official-docs/index.html
+official-docs/index.css
+official-docs/index.js
+official-docs/redoc.standalone.js
+official-docs/swagger/
