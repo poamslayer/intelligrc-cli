@@ -34,6 +34,9 @@ npm install --global @poamslayer/intelligrc-cli@0.1.1
 intelligrc version
 ```
 
+If you are setting up an AI agent to run the CLI, also install the agent skill. See
+[Use with an AI agent](#use-with-an-ai-agent).
+
 ## Quick start
 
 1. Create a profile. A profile is one named, saved credential set for one tenant. Login
