@@ -1,17 +1,17 @@
-# First fixed private release (issue #14).
+# First fixed public release (issue #14).
 #
 # Design: this workflow publishes the package exactly as committed — it
 # never rewrites package.json — so the published artifact is the same
 # package that passed cross-platform and live validation on this commit.
 #
 # Operator prerequisites, before the first dispatch:
-# 1. Choose the user-controlled npm scope. A scope that appears to belong
-#    to IntelliGRC is prohibited without written authorization.
-# 2. Commit the scope onto the package: set "name" to
-#    "@<scope>/intelligrc-cli", remove "private": true, and add
-#    "publishConfig": {"access": "restricted"} so the registry records
-#    the release as private. Let the cross-platform workflow pass on that
-#    commit.
+# 1. The package publishes under the owner's own npm scope, @poamslayer.
+#    A scope that appears to belong to IntelliGRC is prohibited without
+#    written authorization.
+# 2. package.json carries "name": "@poamslayer/intelligrc-cli", no
+#    "private" field, and "publishConfig": {"access": "public"}, so the
+#    registry records the release as public. The cross-platform workflow
+#    must pass on the commit being released.
 # 3. The GitHub environment named "release" exists (created 2026-07-23).
 #    Store an NPM_TOKEN secret there that can publish to the chosen
 #    scope. Required-reviewer protection on environments needs a paid
@@ -22,7 +22,8 @@
 #    package name and version as a cross-check.
 #
 # The job fails before publishing when the inputs disagree with
-# package.json, when the package is still marked private, or when any
+# package.json, when the package is still marked private, when the access
+# level is not public, or when any
 # test fails. Logs and artifacts never contain the npm token or any
 # IntelliGRC credential; this workflow reads no IntelliGRC secret at all.
 name: release
@@ -61,7 +62,7 @@ jobs:
           test "$name" = "${{ inputs.package-name }}" || { echo "package.json name is $name, not ${{ inputs.package-name }}"; exit 1; }
           test "$version" = "${{ inputs.version }}" || { echo "package.json version is $version, not ${{ inputs.version }}"; exit 1; }
           test "$private" = "false" || { echo "package.json still carries \"private\": true"; exit 1; }
-          test "$access" = "restricted" || { echo "publishConfig.access must be \"restricted\" so the release records as private"; exit 1; }
+          test "$access" = "public" || { echo "publishConfig.access must be \"public\" so the release records as public"; exit 1; }
           case "$name" in
             @*/intelligrc-cli) ;;
             *) echo "The package name must use a scope: @<scope>/intelligrc-cli"; exit 1;;

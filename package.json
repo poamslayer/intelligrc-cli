@@ -1,10 +1,12 @@
 {
-  "name": "intelligrc-cli",
+  "name": "@poamslayer/intelligrc-cli",
   "version": "0.1.0",
   "description": "Command-line interface for reading and editing IntelliGRC governance, risk, and compliance data",
-  "private": true,
   "type": "module",
   "license": "UNLICENSED",
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "node": ">=24.0.0"
   },

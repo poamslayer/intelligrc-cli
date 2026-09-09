@@ -58,7 +58,7 @@ jobs:
         run: |
           npm pack --pack-destination "${{ runner.temp }}"
           PREFIX="${{ runner.temp }}/consumer-prefix"
-          npm install --global --prefix "$PREFIX" "${{ runner.temp }}"/intelligrc-cli-*.tgz
+          npm install --global --prefix "$PREFIX" "${{ runner.temp }}"/poamslayer-intelligrc-cli-*.tgz
           echo "INTELLIGRC_INSTALLED_BIN=$PREFIX/bin/intelligrc" >> "$GITHUB_ENV"
 
       # The CLI stores the live secret in secrets.json (mode 0600) under the

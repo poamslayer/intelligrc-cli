@@ -49,7 +49,7 @@ jobs:
         shell: bash
         run: |
           PREFIX="${{ runner.temp }}/consumer-prefix"
-          npm install --global --prefix "$PREFIX" "${{ runner.temp }}"/intelligrc-cli-*.tgz
+          npm install --global --prefix "$PREFIX" "${{ runner.temp }}"/poamslayer-intelligrc-cli-*.tgz
           "$PREFIX/bin/intelligrc" version
           "$PREFIX/bin/intelligrc" commands --output json > /dev/null
           echo "INTELLIGRC_INSTALLED_BIN=$PREFIX/bin/intelligrc" >> "$GITHUB_ENV"
@@ -59,11 +59,11 @@ jobs:
         shell: pwsh
         run: |
           $prefix = Join-Path $env:RUNNER_TEMP 'consumer-prefix'
-          $tarball = Get-ChildItem -Path $env:RUNNER_TEMP -Filter 'intelligrc-cli-*.tgz' | Select-Object -First 1
+          $tarball = Get-ChildItem -Path $env:RUNNER_TEMP -Filter 'poamslayer-intelligrc-cli-*.tgz' | Select-Object -First 1
           npm install --global --prefix $prefix $tarball.FullName
           & (Join-Path $prefix 'intelligrc.cmd') version
           & (Join-Path $prefix 'intelligrc.cmd') commands --output json | Out-Null
-          $runJs = Join-Path $prefix 'node_modules\intelligrc-cli\bin\run.js'
+          $runJs = Join-Path $prefix 'node_modules\@poamslayer\intelligrc-cli\bin\run.js'
           Add-Content -Path $env:GITHUB_ENV -Value "INTELLIGRC_INSTALLED_RUN_JS=$runJs"
 
       - name: Secrets file is private after login (POSIX)

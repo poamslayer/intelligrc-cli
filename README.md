@@ -25,25 +25,24 @@ and retrieves compliance data without constructing raw HTTP requests.
 Always install a pinned version. Do not use `@latest`: an agent that installs an
 unpinned version can silently change behavior between runs.
 
-The package is not published to npm yet, and the npm scope decision is pending. After
-publication under the chosen scope, install one of two ways (replace `@SCOPE` with the
-published scope):
+The package is published to npm as `@poamslayer/intelligrc-cli`. Install one of two
+ways:
 
 ```sh
 # Run one pinned command without a permanent installation.
-npx --yes @SCOPE/intelligrc-cli@0.1.0 version
+npx --yes @poamslayer/intelligrc-cli@0.1.0 version
 
 # Or install the pinned version globally.
-npm install --global @SCOPE/intelligrc-cli@0.1.0
+npm install --global @poamslayer/intelligrc-cli@0.1.0
 intelligrc version
 ```
 
-Until publication, install from a packed tarball built out of this repository:
+To install from a packed tarball built out of this repository instead:
 
 ```sh
 npm ci
 npm pack
-npm install --global ./intelligrc-cli-0.1.0.tgz
+npm install --global ./poamslayer-intelligrc-cli-0.1.0.tgz
 intelligrc version
 ```
 
@@ -620,10 +619,10 @@ Assumed, not verified:
 
 ## Releasing
 
-The release workflow (`.github/workflows/release.yml`) publishes one fixed version to
-the chosen private npm scope. It runs only from a manual dispatch inside the protected
+The release workflow (`.github/workflows/release.yml`) publishes one fixed version of
+`@poamslayer/intelligrc-cli` as a public npm package. It runs only from a manual dispatch inside the protected
 `release` environment, publishes the package exactly as committed, verifies pinned
 `npx` execution and global installation from the registry, and stores credential-free
-release evidence. The workflow header documents the operator prerequisites: commit the
-chosen scope onto `package.json`, let the cross-platform workflow pass on that commit,
-and create the `release` environment with a scoped `NPM_TOKEN`.
+release evidence. The workflow header documents the operator prerequisites: let the
+cross-platform workflow pass on the commit being released, and store an `NPM_TOKEN` that
+can publish to the `@poamslayer` scope in the `release` environment.
