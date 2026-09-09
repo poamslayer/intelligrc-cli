@@ -1,125 +1,94 @@
 # intelligrc-cli
 
-A command-line interface (CLI) for the IntelliGRC API. Every documented `GET` read
-operation is reachable from one stable read command. `evidence list` sends one of two
-documented operations depending on its flags. The CLI maps 22 of the 23 documented write
-operations to one write command each. Every write command reuses the same guarded write
-runtime. The one unimplemented write is `POST /v1/Evidence/Upload`, the multipart
-evidence-file upload: use the IntelliGRC web app to upload an evidence file.
+A command-line interface (CLI) for the IntelliGRC governance, risk, and compliance API.
+The CLI reads every documented `GET` operation and performs 22 of the 23 documented
+write operations. The one write it does not perform is the multipart evidence file
+upload, `POST /v1/Evidence/Upload`, so upload an evidence file in the IntelliGRC web app.
+The CLI is built so that an AI agent can discover every command offline and a person can
+supervise what the agent does.
 
-Run `intelligrc commands` for the complete command catalog and `intelligrc <command>
---help` for the flags of one command. The "Writing ...", "Creating ...", and "Setting
-associations" sections below cover all 22 write commands with worked examples.
+The CLI is for an IntelliGRC administrator or security engineer, or for the person who
+sets up an AI agent for one.
 
-The CLI serves an IntelliGRC administrator or security engineer who supervises an AI
-agent on the same workstation. The agent discovers commands through the offline catalog
-and retrieves compliance data without constructing raw HTTP requests.
+## Install
 
-## Requirements
+You need two things before you install:
 
 - Node.js 24 or later.
-- One IntelliGRC API credential (client ID and client secret).
+- One IntelliGRC API credential, which is a client ID and a client secret.
 
-## Installation
+The package is published on npm as `@poamslayer/intelligrc-cli`. Always install a pinned
+version, because an agent that installs an unpinned version can change behavior between
+runs without anyone noticing.
 
-Always install a pinned version. Do not use `@latest`: an agent that installs an
-unpinned version can silently change behavior between runs.
-
-The package is published to npm as `@poamslayer/intelligrc-cli`. Install one of two
-ways:
+Run one pinned command without a permanent installation:
 
 ```sh
-# Run one pinned command without a permanent installation.
-npx --yes @poamslayer/intelligrc-cli@0.1.0 version
+npx --yes @poamslayer/intelligrc-cli@0.1.1 version
+```
 
-# Or install the pinned version globally.
-npm install --global @poamslayer/intelligrc-cli@0.1.0
+Or install the pinned version globally:
+
+```sh
+npm install --global @poamslayer/intelligrc-cli@0.1.1
 intelligrc version
 ```
 
-To install from a packed tarball built out of this repository instead:
+If you are setting up an AI agent to run the CLI, also install the agent skill. See
+[Use with an AI agent](#use-with-an-ai-agent).
 
-```sh
-npm ci
-npm pack
-npm install --global ./poamslayer-intelligrc-cli-0.1.0.tgz
-intelligrc version
-```
+## Quick start
 
-## First compliance workflow
-
-1. Create a profile. Login validates the credential against the documented tenant-list
-   operation and saves the tenant when the credential returns exactly one tenant. The
-   client secret goes to `secrets.json` in the CLI config directory with mode 0600.
+1. Create a profile. A profile is one named, saved credential set for one tenant. Login
+   reads the client secret from a masked prompt, checks the credential against the
+   documented tenant-list operation, and saves the profile when the credential returns
+   exactly one tenant. The secret goes to `secrets.json` in the CLI config directory
+   with mode 0600.
 
    ```sh
    intelligrc auth login --profile prod --client-id YOUR_CLIENT_ID
    ```
 
-2. Diagnose the profile. `doctor` checks the saved settings and the connection without
-   printing credential or tenant values.
+2. Confirm which identity the CLI will use. The command runs locally and never prints
+   the secret.
 
    ```sh
-   intelligrc doctor --profile prod
+   intelligrc auth status --profile prod
    ```
 
-3. Retrieve compliance data. Every API command needs one identity source (the examples
-   use `--profile`; see Authentication) and prints the upstream response on standard
-   output with the documented field names preserved.
+3. Read the current evaluation. The CLI prints the API response on standard output with
+   the documented field names unchanged.
 
    ```sh
    intelligrc evaluation current --profile prod
-   intelligrc assessment-objective list --profile prod --evaluation-id 42
-   intelligrc control list --profile prod
-   intelligrc evidence list --profile prod --evaluation-id 42
    ```
 
-4. Let an agent discover the surface. The catalog describes every command, argument,
-   flag, and documented permission. Each command also states whether it writes
-   (`"writes"` is `"remote"`, `"local"`, or `null`) and lists the documented operations
-   it can send (`"operations"`). A variant operation names the flags that select it under
-   `"selectedBy"`. The catalog also publishes the exit codes and the failure-code
-   vocabulary, so an agent needs neither this file nor the source. It runs locally: no
-   profile, no network.
+4. Read a list as a table.
 
    ```sh
-   intelligrc commands
+   intelligrc facility list --profile prod --output table
    ```
+
+Run `intelligrc commands` to see every command, and `intelligrc <command> --help` for the
+flags of one command.
 
 ## Authentication
 
-Every API command takes its identity from exactly one identity source:
+Every API command takes its identity from exactly one identity source. The three sources
+are a profile, a credentials file, and the environment.
 
-- A profile, named with `--profile`. `auth login` saves the non-secret settings in
-  `profiles.json` and the client secret in `secrets.json`, both in the CLI config
-  directory (`~/.config/intelligrc` on Linux and macOS, `%LOCALAPPDATA%\intelligrc` on
-  Windows). `secrets.json` has mode 0600.
-- A credentials file, named by `INTELLIGRC_CREDENTIALS_FILE`.
-- The environment identity: `INTELLIGRC_CLIENT_ID`, `INTELLIGRC_CLIENT_SECRET`, and
-  `INTELLIGRC_TENANT_ID` all set, with no `--profile`.
-
-`--profile` is optional when a credentials file or the environment identity is present.
-When no source is present, the command exits 2 with `identity-required`. Passing
-`--profile` together with `INTELLIGRC_CREDENTIALS_FILE` exits 2 with
-`identity-source-conflict`. `auth status` prints the source in use, the resolved fields,
-and the environment variables that overrode a field, and never prints the secret:
+A profile is named with `--profile`. `auth login` saves the settings that are not secret
+in `profiles.json` and the client secret in `secrets.json`. Both files are in the CLI
+config directory, which is `~/.config/intelligrc` on Linux and macOS and
+`%LOCALAPPDATA%\intelligrc` on Windows. `secrets.json` has mode 0600.
 
 ```sh
-intelligrc auth status --profile prod
+intelligrc facility list --profile prod
 ```
 
-Profiles created before the secrets file existed hold their secret in the operating
-system secret store, which this version no longer reads. Recreate each one once with
-`intelligrc auth login --profile NAME --client-id ID --replace`; until then, commands that
-use that profile exit 3 with `client-secret-missing`.
-
-### Headless identity
-
-A container, a CI runner, or an agent sandbox has no saved profile. Use one of the two
-headless sources.
-
-A credentials file holds one complete identity. The CLI only reads it, and on Linux and
-macOS refuses it unless its mode is 0600.
+A credentials file is a JSON file that holds one complete identity. Name the file with
+`INTELLIGRC_CREDENTIALS_FILE`. The CLI only reads the file, and on Linux and macOS it
+refuses the file unless its mode is 0600. `tenantName` and `baseUrl` are optional fields.
 
 ```sh
 cat > /run/secrets/intelligrc.json <<'EOF'
@@ -134,12 +103,9 @@ chmod 600 /run/secrets/intelligrc.json
 INTELLIGRC_CREDENTIALS_FILE=/run/secrets/intelligrc.json intelligrc facility list
 ```
 
-`tenantName` and `baseUrl` are optional fields in that file. A file that cannot be
-opened or parsed exits 3 with `credentials-file-unreadable`; a file with the wrong
-version or a missing required field exits 3 with `credentials-file-invalid`.
-
-The environment identity needs the three variables together. With one missing, the
-command exits 2 with `identity-required`.
+The environment identity needs `INTELLIGRC_CLIENT_ID`, `INTELLIGRC_CLIENT_SECRET`, and
+`INTELLIGRC_TENANT_ID` all set, with no `--profile`. When one of the three is missing,
+the command exits 2 with `identity-required`.
 
 ```sh
 export INTELLIGRC_CLIENT_ID=YOUR_CLIENT_ID
@@ -148,418 +114,92 @@ export INTELLIGRC_TENANT_ID=YOUR_TENANT_ID
 intelligrc facility list
 ```
 
-`INTELLIGRC_BASE_URL` sets the base URL for either headless source. On top of a profile
-or a credentials file, each of the four `INTELLIGRC_*` identity variables that is set
-replaces the matching field, and `auth status` lists the replaced fields under
-`overrides`.
+Use a credentials file or the environment identity in a container, a continuous
+integration (CI) runner, or an agent sandbox, because none of those has a saved profile.
+`--profile` is optional when either of those sources is present. When no source is
+present, the command exits 2 with `identity-required`. When you pass `--profile` and
+`INTELLIGRC_CREDENTIALS_FILE` together, the command exits 2 with
+`identity-source-conflict`.
 
-## Writing data types
+`INTELLIGRC_BASE_URL` sets the API base URL for any source. On top of a profile or a
+credentials file, each `INTELLIGRC_*` identity variable that is set replaces the matching
+field. `auth status` prints the source in use, the resolved fields, and the replaced
+fields under `overrides`, and it never prints the secret.
 
-The CLI can create, update, and delete data types. Each write command needs one
-identity source (the examples use `--profile`) and prints the record the API returned.
-
-```sh
-# Create a data type. The three level identifiers come from the matching
-# `lookup data-type ...` command. The command prints the created record.
-intelligrc data-type create --profile prod --name "Controlled Unclassified Information" \
-  --confidentiality-id 3 --integrity-id 2 --availability-id 1
-
-# Update a data type by its integer identifier. The command prints the updated record.
-intelligrc data-type update 42 --profile prod --name "CUI" \
-  --confidentiality-id 3 --integrity-id 2 --availability-id 1
-
-# Delete a data type by its integer identifier. The command pauses for a
-# confirmation that defaults to "no"; add --force to delete without pausing.
-intelligrc data-type delete 42 --profile prod
-```
-
-Three safety rules protect a write:
-
-- A `create` is never retried after a network failure it cannot confirm. Instead it stops
-  and reports that you should check IntelliGRC before running it again, so a broken
-  connection never produces a duplicate record.
-- An `update` and a `delete` retry after a temporary failure, because repeating them lands
-  on the same result.
-- A `delete` pauses and asks for confirmation. A bare Enter declines. When no terminal is
-  attached and `--force` is absent, the command declines rather than deleting.
-
-## Writing interconnections
-
-`interconnection create` and `interconnection update` send the documented
-`POST /v1/Interconnections` and `PUT /v1/Interconnections/{id}` requests and print the
-record the API returned. `create` requires `--name`, `--authorizing-official-id`, and at
-least one `--authorization-type`. `update` requires only `--name`; every other flag is
-optional, and the CLI leaves that field out of the request body when the flag is absent.
-
-The archived API document does not state how the update operation treats a field its
-request body leaves out. Send every field you want the interconnection to keep, and read
-the printed record to confirm what the API stored.
-
-An interconnection carries a list of authorization types, so `--authorization-type` is the
-CLI convention for supplying a list of structured objects: repeat the flag once per object
-and write each object as comma-separated `key=value` pairs.
+A profile created before 2026-09-09 holds its secret in the operating system keychain,
+which the CLI no longer reads. A command that uses such a profile exits 3 with
+`client-secret-missing`. Fix each profile once with `--replace`:
 
 ```sh
-# Create an interconnection with two authorization types. The id values come from
-# `lookup interconnection authorization-types`. The command prints the created record.
-intelligrc interconnection create --profile prod \
-  --name "Vendor VPN" --authorizing-official-id 12 \
-  --authorization-type id=5 \
-  --authorization-type id=7,other="Site-to-site VPN"
-
-# Rename an interconnection. Repeat every field the interconnection should keep.
-# The command prints the updated record.
-intelligrc interconnection update 42 --profile prod \
-  --name "Vendor VPN (retired)" --authorizing-official-id 12 \
-  --authorization-type id=5 \
-  --authorization-type id=7,other="Site-to-site VPN"
+intelligrc auth login --profile prod --client-id YOUR_CLIENT_ID --replace
 ```
 
-The `--authorization-type` keys are `id` (required, the integer
-`interconnectionAuthorizationTypeId`) and `other` (optional free text for the `otherValue`
-field). A missing `id`, an unknown key, or a non-integer `id` stops the command before any
-network access. Providing `--authorization-type` on an update replaces every existing
-authorization type on that interconnection — that rule is documented. What the operation
-does when the flag is absent is not documented, so send the full list you want to keep.
+## Commands
 
-## Writing facilities
+A command is one topic followed by one verb, such as `facility list`. Most commands use
+one of six verbs: `get` reads one record, `list` reads a collection, `create` adds one
+record, `update` changes fields on one record, `delete` removes one record, and `set`
+replaces the whole association list on one record. A few commands name what they read
+instead, such as `evaluation current`, `assessment-objective history`, and every `lookup`
+command.
 
-`facility create` and `facility update` send the documented `POST /v1/Facilities` and
-`PUT /v1/Facilities/{id}` requests and print the record the API returned. Both commands
-take the same flags, because the two documented request bodies carry the same fourteen
-fields. Only `--name` is required. Every other flag is optional, and the CLI leaves that
-field out of the request body when the flag is absent.
+Two commands describe the rest. `intelligrc commands` prints the catalog, which is the
+JSON description of every command with its flags, permission, and documented operations.
+The catalog runs locally with no profile and no network. `intelligrc <command> --help`
+prints the flags of one command.
 
-The archived API document does not state how the update operation treats a field its
-request body leaves out. Send every field you want the facility to keep, and read the
-printed record to confirm what the API stored.
+| Topic | What it covers |
+|---|---|
+| `auth` | Create, list, remove, and inspect profiles. |
+| `doctor` | Check one saved profile and its connection without printing secret values. |
+| `tenant` | List the tenants the credential can reach. |
+| `evaluation` | Read the current evaluation, list evaluations, or create one. |
+| `assessment-objective` | List assessment objectives and their history, or update one. |
+| `control` | List controls or update one. |
+| `evidence` | List evidence, create evidence from a file name and URL, or set its assessment objectives. |
+| `evidence-folder` | List evidence folders or create one. |
+| `action-plan-project` | List action plan projects or create one. |
+| `action-plan-task` | List action plan tasks or create one. |
+| `action-plan-subtask` | List action plan subtasks or create one. |
+| `boundary` | List boundaries or create one. |
+| `facility` | Read, create, and update facilities, and read or set their data types. |
+| `interconnection` | Read, create, and update interconnections, and read or set their data types. |
+| `personnel` | Read, create, update, and delete personnel. |
+| `data-type` | Read, create, update, and delete data types. |
+| `lookup` | Read the reference tables that fill resource fields, such as facility types. |
+
+JSON is the default output format. `--output jsonl` prints one array element per line.
+`--output table` prints scalar fields as columns. `--json` names the default and cannot
+be combined with the other two formats.
+
+## Writing data
+
+Four rules apply to every write command:
+
+- A `create` is never retried after a network failure the CLI cannot confirm. The command
+  stops and tells you to check IntelliGRC before you run it again, so a broken connection
+  never makes a duplicate record.
+- An `update`, a `delete`, and a `set` retry after a temporary failure, because running
+  one again lands on the same result.
+- A `delete` pauses and asks for confirmation. An empty answer declines. Add `--force` to
+  delete without the pause. With no terminal attached and no `--force`, the command
+  declines.
+- A `set` replaces the whole association list. Send every identifier the record should
+  keep, not only the ones you are adding.
+
+This example replaces the data types of facility 7 with data types 1 and 2:
 
 ```sh
-# Create a facility. The --location-type-id value comes from `lookup facility types`
-# and the --primary-contact-id value comes from `personnel list`.
-intelligrc facility create --profile prod \
-  --name "Headquarters" \
-  --location-type-id 3 \
-  --address "100 Congress Ave" --address-line2 "Suite 400" \
-  --city "Austin" --state TX --zip-code 78701 --country "United States" \
-  --phone-number "512-555-0100" --website "https://example.com" \
-  --employee-count 250 --primary-contact-id 12
-
-# Update a facility by its integer identifier. Repeat every field the facility
-# should keep. The command prints the updated record.
-intelligrc facility update 7 --profile prod \
-  --name "Headquarters" \
-  --location-type-id 3 \
-  --address "100 Congress Ave" --address-line2 "Suite 400" \
-  --city "Austin" --state TX --zip-code 78701 --country "United States" \
-  --phone-number "512-555-0100" --website "https://example.com" \
-  --employee-count 275 --primary-contact-id 12
+intelligrc facility data-types set 7 --profile prod --data-type-id 1 --data-type-id 2
 ```
 
-`--location-type-id`, `--employee-count`, and `--primary-contact-id` take integers. A
-missing `--name`, a non-integer value in any of those three flags, or a non-integer
-identifier argument stops the command before any network or secret-store access.
-
-The archived document also constrains three create fields that the CLI does not check:
-`--state` holds at most two characters, `--zip-code` holds five digits or five-plus-four
-digits, and `--website` holds a uniform resource identifier. The documented update body
-carries none of the three constraints. The IntelliGRC API is the authority in both cases,
-so it returns the authoritative message when it rejects a value.
-
-## Writing personnel
-
-`personnel create`, `personnel update`, and `personnel delete` send the documented
-`POST /v1/Personnel`, `PUT /v1/Personnel/{id}`, and `DELETE /v1/Personnel/{id}` requests.
-`create` and `update` print the record the API returned; `delete` prints a short deletion
-confirmation. The create and update commands take the same flags, because the two
-documented request bodies carry the same twelve fields. Only `--first-name` and
-`--last-name` are required. Every other flag is optional, and the CLI leaves that field
-out of the request body when the flag is absent.
-
-The archived API document does not state how the update operation treats a field its
-request body leaves out. Send every field you want the person to keep, and read the
-printed record to confirm what the API stored.
-
-```sh
-# Create a person. The command prints the created record.
-intelligrc personnel create --profile prod \
-  --first-name "Ada" --last-name "Lovelace" --middle-name "Byron" \
-  --title "Security Lead" --description "Owns the security program" \
-  --email-address "ada@example.com" \
-  --phone-number "512-555-0100" --office-number "512-555-0101" \
-  --network-user-name "alovelace" --department-cd "SEC" \
-  --ad-domain "example.local" --user-type-id 2
-
-# Update a person by their integer identifier. Repeat every field the record
-# should keep. The command prints the updated record.
-intelligrc personnel update 12 --profile prod \
-  --first-name "Ada" --last-name "Lovelace" --title "Chief Security Officer"
-
-# Delete a person by their integer identifier. The command pauses for a
-# confirmation that defaults to "no"; add --force to delete without pausing.
-intelligrc personnel delete 12 --profile prod
-```
-
-`--department-cd` supplies the documented `department_CD` body field; the flag name follows
-the CLI's lowercase, hyphenated convention. `--user-type-id` takes an integer, and the
-archived contract documents no lookup operation that lists the user type options, so the
-IntelliGRC API is the authority on which values it accepts.
-
-A missing `--first-name` or `--last-name`, a non-integer `--user-type-id`, or a
-non-integer identifier argument stops the command before any network or secret-store
-access.
-
-The three write safety rules from [Writing data types](#writing-data-types) apply here
-too: a `create` is never retried after an unconfirmed network failure, an `update` and a
-`delete` retry after a temporary failure, and a `delete` pauses for confirmation. The
-documented delete operation also replies `409 Conflict` when another record references the
-person, for example as the authorizing official of an interconnection. The CLI passes that
-reply through with the message the API returned, so nothing is deleted and the message
-names the reason.
-
-## Writing assessment objectives and controls
-
-`assessment-objective update` and `control update` send the documented
-`PUT /v1/AssessmentObjectives/{id}` and `PUT /v1/Controls/{controlId}` requests and print
-the record the API returned. Both take a universally unique identifier (UUID) argument, not
-an integer. Every field flag is optional, and the CLI leaves that field out of the request
-body when the flag is absent.
-
-The archived API document does not state how either update operation treats a field its
-request body leaves out. Send every field you want the record to keep, and read the printed
-record to confirm what the API stored.
-
-```sh
-# Record a gap analysis result against one assessment objective. The --status-id value
-# comes from `lookup assessment-objective statuses`. The command prints the updated record.
-intelligrc assessment-objective update 3fa85f64-5717-4562-b3fc-2c963f66afa6 --profile prod \
-  --status-id 2 \
-  --implementation-detail "Enforced by the conditional access policy." \
-  --finding-detail "No exceptions observed in the January sample." \
-  --recommendation-detail "Re-sample after the second-quarter policy change." \
-  --validation-methods "Interview, configuration review"
-
-# Update the summary statement of one control. The command prints the updated record.
-intelligrc control update 7c9e6679-7425-40de-944b-e07fc1f90ae7 --profile prod \
-  --summary-statement "The organization enforces least privilege through role assignment."
-```
-
-`--validation-methods` supplies a single string, not a list. The documented body field is
-one string, so write the methods as one value.
-
-Both commands accept `--evaluation-id` to name the evaluation the update belongs to. The
-two operations differ in what the archived document says about leaving it out. For
-`control update`, the document states the rule: when the request body carries no evaluation
-identifier, the API uses the current evaluation. For `assessment-objective update`, the
-document states no rule for an absent evaluation identifier, so pass `--evaluation-id` when
-the update must land on a specific evaluation.
-
-A non-UUID identifier argument, or a non-integer `--status-id` or `--evaluation-id`, stops
-the command before any network or secret-store access.
-
-## Creating evidence and evidence folders
-
-`evidence create` sends the documented `POST /v1/Evidence` request and creates one piece of
-link-based evidence: a name and a web address that points at the real document.
-`evidence-folder create` sends the documented `POST /v1/Evidence/Folders` request and
-creates one folder. Both commands print the record the API returned.
-
-```sh
-# Create a folder at the root, then create evidence inside it. Both commands print
-# the created record, and each record carries the identifier the other command needs.
-intelligrc evidence-folder create --profile prod --name "Policies"
-
-intelligrc evidence create --profile prod \
-  --file-name "Access Control Policy" \
-  --url "https://example.com/policies/access-control.pdf" \
-  --description "Signed 2026 revision" \
-  --parent-id 3fa85f64-5717-4562-b3fc-2c963f66afa6
-
-# Nest a folder under another folder. Omit --parent-id to create it at the root.
-intelligrc evidence-folder create --profile prod --name "2026" \
-  --parent-id 3fa85f64-5717-4562-b3fc-2c963f66afa6
-```
-
-`--parent-id` takes a folder identifier from `evidence-folder list`. The CLI leaves the
-field out of the request body when the flag is absent. For a folder, the archived document
-states what that means: a null parent creates the folder at the root. For a piece of
-evidence, the archived document states no rule for a null parent, so read the printed
-record to confirm where the API filed it.
-
-A missing required flag, or a `--parent-id` that is not a universally unique identifier
-(UUID), stops the command before any network or secret-store access.
-
-Three documented rules belong to the API, not the CLI: folder names must be unique within
-their parent, the folder operation documents a `409 Conflict` reply, and the `--url` value
-must be a uniform resource identifier. The CLI sends the value either way and passes the
-reply through with the message the API returned.
-
-New evidence carries no assessment objective mappings. Use
-`evidence assessment-objectives set` to map assessment objectives after the evidence
-exists — that is the documented order of operations.
-
-## Creating an evaluation
-
-`evaluation create` sends the documented `POST /v1/Evaluations` request and prints the
-created record. It requires `--name`, `--reason`, `--boundary-id`, `--start-date`,
-`--end-date`, `--icl-version-id`, and at least one `--framework-id`. `--total-budget`,
-`--target-type`, and `--previous-evaluation-id` are optional and are omitted from the body
-when not given.
-
-```sh
-# Create an evaluation. The boundary, ICL version, and framework identifiers come from
-# `boundary list`, `lookup icl-version list`, and `lookup icl-version frameworks`.
-# The command prints the created record.
-intelligrc evaluation create --profile prod \
-  --name "CMMC L2 Assessment" --reason "Annual assessment" \
-  --boundary-id 5 \
-  --start-date 2026-07-24 --end-date 2026-12-31 \
-  --icl-version-id 3fa85f64-5717-4562-b3fc-2c963f66afa6 \
-  --framework-id 11111111-2222-3333-4444-555555555555 \
-  --framework-id aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee
-```
-
-`--start-date` and `--end-date` take a calendar date in `YYYY-MM-DD` form. The CLI checks
-that it is a real calendar day and sends it as the documented date-time field at midnight
-UTC, so `2026-07-24` becomes `2026-07-24T00:00:00Z`. `--total-budget` accepts a number
-such as `50000` or `50000.50`. `--target-type` is an integer, not free text. A missing
-required flag, or an invalid integer, number, UUID, or date, stops the command before any
-network access.
-
-## Creating a boundary
-
-`boundary create` sends the documented `POST /v1/Boundaries` request and prints the
-created record. It requires `--name`, `--unique-identifier`, `--operational-status-id`,
-and `--system-type-id`. Every other scalar field and all eight array fields are optional
-and are omitted from the body when their flag is absent.
-
-Each array field has its own repeatable flag. The six identifier lists take integers
-(`--device-id`, `--location-id`, `--sensitive-information-type-id`, `--interconnection-id`,
-`--law-regulation-policy-id`, `--personnel-id`), `--framework-id` takes UUIDs, and
-`--cage-code` takes plain text. Repeat a flag once per value.
-
-```sh
-# Create a boundary with a few associations. The command prints the created record.
-intelligrc boundary create --profile prod \
-  --name "Enclave" --unique-identifier "ENC-001" \
-  --operational-status-id 1 --system-type-id 2 \
-  --confidentiality-id 4 --integrity-id 5 --availability-id 6 \
-  --device-id 10 --device-id 11 \
-  --location-id 12 \
-  --framework-id 11111111-2222-3333-4444-555555555555 \
-  --cage-code 1ABC2
-```
-
-A missing required flag, or an invalid integer or UUID in any scalar or array field, stops
-the command before any network access.
-
-## Creating action-plan work items
-
-`action-plan-project create`, `action-plan-task create`, and
-`action-plan-subtask create` send the documented `POST /v1/ActionPlanProjects`,
-`POST /v1/ActionPlanTasks`, and `POST /v1/ActionPlanSubTasks` requests and print the
-created record. A project requires `--name`, `--description`, and `--status-id`. A task
-also requires `--task-type-id`. A subtask requires `--title`, `--description`, `--task-id`
-(a UUID), and `--status-id`. Every other field is optional and is omitted from the body
-when its flag is absent.
-
-The three assignment lists are repeatable integer flags (`--assigned-department-id`,
-`--assigned-personnel-id`, `--assigned-watcher-id`); repeat one once per value. A task also
-takes a repeatable `--assigned-assessment-objective-id` (UUID). Date flags (`--due-date`,
-`--scheduled-completion-date`) take a `YYYY-MM-DD` calendar date and are sent as the
-documented date-time field at midnight UTC. `--is-assigned-to-organization` takes `true`
-or `false`.
-
-```sh
-# Create a project, then a task under it, then a subtask under the task.
-intelligrc action-plan-project create --profile prod \
-  --name "Remediation" --description "Close the gaps" --status-id 1 \
-  --due-date 2026-08-01 --assigned-personnel-id 12 --assigned-personnel-id 13
-
-intelligrc action-plan-task create --profile prod \
-  --name "Patch servers" --description "Apply updates" --status-id 1 --task-type-id 2 \
-  --project-id 3fa85f64-5717-4562-b3fc-2c963f66afa6 \
-  --is-assigned-to-organization true --assigned-external-organization "Acme MSP"
-
-intelligrc action-plan-subtask create --profile prod \
-  --title "Reboot" --description "Reboot the host" \
-  --task-id aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee --status-id 1
-```
-
-A missing required flag, or an invalid integer, number, date, or UUID in any field, stops
-the command before any network access.
-
-## Setting associations
-
-Three commands replace the list of records associated with one record.
-
-Each data type association also has a read. `facility data-types get <id>` and
-`interconnection data-types get <id>` return the current list. The read and the write
-share the same identifier argument.
-
-| Command | Documented request | Identifier argument | Associated identifiers come from |
-|---|---|---|---|
-| `facility data-types set` | `PUT /v1/Facilities/{id}/datatypes` | integer | `lookup facility data-types` |
-| `interconnection data-types set` | `PUT /v1/Interconnections/{id}/datatypes` | integer | `data-type list` |
-| `evidence assessment-objectives set` | `PUT /v1/Evidence/{id}/AssessmentObjectives` | UUID | `assessment-objective list` |
-
-The two `data-types set` commands read their values from different places, which is a
-documented difference rather than a CLI choice: the facility operation documents
-`GET /v1/lookups/facilities/datatypes` as the source of valid identifiers, and the
-interconnection operation documents the Data Types API.
-
-Each command sends the whole list, so the identifiers you pass become the complete set.
-Send every identifier the record should keep, not only the ones you are adding.
-
-```sh
-# Associate two data types with facility 7. A data type already associated with the
-# facility and absent from this command is removed. The command prints the updated record.
-intelligrc facility data-types set 7 --profile prod \
-  --data-type-id 1 --data-type-id 2
-
-# Clear every data type from interconnection 42 by sending no identifier.
-intelligrc interconnection data-types set 42 --profile prod
-
-# Replace the assessment objectives mapped to one piece of evidence.
-intelligrc evidence assessment-objectives set 3fa85f64-5717-4562-b3fc-2c963f66afa6 \
-  --profile prod \
-  --assessment-objective-id 7c9e6679-7425-40de-944b-e07fc1f90ae7 \
-  --assessment-objective-id 9d2b1c44-1f0e-4a3b-8c55-2b1d3e4f5a6b
-
-# Add one assessment objective and keep the existing mappings.
-intelligrc evidence assessment-objectives set 3fa85f64-5717-4562-b3fc-2c963f66afa6 \
-  --profile prod --preserve-existing true \
-  --assessment-objective-id 9d2b1c44-1f0e-4a3b-8c55-2b1d3e4f5a6b
-```
-
-The evidence command differs from the two `data-types set` commands in three ways:
-
-- `--data-type-id` is optional on both `data-types set` commands. Leaving it out sends an
-  empty list, and the archived document states that an empty list clears every association.
-  A `data-types set` with no `--data-type-id` is a deliberate way to clear associations, so
-  an accidental one removes associations without a warning.
-- `--assessment-objective-id` is required on `evidence assessment-objectives set`, which
-  needs at least one value. That command cannot clear a mapping list.
-- `--preserve-existing true` belongs to `evidence assessment-objectives set` alone. It adds
-  the given objectives to the existing mappings instead of replacing them. The documented
-  default is `false`, which replaces them. Neither `data-types set` command has an
-  equivalent flag.
-
-An association `set` retries after a temporary failure, because repeating it lands on the
-same result. A non-integer `--data-type-id`, an `--assessment-objective-id` that is not a
-UUID, or an identifier argument of the wrong type stops the command before any network or
-secret-store access.
+Worked examples for every write command are in [docs/writing-data.md](docs/writing-data.md).
 
 ## Output and exit codes
 
-`intelligrc commands` prints the exit codes as `exitCodes` and the failure codes as
-`errors`, so the tables below are a convenience, not the only copy.
-
-JSON is the default format. `--json` states that default explicitly and is accepted on
-every command that has `--output`. `--output jsonl` prints one array element per line.
-`--output table` renders scalar fields as columns. Passing `--json` together with
-`--output jsonl` or `--output table` is contradictory and exits 2. Requested data goes to standard
-output only; failures and retry diagnostics go to standard error as one JSON object.
+Requested data goes to standard output only. A failure goes to standard error as one JSON
+object. The catalog prints the exit codes as `exitCodes` and the failure codes as
+`errors`, so the table below is a convenience, not the only copy.
 
 | Exit code | Meaning |
 |-----------|---------|
@@ -573,34 +213,42 @@ output only; failures and retry diagnostics go to standard error as one JSON obj
 | 7 | Not found |
 | 8 | Another API failure |
 
-## Verified facts and assumptions
+TLS is Transport Layer Security, the encryption under HTTPS.
 
-Keep these two categories separate when relying on this CLI.
+## Use with an AI agent
 
-Verified against the archived OpenAPI document (`official-docs/swagger/v1/swagger.json`
-in the source repository):
+An agent learns the CLI from the catalog, so it needs neither this file nor the source.
+Three catalog fields are the ones to read:
 
-- The archived OpenAPI document defines exactly 50 `GET` operations. The CLI's 49 read
-  commands cover all 50 operations, with `evidence list` covering two. An automated
-  contract suite compares every path, parameter, documented permission, and write
-  request-body field against the archived OpenAPI document on every test run.
-- The archived OpenAPI document defines exactly 23 operations that are not `GET`, and the
-  CLI maps 22 of them to one command each. The one operation the CLI does not implement is
-  `POST /v1/Evidence/Upload`, which the document describes as a multipart file upload.
-- Tenant-scoped operations document the `x-client-id`, `x-client-secret`, and
-  `x-tenant-id` headers. The tenant-list operation documents no `x-tenant-id` header.
-- The archived OpenAPI document defines no pagination, rate-limit, or complete error
-  behavior. The CLI returns each response as one payload and does not synthesize pages.
+- `writes` on each command is `"remote"` when the command changes tenant data, `"local"`
+  when it changes only this machine, and `null` when it only reads.
+- `operations` on each command lists the documented method and path the command sends.
+  When a command chooses between operations, `selectedBy` names the flags that select
+  each one.
+- `errors` at the top level is the failure vocabulary. Each code has an exit code and a
+  meaning, so the agent can decide whether to retry.
 
-Assumed, not verified:
+This prints the id and operations of every command that changes tenant data:
 
-- The API base URL. The CLI uses `https://api.intelligrc.app` as the default because a
-  credential-free probe of that host returned a well-formed API error, but no
-  authenticated call has confirmed it. Each profile saves its own base URL, so support
-  confirmation or live evidence can replace the assumption per profile without a new
-  release (`auth login --base-url`).
-- The credential is a long-lived vendor client secret; the archived OpenAPI document
-  defines no token exchange, so no short-lived credential exists.
+```sh
+intelligrc commands | jq '.commands[] | select(.writes == "remote") | {id, operations}'
+```
+
+An agent skill for the CLI is at
+[.claude/skills/intelligrc-cli/SKILL.md](.claude/skills/intelligrc-cli/SKILL.md). Claude
+Code loads the skill automatically from a clone of this repository. To install it into
+another project or agent, use the `skills` command-line tool:
+
+```sh
+# Install into the current project for every agent the tool supports.
+npx skills add poamslayer/intelligrc-cli --skill intelligrc-cli
+
+# Install for one agent only, or for your user account instead of one project.
+npx skills add poamslayer/intelligrc-cli --skill intelligrc-cli -a claude-code
+npx skills add poamslayer/intelligrc-cli --skill intelligrc-cli -g
+```
+
+Without that tool, copy the one file into the agent's skills directory.
 
 ## Security properties
 
@@ -617,13 +265,52 @@ Assumed, not verified:
 - Normal commands make no automatic update check. The CLI installs no update plugin
   and contacts only the IntelliGRC API host the profile names.
 
-## Releasing
+## Verified facts and assumptions
 
-The release workflow (`.github/workflows/release.yml`) publishes one fixed version of
-`@poamslayer/intelligrc-cli` as a public npm package. It runs only from a manual dispatch inside the protected
-`release` environment, publishes the package exactly as committed, verifies pinned
-`npx` execution and global installation from the registry, and stores credential-free
-release evidence. No npm token is stored anywhere: the workflow authenticates through npm
-trusted publishing, which accepts GitHub's short-lived identity token for this workflow
-file and the `release` environment. The workflow header documents the operator
-prerequisites and the one-time `npm trust` command that registered the trusted publisher.
+Keep the two categories separate when you rely on this CLI.
+
+These facts are verified against the contract, which is the vendor's archived OpenAPI
+document at `official-docs/swagger/v1/swagger.json` in this repository:
+
+- The contract defines exactly 50 `GET` operations, and the 49 read commands cover all
+  50. `evidence list` sends one of two operations depending on its flags. An automated
+  test suite compares every path, parameter, documented permission, and write body field
+  against the contract on every test run.
+- The contract defines exactly 23 operations that are not `GET`, and the CLI maps 22 of
+  them to one command each. The one it does not implement is `POST /v1/Evidence/Upload`.
+- The contract defines no pagination, rate limit, or complete error behavior. The CLI
+  returns each response as one payload and does not build pages.
+
+These are assumptions, not verified:
+
+- The API base URL. The CLI uses `https://api.intelligrc.app` as the default because a
+  probe of that host with no credential returned a well-formed API error, but no
+  authenticated call has confirmed it. Each profile saves its own base URL, so you can
+  replace the default per profile with `auth login --base-url` and no new release.
+- The credential is a long-lived client secret. The contract defines no token exchange,
+  so no short-lived credential exists.
+
+## Development and releasing
+
+Clone the repository and run the tests on Node.js 24:
+
+```sh
+git clone https://github.com/poamslayer/intelligrc-cli.git
+cd intelligrc-cli
+npm ci
+npm test
+```
+
+The release workflow in `.github/workflows/release.yml` publishes one fixed version of
+`@poamslayer/intelligrc-cli` as a public npm package. It runs only from a manual dispatch
+inside the protected `release` environment. It publishes the package exactly as
+committed, verifies pinned `npx` execution and global installation from the registry, and
+stores release evidence that holds no credential. No npm token is stored anywhere. The
+workflow authenticates through npm trusted publishing, which accepts GitHub's short-lived
+identity token for this workflow file and the `release` environment. The workflow header
+documents the operator prerequisites and the one-time `npm trust` command that registered
+the trusted publisher.
+
+## License
+
+MIT. See [LICENSE](LICENSE). Copyright Arnold De La Vega.

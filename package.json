@@ -1,9 +1,9 @@
 {
   "name": "@poamslayer/intelligrc-cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Command-line interface for reading and editing IntelliGRC governance, risk, and compliance data",
   "type": "module",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/poamslayer/intelligrc-cli.git"
