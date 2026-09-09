@@ -78,7 +78,7 @@ test('a clean checkout builds, packs, installs, and serves the documented surfac
   // Clean room: copy only the sources npm would see in a fresh checkout.
   // No dist/ is copied, so packing must build the artifact itself.
   const cleanRoom = join(workDir, 'checkout')
-  for (const entry of ['package.json', 'package-lock.json', 'tsconfig.json', 'bin', 'src', 'README.md']) {
+  for (const entry of ['package.json', 'package-lock.json', 'tsconfig.json', 'bin', 'src', 'README.md', 'LICENSE']) {
     cpSync(join(projectRoot, entry), join(cleanRoom, entry), {recursive: true})
   }
 
@@ -91,6 +91,7 @@ test('a clean checkout builds, packs, installs, and serves the documented surfac
   assert.match(tarballListing, /package\/dist\/commands\/version\.js/)
   assert.match(tarballListing, /package\/dist\/commands\/commands\.js/)
   assert.match(tarballListing, /package\/README\.md/)
+  assert.match(tarballListing, /package\/LICENSE/)
 
   // Whitelist: the package carries the manifest, the documentation, the
   // executable, and the built JavaScript — nothing else. Credentials,
@@ -98,7 +99,7 @@ test('a clean checkout builds, packs, installs, and serves the documented surfac
   // OpenAPI document can never ship because any unlisted entry fails
   // here, and a non-JavaScript file under dist/ fails the same way.
   // Split on \r?\n: Windows bsdtar terminates listing lines with CRLF.
-  const allowedEntry = /^package\/(package\.json|README\.md|bin\/[^/]+|dist\/.+\.js)$/
+  const allowedEntry = /^package\/(package\.json|README\.md|LICENSE|bin\/[^/]+|dist\/.+\.js)$/
   for (const entry of tarballListing.trim().split(/\r?\n/)) {
     assert.match(entry, allowedEntry, `Unexpected file in the package: ${entry}`)
   }
