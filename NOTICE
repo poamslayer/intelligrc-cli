@@ -1,0 +1,40 @@
+# Notices
+
+The MIT License in `LICENSE` covers the files written for this project. The items
+below are copied from other sources. Each one keeps its own copyright and license.
+This repository does not change those terms.
+
+## Agent skill packs
+
+Path: `.agents/skills/` (22 skill packs) and the symlinks under `.claude/skills/`
+that point into it.
+Source: GitHub repository `mattpocock/skills`.
+License: MIT License.
+Note: `skills-lock.json` at the repository root records the exact upstream path and
+content hash of each pack.
+
+## Playwright CLI skill
+
+Path: `.claude/skills/playwright-cli/` and the symlink `.codex/skills/playwright-cli`
+that points to it.
+Source: the agent skill shipped with Microsoft's Playwright CLI, GitHub repository
+`microsoft/playwright-cli`.
+License: Apache License 2.0.
+Note: Copied as shipped. Read the upstream repository for the full license text.
+
+## IntelliGRC API documentation archive
+
+Path: `official-docs/`, where present: the OpenAPI document `swagger/v1/swagger.json`,
+`index.html`, `index.css`, and `index.js`.
+Source: an archived copy of the IntelliGRC API documentation site.
+License: property of IntelliGRC. The MIT License in `LICENSE` does not cover these
+files.
+Note: `official-docs/README.md` and `official-docs/errata.md` are this project's own
+writing and are covered by `LICENSE`.
+
+## Redoc
+
+Path: `official-docs/redoc.standalone.js`, where present.
+Source: Redoc, by Redocly.
+License: MIT License.
+Note: A bundled copy used to render the archived documentation site.

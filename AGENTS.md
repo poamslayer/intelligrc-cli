@@ -4,9 +4,11 @@
 
 This repository will contain a command-line interface (CLI) for the IntelliGRC API.
 
-The archived API documentation is in `official-docs/`. Treat
-`official-docs/swagger/v1/swagger.json` as the authoritative source for documented API
-paths, parameters, request bodies, and response schemas.
+The API documentation belongs to IntelliGRC and is not distributed with this repository.
+A maintainer keeps a local, gitignored copy of the OpenAPI document at
+`official-docs/swagger/v1/swagger.json`. Treat that document as the authoritative source
+for documented API paths, parameters, request bodies, and response schemas. See
+`official-docs/README.md` for how the local copy is obtained and verified.
 
 Do not invent undocumented API behavior. Record missing information as an open question
 or an explicit assumption. Important known gaps include the API base URL, formal security

@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import {readFileSync} from 'node:fs'
+import {existsSync, readFileSync} from 'node:fs'
 import {join} from 'node:path'
 import {test} from 'node:test'
 
@@ -59,9 +59,18 @@ interface SwaggerOperation {
 
 const HTTP_METHODS = ['get', 'put', 'post', 'delete', 'options', 'head', 'patch', 'trace']
 
-const swagger = JSON.parse(
-  readFileSync(join(projectRoot, 'official-docs', 'swagger', 'v1', 'swagger.json'), 'utf8'),
-) as {
+// The vendor's proprietary OpenAPI document is optional because it is not
+// distributed with this repository.
+const swaggerPath =
+  process.env.INTELLIGRC_OPENAPI_PATH ||
+  join(projectRoot, 'official-docs', 'swagger', 'v1', 'swagger.json')
+const swaggerAvailable = existsSync(swaggerPath)
+const skipMessage =
+  `OpenAPI document not found at ${swaggerPath}; ` +
+  'set INTELLIGRC_OPENAPI_PATH to run the contract suite'
+const swagger = (swaggerAvailable
+  ? JSON.parse(readFileSync(swaggerPath, 'utf8'))
+  : {paths: {}, components: {schemas: {}}}) as {
   paths: Record<string, Record<string, SwaggerOperation>>
   components: {schemas: Record<string, SwaggerSchema>}
 }
@@ -190,11 +199,11 @@ function documentedBodySchema(operation: SwaggerOperation): SwaggerSchema | unde
   return schema
 }
 
-test('the archived contract documents exactly 50 GET operations', () => {
+test('the archived contract documents exactly 50 GET operations', {skip: swaggerAvailable ? false : skipMessage}, () => {
   assert.equal(documentedReads.length, 50)
 })
 
-test('only API commands carry contract metadata', () => {
+test('only API commands carry contract metadata', {skip: swaggerAvailable ? false : skipMessage}, () => {
   for (const spec of commandSpecs) {
     if (spec.kind === 'api') {
       contractOf(spec)
@@ -213,7 +222,7 @@ test('only API commands carry contract metadata', () => {
   }
 })
 
-test('manifest GET mappings and documented GET operations form a bijection', () => {
+test('manifest GET mappings and documented GET operations form a bijection', {skip: swaggerAvailable ? false : skipMessage}, () => {
   const manifestPairs = readSpecs.flatMap((spec) =>
     contractsOf(spec).map((contract) => {
       assert.equal(
@@ -235,7 +244,7 @@ test('manifest GET mappings and documented GET operations form a bijection', () 
   assert.equal(manifestPairs.length, 50)
 })
 
-test('every mapped write operation is a documented write and the mapped write set is complete', () => {
+test('every mapped write operation is a documented write and the mapped write set is complete', {skip: swaggerAvailable ? false : skipMessage}, () => {
   const documentedWritePairs = new Set(documentedWrites.map((entry) => `${entry.method} ${entry.path}`))
 
   const manifestWritePairs = writeSpecs.map((spec) => {
@@ -285,7 +294,7 @@ test('every mapped write operation is a documented write and the mapped write se
   ])
 })
 
-test('every documented parameter of a mapped operation appears exactly once with its documented facts', () => {
+test('every documented parameter of a mapped operation appears exactly once with its documented facts', {skip: swaggerAvailable ? false : skipMessage}, () => {
   for (const spec of apiSpecs) {
     for (const contract of contractsOf(spec)) {
       const operation = documentedOperationFor(contract.method, contract.path)
@@ -323,7 +332,7 @@ test('every documented parameter of a mapped operation appears exactly once with
   }
 })
 
-test('every mapped parameter names one existing CLI input with a matching required status', () => {
+test('every mapped parameter names one existing CLI input with a matching required status', {skip: swaggerAvailable ? false : skipMessage}, () => {
   for (const spec of apiSpecs) {
     for (const contract of contractsOf(spec)) {
       const usedSources = new Set<string>()
@@ -355,7 +364,7 @@ test('every mapped parameter names one existing CLI input with a matching requir
   }
 })
 
-test('every variant keeps the default method and names selecting flags exactly once', () => {
+test('every variant keeps the default method and names selecting flags exactly once', {skip: swaggerAvailable ? false : skipMessage}, () => {
   for (const spec of apiSpecs) {
     const defaultContract = contractOf(spec)
     for (const variant of spec.variants ?? []) {
@@ -376,7 +385,7 @@ test('every variant keeps the default method and names selecting flags exactly o
   }
 })
 
-test('every write command body field matches the documented DTO and names one existing flag', () => {
+test('every write command body field matches the documented DTO and names one existing flag', {skip: swaggerAvailable ? false : skipMessage}, () => {
   for (const spec of writeSpecs) {
     const contract = contractOf(spec)
     const operation = documentedOperationFor(contract.method, contract.path)!
@@ -443,7 +452,7 @@ test('every write command body field matches the documented DTO and names one ex
   }
 })
 
-test('every mapped API command reports its documented permission, and tenant list reports null', () => {
+test('every mapped API command reports its documented permission, and tenant list reports null', {skip: swaggerAvailable ? false : skipMessage}, () => {
   for (const spec of apiSpecs) {
     const contract = contractOf(spec)
     const operation = documentedOperationFor(contract.method, contract.path)!
@@ -473,7 +482,7 @@ test('every mapped API command reports its documented permission, and tenant lis
   }
 })
 
-test('every catalog operation is documented, and only API commands publish operations', () => {
+test('every catalog operation is documented, and only API commands publish operations', {skip: swaggerAvailable ? false : skipMessage}, () => {
   const documented = new Set(documentedOperations().map(({method, path}) => `${method.toUpperCase()} ${path}`))
 
   for (const command of buildCatalog().commands) {
@@ -490,7 +499,7 @@ test('every catalog operation is documented, and only API commands publish opera
   }
 })
 
-test('a catalog write target agrees with the documented method', () => {
+test('a catalog write target agrees with the documented method', {skip: swaggerAvailable ? false : skipMessage}, () => {
   for (const command of buildCatalog().commands) {
     if (command.kind !== 'api') {
       continue

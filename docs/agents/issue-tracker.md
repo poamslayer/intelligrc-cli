@@ -6,21 +6,16 @@ CLI for all operations.
 ## Repository safety
 
 This directory is its own Git clone. The `origin` remote is
-`https://github.com/poamslayer/intelligrc-cli.git`. The repository was once addressed as
-`arnoldadlv/intelligrc-cli`; GitHub still redirects that name, but pushes to it fail to
-open pull requests, so keep `origin` on the `poamslayer` address.
+`https://github.com/poamslayer/intelligrc-cli.git`. Keep `origin` on that address.
 
 Before reading or changing GitHub Issues:
 
-1. Run `git rev-parse --show-toplevel`.
-2. Confirm the result is `/Users/arnoldd/intelligrc`.
-3. Run `gh repo view --json nameWithOwner -q .nameWithOwner`.
-4. Confirm the result is `poamslayer/intelligrc-cli`.
-5. Stop and ask the user if either check fails.
+1. Run `gh repo view --json nameWithOwner -q .nameWithOwner`.
+2. Confirm the result is `poamslayer/intelligrc-cli`.
+3. Stop and ask the user if the check fails.
 
 Never create, edit, label, comment on, or close issues in any other repository for
-IntelliGRC work. The home directory once carried an unrelated `arnoldadlv/crm` clone;
-the checks above guard against that class of mistake.
+IntelliGRC work. The check above guards against running `gh` from an unrelated clone.
 
 ## Conventions
 

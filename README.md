@@ -269,8 +269,9 @@ Without that tool, copy the one file into the agent's skills directory.
 
 Keep the two categories separate when you rely on this CLI.
 
-These facts are verified against the contract, which is the vendor's archived OpenAPI
-document at `official-docs/swagger/v1/swagger.json` in this repository:
+These facts are verified against the contract, which is IntelliGRC's OpenAPI document.
+That document is IntelliGRC's property and is not distributed with this repository. The
+maintainer runs the contract test suite against a local copy; see `official-docs/README.md`:
 
 - The contract defines exactly 50 `GET` operations, and the 49 read commands cover all
   50. `evidence list` sends one of two operations depending on its flags. An automated
