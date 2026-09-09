@@ -233,8 +233,19 @@ intelligrc commands | jq '.commands[] | select(.writes == "remote") | {id, opera
 
 An agent skill for the CLI is at
 [.claude/skills/intelligrc-cli/SKILL.md](.claude/skills/intelligrc-cli/SKILL.md). Claude
-Code loads the skill automatically from a clone of this repository. For another agent,
-copy that one file into the agent's skills directory.
+Code loads the skill automatically from a clone of this repository. To install it into
+another project or agent, use the `skills` command-line tool:
+
+```sh
+# Install into the current project for every agent the tool supports.
+npx skills add poamslayer/intelligrc-cli --skill intelligrc-cli
+
+# Install for one agent only, or for your user account instead of one project.
+npx skills add poamslayer/intelligrc-cli --skill intelligrc-cli -a claude-code
+npx skills add poamslayer/intelligrc-cli --skill intelligrc-cli -g
+```
+
+Without that tool, copy the one file into the agent's skills directory.
 
 ## Security properties
 
