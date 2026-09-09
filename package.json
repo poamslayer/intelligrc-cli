@@ -4,6 +4,10 @@
   "description": "Command-line interface for reading and editing IntelliGRC governance, risk, and compliance data",
   "type": "module",
   "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/poamslayer/intelligrc-cli.git"
+  },
   "publishConfig": {
     "access": "public"
   },

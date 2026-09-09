@@ -13,19 +13,28 @@
 #    registry records the release as public. The cross-platform workflow
 #    must pass on the commit being released.
 # 3. The GitHub environment named "release" exists (created 2026-07-23).
-#    Store an NPM_TOKEN secret there that can publish to the chosen
-#    scope. Required-reviewer protection on environments needs a paid
-#    GitHub plan for private repositories; on the Free plan the dispatch
-#    step itself is the human gate, because only a repository writer can
-#    start a run and pull-request code never triggers this workflow.
+#    No npm token is stored anywhere. The workflow authenticates through
+#    npm trusted publishing: GitHub issues a short-lived OIDC identity
+#    token for this workflow file and environment, and npm accepts it
+#    because the package lists this repository, "release.yml", and the
+#    "release" environment as a trusted publisher. npm can only add a
+#    trusted publisher to a package that already exists, so the first
+#    version was published once from the owner's signed-in machine, then
+#    the owner ran:
+#      npm trust github @poamslayer/intelligrc-cli --file release.yml \
+#        --repo poamslayer/intelligrc-cli --env release --allow-publish
+#    Required-reviewer protection on environments needs a paid GitHub
+#    plan for private repositories; on the Free plan the dispatch step
+#    itself is the human gate, because only a repository writer can start
+#    a run and pull-request code never triggers this workflow.
 # 4. Dispatch this workflow from the validated commit, passing the exact
 #    package name and version as a cross-check.
 #
 # The job fails before publishing when the inputs disagree with
 # package.json, when the package is still marked private, when the access
 # level is not public, or when any
-# test fails. Logs and artifacts never contain the npm token or any
-# IntelliGRC credential; this workflow reads no IntelliGRC secret at all.
+# test fails. Logs and artifacts never contain a registry credential or
+# any IntelliGRC credential; this workflow reads no secret at all.
 name: release
 
 on:
@@ -40,6 +49,8 @@ on:
 
 permissions:
   contents: read
+  # Lets GitHub mint the OIDC token npm trusted publishing checks.
+  id-token: write
 
 jobs:
   publish:
@@ -52,6 +63,10 @@ jobs:
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
+
+      # Trusted publishing needs npm 11.5.1 or later.
+      - name: Update npm
+        run: npm install --global npm@latest
 
       - name: Verify the inputs match the committed package
         run: |
@@ -74,17 +89,14 @@ jobs:
       - name: Run the automated suite
         run: npm test
 
+      # Provenance is attached automatically under trusted publishing.
       - name: Publish the fixed version
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish
 
       # Consumer verification from the registry, in fresh directories:
       # pinned npx execution and global installation must both serve the
       # public executable and the offline catalog.
       - name: Verify pinned npx execution and global installation
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           spec="${{ inputs.package-name }}@${{ inputs.version }}"
           workdir=$(mktemp -d)
@@ -100,8 +112,6 @@ jobs:
           "$prefix/bin/intelligrc" commands --output json > /dev/null
 
       - name: Record release evidence without credentials
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           npm view "${{ inputs.package-name }}@${{ inputs.version }}" name version dist.integrity dist.shasum --json > release-evidence.json
           cat release-evidence.json

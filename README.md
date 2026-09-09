@@ -623,6 +623,7 @@ The release workflow (`.github/workflows/release.yml`) publishes one fixed versi
 `@poamslayer/intelligrc-cli` as a public npm package. It runs only from a manual dispatch inside the protected
 `release` environment, publishes the package exactly as committed, verifies pinned
 `npx` execution and global installation from the registry, and stores credential-free
-release evidence. The workflow header documents the operator prerequisites: let the
-cross-platform workflow pass on the commit being released, and store an `NPM_TOKEN` that
-can publish to the `@poamslayer` scope in the `release` environment.
+release evidence. No npm token is stored anywhere: the workflow authenticates through npm
+trusted publishing, which accepts GitHub's short-lived identity token for this workflow
+file and the `release` environment. The workflow header documents the operator
+prerequisites and the one-time `npm trust` command that registered the trusted publisher.
