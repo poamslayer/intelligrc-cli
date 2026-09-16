@@ -56,7 +56,20 @@ test('the core export subpath serves the documented surface from a packed tarbal
   // Clean room: only the sources npm would see in a fresh checkout, so
   // packing must build the artifact itself.
   const cleanRoom = join(workDir, 'checkout')
-  for (const entry of ['package.json', 'package-lock.json', 'tsconfig.json', 'bin', 'src', 'README.md', 'LICENSE']) {
+  for (const entry of [
+    'package.json',
+    'package-lock.json',
+    'tsconfig.json',
+    'bin',
+    'src',
+    'README.md',
+    'LICENSE',
+    // The three note files the package publishes, and the directories
+    // they sit in. `files` picks exactly those three out.
+    'CONTEXT.md',
+    'docs',
+    'official-docs',
+  ]) {
     cpSync(join(projectRoot, entry), join(cleanRoom, entry), {recursive: true})
   }
 
