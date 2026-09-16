@@ -1,3 +1,4 @@
+import {type EnvironmentVariables} from './environment.js'
 import {CliFailure, EXIT} from './errors.js'
 
 export const DEFAULT_BASE_URL = 'https://api.intelligrc.app'
@@ -18,7 +19,7 @@ function isLoopbackHost(hostname: string): boolean {
  */
 export function resolveBaseUrl(
   flagValue: string | undefined,
-  env: NodeJS.ProcessEnv,
+  env: EnvironmentVariables,
 ): string {
   const candidate = flagValue ?? env.INTELLIGRC_BASE_URL ?? DEFAULT_BASE_URL
 

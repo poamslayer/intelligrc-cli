@@ -2,7 +2,8 @@ import {Command} from '@oclif/core'
 
 import {buildDataTypeBody} from '../../api/filters.js'
 import {apiWriteDescription, runApiWrite} from '../../api/run-write.js'
-import {apiCommandSpec, oclifFlags} from '../../manifest.js'
+import {apiCommandSpec} from '../../manifest.js'
+import {oclifFlags} from '../../oclif-manifest.js'
 
 const spec = apiCommandSpec('data-type create')
 

@@ -250,6 +250,23 @@ npx skills add poamslayer/intelligrc-cli --skill intelligrc-cli -g
 
 Without that tool, copy the one file into the agent's skills directory.
 
+## Use as a library
+
+An agent that cannot run a shell reaches IntelliGRC through the IntelliGRC MCP server
+instead. That server does not reimplement this CLI: it consumes the transport, the
+command catalog, and identity resolution from the `core` export subpath, so the two
+surfaces cannot disagree about how a request is sent or what the API offers.
+
+```js
+import {apiRequest, buildCatalog, resolveIdentity} from '@poamslayer/intelligrc-cli/core'
+```
+
+The subpath is a supported API with semver obligations, and it is the only supported
+import: a deep import into the package is refused. Nothing behind it prompts on a
+terminal, exits the process, reads the working directory, or writes to a process stream.
+See [docs/core-export.md](docs/core-export.md) for the full surface, the version policy,
+and what happens to a consumer when the catalog changes.
+
 ## Security properties
 
 - The client secret is stored only in `secrets.json` in the CLI config directory with

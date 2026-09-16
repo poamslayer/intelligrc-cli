@@ -13,10 +13,10 @@
  */
 import {type Command} from '@oclif/core'
 
-import {emitFailure} from '../errors.js'
 import {type ApiCommandSpec} from '../manifest.js'
 import {formatOutput} from '../output.js'
-import {apiRequest, emitRetryDiagnostic, type HttpMethod, type QueryPairs} from './client.js'
+import {emitFailure, emitRetryDiagnostic} from '../report.js'
+import {apiRequest, type HttpMethod, type QueryPairs} from './client.js'
 import {resolveOutputFormat} from './filters.js'
 import {resolveApiContext} from './resolve.js'
 
@@ -88,6 +88,7 @@ export async function runApiWrite(command: Command, options: ApiWriteOptions): P
       options.profile,
       command.config.configDir,
       process.env,
+      process.cwd(),
     )
     redactionValues = context.redactionValues
 

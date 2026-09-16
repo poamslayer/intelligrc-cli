@@ -5,6 +5,9 @@
  * and HTTP dates; every delay is capped at the remaining request policy
  * budget so retries can never extend a command past TOTAL_BUDGET_MS.
  */
+// A type-only import, erased at run time: this module deliberately loads
+// nothing, so a test can import it directly under Node's type stripping.
+import type {EnvironmentVariables} from '../environment.js'
 
 export const MAX_ATTEMPTS = 3
 
@@ -21,7 +24,7 @@ export const TOTAL_BUDGET_MS = MAX_ATTEMPTS * ATTEMPT_TIMEOUT_MS
  * 30-second limit stays the ceiling, so the variable cannot extend any
  * request.
  */
-export function resolveAttemptTimeoutMs(env: NodeJS.ProcessEnv): number {
+export function resolveAttemptTimeoutMs(env: EnvironmentVariables): number {
   const raw = env.INTELLIGRC_ATTEMPT_TIMEOUT_MS
   if (raw !== undefined && /^\d+$/.test(raw) && Number(raw) > 0) {
     return Math.min(Number(raw), ATTEMPT_TIMEOUT_MS)

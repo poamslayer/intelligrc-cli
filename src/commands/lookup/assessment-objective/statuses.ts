@@ -1,7 +1,8 @@
 import {Command} from '@oclif/core'
 
 import {apiGetDescription, runApiGet} from '../../../api/run-get.js'
-import {apiCommandSpec, oclifFlags} from '../../../manifest.js'
+import {apiCommandSpec} from '../../../manifest.js'
+import {oclifFlags} from '../../../oclif-manifest.js'
 
 const spec = apiCommandSpec('lookup assessment-objective statuses')
 

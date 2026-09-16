@@ -1,6 +1,6 @@
 {
   "name": "@poamslayer/intelligrc-cli",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Command-line interface for reading and editing IntelliGRC governance, risk, and compliance data",
   "type": "module",
   "license": "MIT",
@@ -16,6 +16,13 @@
   },
   "bin": {
     "intelligrc": "./bin/run.js"
+  },
+  "exports": {
+    "./core": {
+      "types": "./dist/core/index.d.ts",
+      "default": "./dist/core/index.js"
+    },
+    "./package.json": "./package.json"
   },
   "files": [
     "/bin",

@@ -4,6 +4,11 @@
  *   {"error": {"code", "message", "httpStatus"?, "retryable", "attempts",
  *              "apiError"?}}
  * passed through redaction so credential values never reach any output.
+ *
+ * This module defines the vocabulary and the failure type. Writing a failure
+ * to standard error lives in report.ts, because a library caller consuming
+ * the `core` export subpath handles its own reporting and must never have a
+ * process stream written on its behalf.
  */
 
 /** Exit codes from the issue #1 contract. */
@@ -204,39 +209,4 @@ export function redact(text: string, secrets: Array<string | null | undefined>):
   }
 
   return result
-}
-
-/**
- * Write one redacted failure object to stderr and return the exit code the
- * command must exit with. Non-CliFailure errors map to exit code 1.
- */
-export function emitFailure(
-  error: unknown,
-  secrets: Array<string | null | undefined>,
-): number {
-  const failure =
-    error instanceof CliFailure
-      ? error
-      : new CliFailure({
-          code: 'unexpected-failure',
-          message: error instanceof Error ? error.message : String(error),
-          exitCode: EXIT.unexpected,
-        })
-
-  const body: Record<string, unknown> = {
-    code: failure.code,
-    message: failure.message,
-    retryable: failure.retryable,
-    attempts: failure.attempts,
-  }
-  if (failure.httpStatus !== undefined) {
-    body.httpStatus = failure.httpStatus
-  }
-
-  if (failure.apiError !== undefined) {
-    body.apiError = failure.apiError
-  }
-
-  process.stderr.write(`${redact(JSON.stringify({error: body}), secrets)}\n`)
-  return failure.exitCode
 }

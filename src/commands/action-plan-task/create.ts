@@ -2,7 +2,8 @@ import {Command} from '@oclif/core'
 
 import {buildActionPlanTaskCreateBody} from '../../api/filters.js'
 import {apiWriteDescription, runApiWrite} from '../../api/run-write.js'
-import {apiCommandSpec, oclifFlags} from '../../manifest.js'
+import {apiCommandSpec} from '../../manifest.js'
+import {oclifFlags} from '../../oclif-manifest.js'
 
 const spec = apiCommandSpec('action-plan-task create')
 

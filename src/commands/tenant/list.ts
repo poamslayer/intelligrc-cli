@@ -1,7 +1,8 @@
 import {Command} from '@oclif/core'
 
 import {runApiGet} from '../../api/run-get.js'
-import {apiCommandSpec, oclifFlags} from '../../manifest.js'
+import {apiCommandSpec} from '../../manifest.js'
+import {oclifFlags} from '../../oclif-manifest.js'
 
 const spec = apiCommandSpec('tenant list')
 

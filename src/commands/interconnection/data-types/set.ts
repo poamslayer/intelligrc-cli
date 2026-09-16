@@ -2,7 +2,8 @@ import {Command} from '@oclif/core'
 
 import {buildDataTypeIdsBody, parseInterconnectionId} from '../../../api/filters.js'
 import {apiWriteDescription, runApiWrite} from '../../../api/run-write.js'
-import {apiCommandSpec, oclifArgs, oclifFlags} from '../../../manifest.js'
+import {apiCommandSpec} from '../../../manifest.js'
+import {oclifArgs, oclifFlags} from '../../../oclif-manifest.js'
 
 const spec = apiCommandSpec('interconnection data-types set')
 

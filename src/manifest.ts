@@ -1,14 +1,13 @@
 /**
  * Typed command manifest. Single source of truth for the command catalog.
  * Command classes derive their summaries and flag definitions from these
- * specs through commandSpec() and oclifFlags(), so the catalog cannot drift
- * from actual command behavior.
+ * specs through commandSpec() and the adapters in oclif-manifest.ts, so the
+ * catalog cannot drift from actual command behavior.
  *
- * Later slices extend this file with API commands and reuse it for command
- * registration checks, help text, permission text, and contract tests.
+ * This module is plain data and plain functions over it. It imports nothing
+ * from oclif, so a library caller can read the catalog through the `core`
+ * export subpath without loading a command framework.
  */
-import {Args, Flags, type Interfaces} from '@oclif/core'
-
 import {ERROR_CATALOG, EXIT_CODE_CATALOG} from './errors.js'
 
 import {OUTPUT_FORMATS} from './output.js'
@@ -3488,47 +3487,4 @@ export function selectContract(
   }
 
   return spec.contract
-}
-
-/**
- * Convert one spec's args into oclif argument definitions. Every arg is
- * defined as a string; integer validation happens in the command through
- * the shared filter parsers, so the failure keeps the stable error code
- * and exit-2 contract.
- */
-export function oclifArgs(spec: CommandSpec): Interfaces.ArgInput {
-  const args: Interfaces.ArgInput = {}
-  for (const arg of spec.args) {
-    args[arg.name] = Args.string({description: arg.summary, required: arg.required})
-  }
-
-  return args
-}
-
-/** Convert one spec's flags into oclif flag definitions. */
-export function oclifFlags(spec: CommandSpec): Interfaces.FlagInput {
-  const flags: Interfaces.FlagInput = {}
-  for (const flag of spec.flags) {
-    if (flag.type === 'boolean') {
-      flags[flag.name] = Flags.boolean({summary: flag.summary, required: flag.required})
-    } else if (flag.multiple) {
-      // A repeatable option collects every occurrence into a string array;
-      // it carries no scalar default, so it stays undefined when omitted.
-      flags[flag.name] = Flags.string({
-        summary: flag.summary,
-        required: flag.required,
-        options: flag.allowedValues,
-        multiple: true,
-      })
-    } else {
-      flags[flag.name] = Flags.string({
-        summary: flag.summary,
-        required: flag.required,
-        options: flag.allowedValues,
-        default: flag.default,
-      })
-    }
-  }
-
-  return flags
 }

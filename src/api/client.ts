@@ -13,8 +13,11 @@
  * repeating it lands on the same result.
  *
  * The transport is independent of oclif so fake-server and live tests
- * exercise the same request policy.
+ * exercise the same request policy. It writes to no process stream either:
+ * reporting a retried success lives in report.ts, so a library caller
+ * consuming the `core` export subpath decides what its own output is.
  */
+import {type EnvironmentVariables} from '../environment.js'
 import {CliFailure, EXIT} from '../errors.js'
 import {apiErrorFromBody} from './response.js'
 import {
@@ -60,7 +63,7 @@ export interface ApiRequestOptions {
   permission?: string | null
   /** Values that must never appear in any output. */
   redactionValues: string[]
-  env: NodeJS.ProcessEnv
+  env: EnvironmentVariables
 }
 
 export interface ApiSuccess {
@@ -374,16 +377,4 @@ export async function apiRequest(options: ApiRequestOptions): Promise<ApiSuccess
 
   // Unreachable: every loop exit returns or throws. Satisfies the compiler.
   throw lastFailure ?? new Error('request loop ended without a result')
-}
-
-/**
- * Report a retried success on stderr, per the contract: a retried request
- * reports its total attempt count without changing successful API data.
- */
-export function emitRetryDiagnostic(attempts: number): void {
-  if (attempts > 1) {
-    process.stderr.write(
-      `${JSON.stringify({diagnostic: {code: 'request-retried', attempts}})}\n`,
-    )
-  }
 }
