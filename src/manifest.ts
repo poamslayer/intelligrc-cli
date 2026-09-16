@@ -3407,6 +3407,11 @@ export const ENV_CATALOG = [
     name: 'INTELLIGRC_ATTEMPT_TIMEOUT_MS',
     meaning: 'Per-attempt request timeout in milliseconds.',
   },
+  {
+    name: 'INTELLIGRC_CONFIG_DIR',
+    meaning:
+      'Directory holding profiles.json and secrets.json. Overrides the default location, which is XDG_CONFIG_HOME or LOCALAPPDATA or ~/.config, plus "intelligrc".',
+  },
 ] as const
 
 export interface Catalog {

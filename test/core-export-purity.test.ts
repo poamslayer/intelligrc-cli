@@ -86,7 +86,7 @@ test('the core export graph stays small', () => {
   // number and saying why in docs/core-export.md.
   const graph = coreModuleGraph()
   assert.ok(
-    graph.length <= 13,
+    graph.length <= 14,
     `the core export reaches ${graph.length} modules: ${graph
       .map((file) => relative(projectRoot, file))
       .join(', ')}`,

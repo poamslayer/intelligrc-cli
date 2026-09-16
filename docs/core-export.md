@@ -24,11 +24,16 @@ Three things, and nothing else:
    `selectContract`, `ENV_CATALOG`, and the types that describe them. This is the command
    catalog the contract suite keeps equal to the archived OpenAPI document.
 3. **Identity resolution.** `resolveIdentity` and its `Identity` type, covering all three
-   identity sources: a named profile, a credentials file, and the environment.
+   identity sources: a named profile, a credentials file, and the environment. Alongside
+   it, `resolveConfigDir` answers where `profiles.json` and `secrets.json` live. The
+   executable gets that directory from oclif; a consumer has no oclif and must still find
+   the profile a person created with `intelligrc auth login`, so the rule lives in one
+   place and `test/config-dir.test.ts` compares it against what oclif actually computes.
 
 It also serves the failure vocabulary those three raise — `CliFailure`, `EXIT`,
 `ERROR_CATALOG`, `EXIT_CODE_CATALOG`, `redact` — plus `resolveBaseUrl`,
-`DEFAULT_BASE_URL`, and the `EnvironmentVariables` type.
+`DEFAULT_BASE_URL`, `CONFIG_DIRNAME`, `CONFIG_DIR_VARIABLE`, and the
+`EnvironmentVariables` type.
 
 ## Three rules every module behind the subpath follows
 
