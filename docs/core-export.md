@@ -51,6 +51,23 @@ own writes to standard error live in `src/report.ts`, which the subpath does not
 `test/core-export-purity.test.ts` walks the module graph out of `src/core/index.ts` and
 fails on any of these.
 
+## Three note files the package also publishes
+
+Beside the code, the package ships three Markdown files, because the MCP server's `docs`
+tool serves them and a second copy of them would drift from this one:
+
+| File | What it is |
+| --- | --- |
+| `official-docs/errata.md` | observed API behavior the vendor document does not describe |
+| `CONTEXT.md` | the glossary: one term for one concept, and the words to avoid |
+| `docs/writing-data.md` | how to write correctly, including the write rules |
+
+They are data, never instructions. A consumer reads them by path from the installed
+package; they are not importable and not part of the JavaScript surface. `official-docs/`
+ships exactly one file by name, so a maintainer's local copy of the vendor OpenAPI
+document sitting beside the errata cannot be published — `test/pack.test.ts` plants one
+and proves it does not ship.
+
 ## What is deliberately not served
 
 - **The oclif adaptation.** `oclifArgs` and `oclifFlags` live in `src/oclif-manifest.ts`,

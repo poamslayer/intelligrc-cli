@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import {execFile, execFileSync} from 'node:child_process'
-import {cpSync, mkdirSync, mkdtempSync} from 'node:fs'
+import {cpSync, mkdirSync, mkdtempSync, writeFileSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join} from 'node:path'
 import {test} from 'node:test'
@@ -78,7 +78,20 @@ test('a clean checkout builds, packs, installs, and serves the documented surfac
   // Clean room: copy only the sources npm would see in a fresh checkout.
   // No dist/ is copied, so packing must build the artifact itself.
   const cleanRoom = join(workDir, 'checkout')
-  for (const entry of ['package.json', 'package-lock.json', 'tsconfig.json', 'bin', 'src', 'README.md', 'LICENSE']) {
+  for (const entry of [
+    'package.json',
+    'package-lock.json',
+    'tsconfig.json',
+    'bin',
+    'src',
+    'README.md',
+    'LICENSE',
+    // The three note files the package publishes, and the directories
+    // they sit in. `files` picks exactly those three out.
+    'CONTEXT.md',
+    'docs',
+    'official-docs',
+  ]) {
     cpSync(join(projectRoot, entry), join(cleanRoom, entry), {recursive: true})
   }
 
@@ -95,14 +108,24 @@ test('a clean checkout builds, packs, installs, and serves the documented surfac
   assert.match(tarballListing, /package\/README\.md/)
   assert.match(tarballListing, /package\/LICENSE/)
 
+  // The notes the MCP server's `docs` tool serves. They ship from here so
+  // there is one copy of them, kept beside the contract test that keeps
+  // the errata honest.
+  assert.match(tarballListing, /package\/CONTEXT\.md/)
+  assert.match(tarballListing, /package\/docs\/writing-data\.md/)
+  assert.match(tarballListing, /package\/official-docs\/errata\.md/)
+
   // Whitelist: the package carries the manifest, the documentation, the
-  // executable, the built JavaScript, and the declaration files the core
-  // export subpath needs — nothing else. Credentials, live responses,
+  // executable, the built JavaScript, the declaration files the core
+  // export subpath needs, and the three note files the MCP server's
+  // `docs` tool serves — nothing else. Credentials, live responses,
   // tenant data, session data, tests, and the archived OpenAPI document
-  // can never ship because any unlisted entry fails here, and any other
-  // file type under dist/ fails the same way.
+  // can never ship because any unlisted entry fails here. In particular
+  // official-docs/ ships exactly one file, so a maintainer's local copy
+  // of the vendor contract beside it cannot be published by accident.
   // Split on \r?\n: Windows bsdtar terminates listing lines with CRLF.
-  const allowedEntry = /^package\/(package\.json|README\.md|LICENSE|bin\/[^/]+|dist\/.+\.(js|d\.ts))$/
+  const allowedEntry =
+    /^package\/(package\.json|README\.md|LICENSE|CONTEXT\.md|docs\/writing-data\.md|official-docs\/errata\.md|bin\/[^/]+|dist\/.+\.(js|d\.ts))$/
   for (const entry of tarballListing.trim().split(/\r?\n/)) {
     assert.match(entry, allowedEntry, `Unexpected file in the package: ${entry}`)
   }
@@ -213,4 +236,48 @@ test('a clean checkout builds, packs, installs, and serves the documented surfac
   } finally {
     await api.close()
   }
+})
+
+/**
+ * `official-docs/` holds the errata, which this package publishes, beside a
+ * maintainer's local copy of the vendor OpenAPI document, which it must
+ * never publish. The document is IntelliGRC's property.
+ *
+ * The `files` field picks out one file by name, so this cannot happen. That
+ * is exactly the kind of claim that stops being true when someone widens a
+ * glob to "official-docs/" one afternoon, so it is asserted against a
+ * planted file rather than trusted.
+ */
+test('a vendor document sitting beside the errata never ships', {timeout: 300_000}, async () => {
+  const workDir = mkdtempSync(join(tmpdir(), 'intelligrc-vendor-leak-test-'))
+  const cleanRoom = join(workDir, 'checkout')
+  for (const entry of [
+    'package.json',
+    'package-lock.json',
+    'tsconfig.json',
+    'bin',
+    'src',
+    'README.md',
+    'LICENSE',
+    'CONTEXT.md',
+    'docs',
+    'official-docs',
+  ]) {
+    cpSync(join(projectRoot, entry), join(cleanRoom, entry), {recursive: true})
+  }
+
+  // A stand-in for the vendor document, in the place a maintainer keeps it.
+  const planted = join(cleanRoom, 'official-docs', 'swagger', 'v1')
+  mkdirSync(planted, {recursive: true})
+  writeFileSync(join(planted, 'swagger.json'), '{"openapi":"3.0.1","paths":{}}\n')
+  writeFileSync(join(cleanRoom, 'official-docs', 'SHA256SUMS'), 'not a real checksum\n')
+
+  run('npm', ['ci'], cleanRoom)
+  const packOutput = run('npm', ['pack', '--pack-destination', workDir], cleanRoom)
+  const tarball = join(workDir, packOutput.trim().split(/\r?\n/).at(-1)!)
+  const listing = run('tar', ['-tzf', tarball], workDir)
+
+  assert.ok(!listing.includes('swagger'), 'the packed artifact carries the vendor document')
+  assert.ok(!listing.includes('SHA256SUMS'), 'the packed artifact carries the vendor checksums')
+  assert.match(listing, /package\/official-docs\/errata\.md/)
 })
