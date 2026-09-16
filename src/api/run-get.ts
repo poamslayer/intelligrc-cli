@@ -8,10 +8,10 @@
  */
 import {type Command} from '@oclif/core'
 
-import {emitFailure} from '../errors.js'
 import {type ApiCommandSpec, type OperationContract} from '../manifest.js'
 import {formatOutput} from '../output.js'
-import {apiRequest, emitRetryDiagnostic, type QueryPairs} from './client.js'
+import {emitFailure, emitRetryDiagnostic} from '../report.js'
+import {apiRequest, type QueryPairs} from './client.js'
 import {resolveOutputFormat} from './filters.js'
 import {resolveApiContext} from './resolve.js'
 
@@ -72,6 +72,7 @@ export async function runApiGet(command: Command, options: ApiGetOptions): Promi
       options.profile,
       command.config.configDir,
       process.env,
+      process.cwd(),
     )
     redactionValues = context.redactionValues
 

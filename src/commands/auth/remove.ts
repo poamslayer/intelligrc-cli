@@ -1,7 +1,9 @@
 import {Command} from '@oclif/core'
 
-import {CliFailure, EXIT, emitFailure} from '../../errors.js'
-import {commandSpec, oclifFlags} from '../../manifest.js'
+import {CliFailure, EXIT} from '../../errors.js'
+import {emitFailure} from '../../report.js'
+import {commandSpec} from '../../manifest.js'
+import {oclifFlags} from '../../oclif-manifest.js'
 import {ProfileStore} from '../../profile-store.js'
 import {FileSecretStore} from '../../secret-store.js'
 

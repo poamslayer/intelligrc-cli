@@ -2,7 +2,8 @@ import {Command} from '@oclif/core'
 
 import {parseDataTypeId} from '../../api/filters.js'
 import {apiDeleteDescription, runApiDelete} from '../../api/run-delete.js'
-import {apiCommandSpec, oclifArgs, oclifFlags} from '../../manifest.js'
+import {apiCommandSpec} from '../../manifest.js'
+import {oclifArgs, oclifFlags} from '../../oclif-manifest.js'
 
 const spec = apiCommandSpec('data-type delete')
 

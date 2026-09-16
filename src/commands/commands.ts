@@ -1,6 +1,7 @@
 import {Command} from '@oclif/core'
 
-import {buildCatalog, commandSpec, oclifFlags} from '../manifest.js'
+import {buildCatalog, commandSpec} from '../manifest.js'
+import {oclifFlags} from '../oclif-manifest.js'
 
 const spec = commandSpec('commands')
 

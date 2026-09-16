@@ -1,6 +1,6 @@
 import {Command} from '@oclif/core'
 
-import {apiRequest, emitRetryDiagnostic} from '../api/client.js'
+import {apiRequest} from '../api/client.js'
 import {
   clientSecretMissingFailure,
   profileBaseUrlInvalidFailure,
@@ -8,8 +8,10 @@ import {
   profileNotFoundFailure,
 } from '../api/resolve.js'
 import {resolveBaseUrl} from '../base-url.js'
-import {CliFailure, EXIT, emitFailure} from '../errors.js'
-import {commandSpec, oclifFlags} from '../manifest.js'
+import {CliFailure, EXIT} from '../errors.js'
+import {emitFailure, emitRetryDiagnostic} from '../report.js'
+import {commandSpec} from '../manifest.js'
+import {oclifFlags} from '../oclif-manifest.js'
 import {ProfileStore} from '../profile-store.js'
 import {FileSecretStore} from '../secret-store.js'
 

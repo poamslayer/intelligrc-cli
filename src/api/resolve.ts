@@ -23,8 +23,9 @@ export function resolveApiContext(
   profileName: string | undefined,
   configDir: string,
   env: NodeJS.ProcessEnv,
+  baseDir: string,
 ): ApiContext {
-  const identity = resolveIdentity(profileName, configDir, env)
+  const identity = resolveIdentity(profileName, configDir, env, baseDir)
 
   return {
     baseUrl: identity.baseUrl,

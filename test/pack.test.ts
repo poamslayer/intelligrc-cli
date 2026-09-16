@@ -89,17 +89,20 @@ test('a clean checkout builds, packs, installs, and serves the documented surfac
   // The tarball must carry the built commands, not just bin/.
   const tarballListing = run('tar', ['-tzf', tarball], workDir)
   assert.match(tarballListing, /package\/dist\/commands\/version\.js/)
+  assert.match(tarballListing, /package\/dist\/core\/index\.js/)
+  assert.match(tarballListing, /package\/dist\/core\/index\.d\.ts/)
   assert.match(tarballListing, /package\/dist\/commands\/commands\.js/)
   assert.match(tarballListing, /package\/README\.md/)
   assert.match(tarballListing, /package\/LICENSE/)
 
   // Whitelist: the package carries the manifest, the documentation, the
-  // executable, and the built JavaScript — nothing else. Credentials,
-  // live responses, tenant data, session data, tests, and the archived
-  // OpenAPI document can never ship because any unlisted entry fails
-  // here, and a non-JavaScript file under dist/ fails the same way.
+  // executable, the built JavaScript, and the declaration files the core
+  // export subpath needs — nothing else. Credentials, live responses,
+  // tenant data, session data, tests, and the archived OpenAPI document
+  // can never ship because any unlisted entry fails here, and any other
+  // file type under dist/ fails the same way.
   // Split on \r?\n: Windows bsdtar terminates listing lines with CRLF.
-  const allowedEntry = /^package\/(package\.json|README\.md|LICENSE|bin\/[^/]+|dist\/.+\.js)$/
+  const allowedEntry = /^package\/(package\.json|README\.md|LICENSE|bin\/[^/]+|dist\/.+\.(js|d\.ts))$/
   for (const entry of tarballListing.trim().split(/\r?\n/)) {
     assert.match(entry, allowedEntry, `Unexpected file in the package: ${entry}`)
   }

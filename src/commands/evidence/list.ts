@@ -2,7 +2,8 @@ import {Command} from '@oclif/core'
 
 import {filterQueryFromFlags} from '../../api/filters.js'
 import {apiGetDescription, runApiGet} from '../../api/run-get.js'
-import {apiCommandSpec, oclifFlags, selectContract} from '../../manifest.js'
+import {apiCommandSpec, selectContract} from '../../manifest.js'
+import {oclifFlags} from '../../oclif-manifest.js'
 
 const spec = apiCommandSpec('evidence list')
 

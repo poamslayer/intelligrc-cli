@@ -3,6 +3,7 @@ import {resolve} from 'node:path'
 
 import {DEFAULT_BASE_URL, resolveBaseUrl} from './base-url.js'
 import {readCredentialsFile} from './credentials-file.js'
+import {type EnvironmentVariables} from './environment.js'
 import {CliFailure, EXIT} from './errors.js'
 import {ProfileStore} from './profile-store.js'
 import {FileSecretStore} from './secret-store.js'
@@ -88,11 +89,17 @@ interface IdentityBase {
  * Choose one identity source and apply the documented environment overrides.
  * A variable set to the empty string counts as unset everywhere: it does not
  * form the environment identity and it does not override a field.
+ *
+ * `baseDir` resolves a relative INTELLIGRC_CREDENTIALS_FILE path. The CLI
+ * passes its working directory; a library caller passes whatever directory
+ * relative paths should mean for it. This function never reads the working
+ * directory itself.
  */
 export function resolveIdentity(
   profileName: string | undefined,
   configDir: string,
-  env: NodeJS.ProcessEnv,
+  env: EnvironmentVariables,
+  baseDir: string,
 ): Identity {
   const credentialsFile = nonEmpty(env.INTELLIGRC_CREDENTIALS_FILE)
   let base: IdentityBase
@@ -107,10 +114,10 @@ export function resolveIdentity(
       })
     }
 
-    const fields = readCredentialsFile(credentialsFile)
+    const fields = readCredentialsFile(credentialsFile, baseDir)
     base = {
       source: 'credentials-file',
-      credentialsFile: resolve(process.cwd(), credentialsFile),
+      credentialsFile: resolve(baseDir, credentialsFile),
       clientId: fields.clientId,
       clientSecret: fields.clientSecret,
       tenantId: fields.tenantId,
@@ -200,7 +207,7 @@ function applyOverride(
   base: IdentityBase,
   field: 'clientId' | 'clientSecret' | 'tenantId' | 'baseUrl',
   variable: string,
-  env: NodeJS.ProcessEnv,
+  env: EnvironmentVariables,
   overrides: string[],
 ): void {
   const value = nonEmpty(env[variable])

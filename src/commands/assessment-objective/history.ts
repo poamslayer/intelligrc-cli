@@ -3,7 +3,8 @@ import {Command} from '@oclif/core'
 import {type QueryPairs} from '../../api/client.js'
 import {parseAssessmentObjectiveId, parseEvaluationId} from '../../api/filters.js'
 import {apiGetDescription, runApiGet} from '../../api/run-get.js'
-import {apiCommandSpec, oclifFlags} from '../../manifest.js'
+import {apiCommandSpec} from '../../manifest.js'
+import {oclifFlags} from '../../oclif-manifest.js'
 
 const spec = apiCommandSpec('assessment-objective history')
 

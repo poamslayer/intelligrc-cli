@@ -2,8 +2,8 @@
 
 import {Errors, flush, run} from '@oclif/core'
 
-import {emitFailure} from '../dist/errors.js'
 import {oclifFailure} from '../dist/oclif-failure.js'
+import {emitFailure} from '../dist/report.js'
 
 // A reader that goes away is not a failure. oclif installs a stdout error
 // handler that swallows EPIPE and rethrows everything else, and macOS raises

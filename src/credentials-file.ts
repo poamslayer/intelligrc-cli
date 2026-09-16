@@ -13,9 +13,14 @@ export interface CredentialsFile {
   baseUrl?: string
 }
 
-/** Read and validate the credentials file named by the environment. */
-export function readCredentialsFile(path: string): CredentialsFile {
-  const filePath = resolve(process.cwd(), path)
+/**
+ * Read and validate the credentials file named by the environment. A
+ * relative path resolves against `baseDir`, which the caller supplies: this
+ * module never reads the working directory, because a library caller such as
+ * the MCP server has no meaningful one.
+ */
+export function readCredentialsFile(path: string, baseDir: string): CredentialsFile {
+  const filePath = resolve(baseDir, path)
 
   let raw: string
   try {

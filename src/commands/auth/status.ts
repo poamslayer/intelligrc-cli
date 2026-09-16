@@ -1,9 +1,10 @@
 import {Command} from '@oclif/core'
 
 import {resolveOutputFormat} from '../../api/filters.js'
-import {emitFailure} from '../../errors.js'
+import {emitFailure} from '../../report.js'
 import {type Identity, resolveIdentity} from '../../identity.js'
-import {commandSpec, oclifFlags} from '../../manifest.js'
+import {commandSpec} from '../../manifest.js'
+import {oclifFlags} from '../../oclif-manifest.js'
 import {formatOutput} from '../../output.js'
 
 const spec = commandSpec('auth status')
@@ -29,6 +30,7 @@ export default class AuthStatus extends Command {
         flags.profile as string | undefined,
         this.config.configDir,
         process.env,
+        process.cwd(),
       )
       const body = {
         identity: {

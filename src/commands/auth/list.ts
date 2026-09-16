@@ -1,7 +1,8 @@
 import {Command} from '@oclif/core'
 
-import {emitFailure} from '../../errors.js'
-import {commandSpec, oclifFlags} from '../../manifest.js'
+import {emitFailure} from '../../report.js'
+import {commandSpec} from '../../manifest.js'
+import {oclifFlags} from '../../oclif-manifest.js'
 import {ProfileStore} from '../../profile-store.js'
 
 const spec = commandSpec('auth list')
