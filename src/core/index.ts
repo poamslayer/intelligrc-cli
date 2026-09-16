@@ -38,12 +38,6 @@ export {
 
 export {DEFAULT_BASE_URL, resolveBaseUrl} from '../base-url.js'
 
-export {
-  CONFIG_DIRNAME,
-  CONFIG_DIR_VARIABLE,
-  resolveConfigDir,
-} from '../config-dir.js'
-
 export {type EnvironmentVariables} from '../environment.js'
 
 export {
